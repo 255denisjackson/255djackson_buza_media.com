@@ -1,0 +1,782 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--primary:#1a1a2e;--accent:#e63946;--accent2:#457b9d;--bg:#f8f9fa;--card:#fff;--border:#e0e0e0;--text:#1a1a1e;--muted:#6c757d;--tag-bg:#eef2ff;--tag-color:#3730a3}
+html,body{width:100%;overflow-x:hidden}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text)}
+.hidden{display:none!important}
+
+nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width:100%}
+.nav-top{display:flex;align-items:center;justify-content:space-between;padding:0 1.25rem;height:54px;gap:.75rem}
+.nav-brand{display:flex;align-items:center;gap:.5rem;cursor:pointer;flex-shrink:0}
+.nav-brand-mark{width:30px;height:30px;border-radius:7px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:.95rem;font-weight:700;color:#fff;flex-shrink:0}
+.nav-brand-text{font-size:1.1rem;font-weight:700;letter-spacing:.3px;white-space:nowrap}
+.nav-brand-text span{color:var(--accent)}
+.nav-controls{display:flex;gap:.5rem;align-items:center;flex-shrink:0}
+.nav-mode-tab{background:none;border:none;color:rgba(255,255,255,.6);padding:5px 11px;cursor:pointer;font-size:.8rem;border-radius:5px;transition:.15s;white-space:nowrap}
+.nav-mode-tab:hover{color:#fff;background:rgba(255,255,255,.1)}
+.nav-mode-tab.active{color:#fff;background:rgba(255,255,255,.15)}
+.nav-login-btn{background:var(--accent);border:none;color:#fff;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:.8rem;font-weight:600;transition:.15s;white-space:nowrap;display:flex;align-items:center;gap:.35rem}
+.nav-login-btn:hover{background:#c1121f}
+.nav-user{display:flex;align-items:center;gap:.5rem;background:rgba(255,255,255,.1);padding:5px 8px 5px 5px;border-radius:24px;flex-shrink:0}
+.nav-user-avatar{width:26px;height:26px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:700;flex-shrink:0}
+.nav-user-name{font-size:.79rem;font-weight:500;white-space:nowrap}
+.nav-logout-btn{background:rgba(255,255,255,.12);border:none;color:#fff;cursor:pointer;font-size:.76rem;font-weight:600;padding:6px 12px;border-radius:18px;display:flex;align-items:center;gap:.3rem;white-space:nowrap;transition:.15s}
+.nav-logout-btn:hover{background:var(--accent)}
+
+.nav-cats{background:rgba(0,0,0,.25);border-top:1px solid rgba(255,255,255,.08)}
+.nav-cats-inner{display:flex;align-items:center;padding:0 1.25rem;overflow-x:auto;gap:0;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.nav-cats-inner::-webkit-scrollbar{display:none}
+.cat-tab{background:none;border:none;color:rgba(255,255,255,.65);padding:9px 13px;cursor:pointer;font-size:.8rem;font-weight:500;border-bottom:2px solid transparent;white-space:nowrap;transition:.15s}
+.cat-tab:hover{color:#fff}
+.cat-tab.active{color:#fff;border-bottom-color:var(--accent)}
+
+#view-public,#view-admin{padding:1.25rem}
+.pub-header{max-width:1100px;margin:0 auto .85rem}
+.pub-header h1{font-size:1.4rem;font-weight:700;color:var(--primary)}
+.pub-header p{font-size:.79rem;color:var(--muted);margin-top:.2rem}
+
+.hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;max-width:1100px;margin:0 auto 1.75rem}
+.hero-card{background:var(--card);border-radius:12px;border:.5px solid var(--border);overflow:hidden;cursor:pointer;transition:.15s}
+.hero-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.1)}
+.hero-card.featured{grid-column:1/-1;display:grid;grid-template-columns:1fr 400px}
+.card-img{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);height:210px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;flex-shrink:0}
+.card-img img{width:100%;height:100%;object-fit:cover}
+.hero-card.featured .card-img{height:270px}
+.card-img-icon{font-size:3rem;opacity:.2}
+.card-img-label{position:absolute;bottom:10px;left:10px;background:var(--accent);color:#fff;font-size:.67rem;font-weight:700;padding:3px 9px;border-radius:4px;text-transform:uppercase;letter-spacing:.4px}
+.card-body{padding:1.1rem}
+.card-category{font-size:.69rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.6px;margin-bottom:.35rem}
+.card-title{font-size:.97rem;font-weight:600;line-height:1.4;margin-bottom:.45rem;color:var(--text)}
+.hero-card.featured .card-title{font-size:1.25rem}
+.card-excerpt{font-size:.82rem;color:var(--muted);line-height:1.6;margin-bottom:.7rem}
+.card-meta{font-size:.72rem;color:var(--muted);display:flex;align-items:center;gap:.45rem;flex-wrap:wrap}
+.card-tag{background:var(--tag-bg);color:var(--tag-color);font-size:.66rem;font-weight:500;padding:2px 7px;border-radius:4px}
+.breaking-badge{background:var(--accent);color:#fff;font-size:.63rem;font-weight:700;padding:2px 7px;border-radius:3px;text-transform:uppercase;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+
+.section-label{max-width:1100px;margin:0 auto .7rem}
+.section-label h2{font-size:.97rem;font-weight:600;color:var(--text)}
+.section-line{height:2px;background:var(--accent);width:34px;margin-top:4px}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:1rem;max-width:1100px;margin:0 auto 2rem}
+.small-card{background:var(--card);border-radius:10px;border:.5px solid var(--border);overflow:hidden;cursor:pointer;transition:.15s;display:flex;flex-direction:column}
+.small-card:hover{transform:translateY(-1px);box-shadow:0 3px 12px rgba(0,0,0,.08)}
+.small-card .card-img{height:160px}
+.small-card .card-body{flex:1}
+.empty-state{text-align:center;padding:3rem;color:var(--muted);grid-column:1/-1}
+
+#view-article{max-width:780px;margin:0 auto;padding:1.5rem 1.25rem}
+.back-btn{background:none;border:.5px solid var(--border);color:var(--muted);padding:6px 13px;border-radius:6px;cursor:pointer;font-size:.83rem;margin-bottom:1.25rem;display:inline-flex;align-items:center;gap:.4rem}
+.back-btn:hover{border-color:var(--accent);color:var(--accent)}
+.article-category{font-size:.72rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.45rem}
+.article-title{font-size:1.85rem;font-weight:700;line-height:1.3;margin-bottom:.7rem}
+.article-meta{font-size:.81rem;color:var(--muted);display:flex;gap:.85rem;flex-wrap:wrap;padding-bottom:.9rem;border-bottom:.5px solid var(--border);margin-bottom:1.25rem}
+.article-img{background:linear-gradient(135deg,#1a1a2e,#0f3460);height:280px;border-radius:10px;margin-bottom:1.4rem;display:flex;align-items:center;justify-content:center;font-size:3.5rem;opacity:.35;overflow:hidden}
+.article-img img{width:100%;height:100%;object-fit:cover}
+.article-body{font-size:1rem;line-height:1.8;color:var(--text);margin-bottom:1.5rem}
+.article-body p{margin-bottom:1rem}
+.engage-bar{display:flex;align-items:center;gap:.6rem;padding:1rem 0;border-top:.5px solid var(--border);flex-wrap:wrap}
+.engage-btn{display:flex;align-items:center;gap:.4rem;background:var(--bg);border:.5px solid var(--border);padding:8px 14px;border-radius:20px;cursor:pointer;font-size:.84rem;font-weight:500;color:var(--text);transition:.15s}
+.engage-btn:hover{border-color:var(--accent2);color:var(--accent2)}
+.engage-btn.liked{background:#fef2f2;border-color:#fca5a5;color:var(--accent)}
+.engage-btn i{font-size:17px}
+
+#view-login{display:flex;align-items:center;justify-content:center;min-height:560px;padding:2rem 1.25rem}
+.login-card{background:var(--card);border-radius:16px;border:.5px solid var(--border);padding:2.25rem 2rem;max-width:380px;width:100%;box-shadow:0 8px 28px rgba(0,0,0,.07)}
+.login-logo{display:flex;flex-direction:column;align-items:center;gap:.6rem;margin-bottom:1.5rem}
+.login-logo-mark{width:52px;height:52px;border-radius:13px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700;color:#fff}
+.login-logo-text{font-size:1.25rem;font-weight:700;color:var(--primary)}
+.login-logo-text span{color:var(--accent)}
+.login-subtitle{font-size:.85rem;color:var(--muted);text-align:center;margin-bottom:1.5rem}
+.login-field{margin-bottom:1.1rem}
+.login-field label{display:block;font-size:.8rem;font-weight:500;color:var(--text);margin-bottom:.4rem}
+.login-input-wrap{position:relative}
+.login-input-wrap i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:17px}
+.login-field input{width:100%;border:.5px solid var(--border);border-radius:9px;padding:10px 12px 10px 38px;font-size:.88rem;outline:none;transition:.15s;font-family:inherit}
+.login-field input:focus{border-color:var(--accent2);box-shadow:0 0 0 3px rgba(69,123,157,.12)}
+.login-error{background:#fef2f2;color:#b91c1c;font-size:.79rem;padding:8px 12px;border-radius:8px;margin-bottom:1rem;display:flex;align-items:center;gap:.4rem;border:.5px solid #fecaca}
+.login-btn{width:100%;background:var(--accent);color:#fff;border:none;padding:11px;border-radius:9px;font-size:.9rem;font-weight:600;cursor:pointer;transition:.15s;display:flex;align-items:center;justify-content:center;gap:.45rem;margin-top:.4rem}
+.login-btn:hover{background:#c1121f}
+.login-hint{text-align:center;font-size:.76rem;color:var(--muted);margin-top:1.1rem;padding-top:1rem;border-top:.5px solid var(--border)}
+.login-hint code{background:var(--bg);padding:1px 6px;border-radius:4px;font-size:.74rem}
+.login-back{display:flex;align-items:center;gap:.4rem;font-size:.81rem;color:var(--muted);cursor:pointer;margin-bottom:1.25rem;width:fit-content}
+.login-back:hover{color:var(--accent)}
+
+#view-admin{padding:1.25rem}
+.admin-layout{display:grid;grid-template-columns:210px 1fr;gap:1.25rem;max-width:1200px;margin:0 auto}
+.admin-sidebar{background:var(--card);border-radius:12px;border:.5px solid var(--border);padding:1.1rem;height:fit-content;position:sticky;top:96px}
+.admin-sidebar h3{font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.7rem}
+.sidebar-item{display:flex;align-items:center;gap:.55rem;padding:.48rem .7rem;border-radius:6px;cursor:pointer;font-size:.84rem;color:var(--text);border:none;background:none;width:100%;text-align:left;margin-bottom:.12rem;transition:.12s}
+.sidebar-item:hover{background:var(--bg)}
+.sidebar-item.active{background:var(--tag-bg);color:#3730a3;font-weight:500}
+.sidebar-item i{font-size:15px}
+.sidebar-stats{margin-top:1.1rem;padding-top:.9rem;border-top:.5px solid var(--border)}
+.stat-row{display:flex;justify-content:space-between;font-size:.77rem;padding:.28rem 0;color:var(--muted)}
+.stat-row strong{color:var(--text)}
+
+.mobile-admin-nav{display:none;gap:.4rem;overflow-x:auto;padding-bottom:.5rem;margin-bottom:1rem;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.mobile-admin-nav::-webkit-scrollbar{display:none}
+.mob-nav-btn{background:var(--card);border:.5px solid var(--border);color:var(--text);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:.8rem;white-space:nowrap;display:flex;align-items:center;gap:.35rem;transition:.12s;flex-shrink:0}
+.mob-nav-btn.active{background:var(--tag-bg);color:#3730a3;border-color:#c7d2fe;font-weight:500}
+
+.admin-section{background:var(--card);border-radius:14px;border:.5px solid var(--border);padding:1.6rem;margin-bottom:1.1rem;box-shadow:0 1px 3px rgba(0,0,0,.03)}
+.admin-section-title{font-size:1.02rem;font-weight:700;margin-bottom:.3rem;display:flex;align-items:center;gap:.5rem;color:var(--primary)}
+.admin-section-sub{font-size:.81rem;color:var(--muted);margin-bottom:1.4rem}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.1rem}
+.form-group{display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.1rem}
+.form-group label{font-size:.8rem;font-weight:600;color:var(--text);display:flex;align-items:center;gap:.3rem}
+.form-group label i{font-size:14px;color:var(--accent2)}
+.req{color:var(--accent);font-weight:700}
+.form-group input,.form-group select,.form-group textarea{border:1.5px solid var(--border);border-radius:10px;padding:10px 13px;font-size:.88rem;color:var(--text);background:#fbfbfc;outline:none;font-family:inherit;transition:.15s;width:100%}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent2);background:#fff;box-shadow:0 0 0 4px rgba(69,123,157,.1)}
+.form-group textarea{min-height:130px;resize:vertical;line-height:1.65}
+.field-hint{font-size:.72rem;color:var(--muted)}
+
+/* ── IMAGE URL INPUT WIDGET ── */
+.img-url-wrap{border:1.5px solid var(--border);border-radius:10px;overflow:hidden;background:#fbfbfc;transition:.15s}
+.img-url-wrap:focus-within{border-color:var(--accent2);background:#fff;box-shadow:0 0 0 4px rgba(69,123,157,.1)}
+.img-url-input-row{display:flex;align-items:center;gap:0}
+.img-url-icon{padding:10px 12px;color:var(--muted);font-size:18px;flex-shrink:0;display:flex;align-items:center}
+.img-url-input{flex:1;border:none;background:transparent;outline:none;padding:10px 8px 10px 0;font-size:.88rem;color:var(--text);font-family:inherit;min-width:0}
+.img-url-clear{background:none;border:none;cursor:pointer;padding:10px 12px;color:var(--muted);font-size:18px;display:flex;align-items:center;flex-shrink:0}
+.img-url-clear:hover{color:var(--accent)}
+.img-preview-box{position:relative;background:linear-gradient(135deg,#1a1a2e,#0f3460);border-top:1.5px solid var(--border)}
+.img-preview-box img{width:100%;height:200px;object-fit:cover;display:block}
+.img-preview-box .img-overlay{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.5));padding:8px 10px;font-size:.72rem;color:#fff;display:flex;align-items:center;gap:.35rem}
+.img-error-box{padding:10px 12px;font-size:.78rem;color:#b91c1c;background:#fef2f2;display:flex;align-items:center;gap:.4rem;border-top:1px solid #fecaca}
+.img-placeholder{height:90px;display:flex;align-items:center;justify-content:center;gap:.6rem;color:var(--muted);font-size:.82rem;padding:10px}
+.img-placeholder i{font-size:22px}
+
+.toolbar{display:flex;gap:.3rem;padding:.5rem;background:var(--bg);border-radius:9px 9px 0 0;border:1.5px solid var(--border);border-bottom:none;flex-wrap:wrap}
+.toolbar-btn{background:#fff;border:.5px solid var(--border);border-radius:6px;padding:5px 9px;cursor:pointer;font-size:.76rem;color:var(--text);transition:.1s}
+.toolbar-btn:hover{background:var(--tag-bg);color:#3730a3;border-color:#c7d2fe}
+.form-group textarea.with-toolbar{border-radius:0 0 10px 10px;border-top:none}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;background:var(--bg);border-radius:10px;padding:.8rem 1rem;border:1px solid var(--border)}
+.toggle-row-label{display:flex;align-items:center;gap:.6rem;font-size:.85rem;font-weight:500}
+.toggle-row-label i{font-size:18px;color:var(--accent)}
+.switch{position:relative;width:42px;height:24px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0}
+.switch-slider{position:absolute;inset:0;background:#ccc;border-radius:24px;cursor:pointer;transition:.2s}
+.switch-slider:before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.switch input:checked+.switch-slider{background:var(--accent)}
+.switch input:checked+.switch-slider:before{transform:translateX(18px)}
+.btn{padding:9px 19px;border-radius:9px;border:none;cursor:pointer;font-size:.86rem;font-weight:600;transition:.15s;display:inline-flex;align-items:center;gap:.4rem}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#c1121f}
+.btn-secondary{background:#fff;color:var(--text);border:1.5px solid var(--border)}
+.btn-secondary:hover{border-color:var(--accent2);color:var(--accent2)}
+.btn-danger{background:#fff0f0;color:#c1121f;border:1.5px solid #fecaca}
+.btn-danger:hover{background:#fee2e2}
+.btn-sm{padding:5px 11px;font-size:.76rem}
+.actions-bar{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;padding-top:.3rem}
+.badge{font-size:.68px;font-weight:600;padding:2px 7px;border-radius:4px;display:inline-block;font-size:.68rem}
+.badge-published{background:#d1fae5;color:#065f46}
+.badge-draft{background:#fef9c3;color:#78350f}
+.badge-breaking{background:#fee2e2;color:#991b1b}
+
+.social-input-row{display:flex;align-items:center;gap:.6rem;margin-bottom:.85rem}
+.social-input-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;font-size:17px}
+.si-fb{background:#1877f2}.si-tw{background:#1a1a2e}.si-ig{background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)}.si-yt{background:red}.si-tt{background:#000}.si-wa{background:#25d366}
+.social-input-label{font-size:.83rem;font-weight:600;color:var(--text);min-width:78px}
+.social-input-row input{flex:1;border:1.5px solid var(--border);border-radius:9px;padding:9px 12px;font-size:.85rem;font-family:inherit;outline:none}
+.social-input-row input:focus{border-color:var(--accent2)}
+
+.insights-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.85rem;margin-bottom:1.25rem}
+.insight-card{background:var(--card);border:.5px solid var(--border);border-radius:12px;padding:1rem}
+.insight-label{font-size:.72rem;color:var(--muted);margin-bottom:.3rem;display:flex;align-items:center;gap:.3rem}
+.insight-label i{font-size:13px}
+.insight-value{font-size:1.5rem;font-weight:700;color:var(--text)}
+.insight-post-item{background:var(--card);border:.5px solid var(--border);border-radius:10px;padding:.75rem;margin-bottom:.6rem;display:flex;align-items:center;gap:.65rem}
+.rank-badge{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:.68rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.insight-thumb{width:40px;height:40px;border-radius:7px;background:linear-gradient(135deg,#1a1a2e,#0f3460);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.insight-thumb img{width:100%;height:100%;object-fit:cover}
+.insight-thumb i{font-size:16px;color:rgba(255,255,255,.3)}
+.insight-post-title{font-size:.8rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+.insight-post-stat{font-size:.72rem;color:var(--muted);display:flex;align-items:center;gap:3px;margin-top:2px}
+.insight-post-stat i{font-size:12px}
+
+.posts-table{width:100%;border-collapse:collapse;font-size:.83rem}
+.posts-table th{text-align:left;padding:.55rem .7rem;font-size:.69rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;border-bottom:.5px solid var(--border)}
+.posts-table td{padding:.6rem .7rem;border-bottom:.5px solid var(--border);vertical-align:middle}
+.posts-table tr:last-child td{border-bottom:none}
+.posts-table tr:hover td{background:var(--bg)}
+.post-title-cell{font-weight:500;display:flex;align-items:center;gap:.5rem;max-width:220px}
+.post-thumb{width:36px;height:36px;border-radius:6px;object-fit:cover;flex-shrink:0}
+.post-thumb-placeholder{width:36px;height:36px;border-radius:6px;background:var(--bg);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;flex-shrink:0}
+.post-card-list{display:none;flex-direction:column;gap:.65rem}
+.post-card-item{background:var(--card);border:.5px solid var(--border);border-radius:10px;padding:1rem;display:flex;gap:.75rem}
+.post-card-item-body{flex:1;min-width:0}
+.post-card-item-title{font-size:.88rem;font-weight:600;color:var(--text);margin-bottom:.25rem}
+.post-card-item-meta{font-size:.74rem;color:var(--muted);margin-bottom:.6rem;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+.post-card-item-actions{display:flex;gap:.4rem;flex-wrap:wrap}
+.post-card-thumb{width:56px;height:56px;border-radius:8px;object-fit:cover;flex-shrink:0;background:var(--bg)}
+
+.toast{position:fixed;bottom:1.25rem;right:1.25rem;background:#1a1a2e;color:#fff;padding:.7rem 1.1rem;border-radius:8px;font-size:.84rem;transform:translateY(80px);opacity:0;transition:.3s;z-index:999;display:flex;align-items:center;gap:.45rem;max-width:calc(100vw - 2.5rem)}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:#065f46}
+.toast.error{background:#991b1b}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:flex-end;justify-content:center}
+.modal{background:#fff;border-radius:14px 14px 0 0;padding:1.75rem 1.5rem 2rem;width:100%;max-height:88vh;overflow-y:auto}
+.modal h3{font-size:1rem;font-weight:700;margin-bottom:1rem;color:var(--primary)}
+.modal-actions{display:flex;gap:.65rem;justify-content:flex-end;margin-top:1.1rem}
+
+.filter-bar{display:flex;gap:.45rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
+.filter-btn{background:#fff;border:.5px solid var(--border);color:var(--muted);padding:5px 11px;border-radius:6px;cursor:pointer;font-size:.78rem;transition:.12s;white-space:nowrap}
+.filter-btn:hover,.filter-btn.active{background:var(--tag-bg);color:#3730a3;border-color:#c7d2fe}
+.search-input{border:.5px solid var(--border);border-radius:6px;padding:6px 11px;font-size:.81rem;outline:none;width:100%;font-family:inherit}
+.search-input:focus{border-color:var(--accent2)}
+
+/* cloud info badge */
+.cloud-info{display:flex;align-items:flex-start;gap:.5rem;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:.65rem .85rem;font-size:.78rem;color:#0369a1;margin-bottom:.5rem}
+.cloud-info i{font-size:16px;flex-shrink:0;margin-top:1px}
+
+@media(max-width:900px){
+  .hero-card.featured{grid-template-columns:1fr}
+  .hero-card.featured .card-img{height:220px}
+  .admin-layout{grid-template-columns:180px 1fr;gap:1rem}
+  .form-row{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  #view-public,#view-admin{padding:.75rem}
+  #view-article{padding:.9rem}
+  .nav-top{padding:0 .9rem;height:48px}
+  .nav-brand-text{font-size:.95rem}
+  .nav-mode-tab{font-size:.72rem;padding:4px 8px}
+  .nav-login-btn,.nav-logout-btn{font-size:.72rem;padding:5px 10px}
+  .nav-user-name{display:none}
+  .nav-cats-inner{padding:0 .9rem}
+  .cat-tab{font-size:.74rem;padding:8px 10px}
+  .hero-grid{grid-template-columns:1fr;gap:.85rem;margin-bottom:1.25rem}
+  .hero-card.featured{grid-column:1;display:block}
+  .hero-card.featured .card-img{height:200px}
+  .hero-card.featured .card-title{font-size:1.05rem}
+  .card-img{height:185px}
+  .card-img-icon{font-size:2.5rem}
+  .card-body{padding:.9rem}
+  .cards-grid{grid-template-columns:1fr;gap:.75rem}
+  .small-card{flex-direction:column}
+  .small-card .card-img{width:100%;height:185px}
+  .small-card .card-body{padding:.9rem}
+  .small-card .card-title{font-size:.9rem}
+  .article-title{font-size:1.3rem}
+  .article-img{height:200px;font-size:2.5rem}
+  .engage-bar{gap:.4rem}
+  .engage-btn{padding:7px 11px;font-size:.78rem}
+  .admin-layout{display:block}
+  .admin-sidebar{display:none}
+  .mobile-admin-nav{display:flex}
+  .admin-section{padding:1rem}
+  .form-row{grid-template-columns:1fr}
+  .insights-grid{grid-template-columns:1fr 1fr}
+  .posts-table{display:none}
+  .post-card-list{display:flex}
+  .login-card{padding:1.75rem 1.25rem}
+  .pub-header h1{font-size:1.15rem}
+  .actions-bar{gap:.4rem}
+  .btn{padding:7px 13px;font-size:.8rem}
+  .insight-post-title{max-width:150px}
+}
+@media(max-width:380px){
+  .nav-brand-text{font-size:.88rem}
+  .nav-mode-tab{font-size:.68rem;padding:4px 7px}
+  .cat-tab{font-size:.7rem;padding:7px 9px}
+  .card-img{height:165px}
+  .article-title{font-size:1.15rem}
+  .btn{padding:6px 10px;font-size:.76rem}
+  .insights-grid{grid-template-columns:1fr}
+}
+</style>
+
+<h2 class="sr-only">Buza Media — full news platform with cloud image URL posting and MySQL-ready design</h2>
+
+<nav>
+  <div class="nav-top">
+    <div class="nav-brand" onclick="goHome()">
+      <div class="nav-brand-mark">B</div>
+      <div class="nav-brand-text">BUZA<span>MEDIA</span></div>
+    </div>
+    <div class="nav-controls" id="nav-controls">
+      <button class="nav-mode-tab active" onclick="switchMode(this,'public')" id="tab-public">Live Site</button>
+      <button class="nav-mode-tab" onclick="goToAdminOrLogin()" id="tab-admin">Admin</button>
+      <button class="nav-login-btn" onclick="goToLoginScreen()"><i class="ti ti-lock" aria-hidden="true"></i> Admin Login</button>
+    </div>
+  </div>
+  <div class="nav-cats">
+    <div class="nav-cats-inner">
+      <button class="cat-tab active" onclick="filterCategory(this,'all')">All Stories</button>
+      <button class="cat-tab" onclick="filterCategory(this,'Politics')">Politics</button>
+      <button class="cat-tab" onclick="filterCategory(this,'Tech')">Tech</button>
+      <button class="cat-tab" onclick="filterCategory(this,'Business')">Business</button>
+      <button class="cat-tab" onclick="filterCategory(this,'Sports')">Sports</button>
+      <button class="cat-tab" onclick="filterCategory(this,'World News')">World News</button>
+      <button class="cat-tab" onclick="filterCategory(this,'Entertainment')">Entertainment</button>
+    </div>
+  </div>
+</nav>
+
+<!-- PUBLIC -->
+<div id="view-public">
+  <div class="pub-header"><h1 id="pub-section-title">Today's top stories</h1><p id="pub-date"></p></div>
+  <div id="featured-area"></div>
+  <div class="section-label"><h2 id="latest-label">Latest updates</h2><div class="section-line"></div></div>
+  <div class="cards-grid" id="latest-grid"></div>
+</div>
+
+<!-- ARTICLE -->
+<div id="view-article" class="hidden">
+  <button class="back-btn" onclick="closeArticle()"><i class="ti ti-arrow-left" aria-hidden="true"></i> Back</button>
+  <div class="article-category" id="art-category"></div>
+  <div class="article-title" id="art-title"></div>
+  <div class="article-meta">
+    <span><i class="ti ti-user" style="font-size:13px;vertical-align:-1px" aria-hidden="true"></i> <span id="art-author"></span></span>
+    <span><i class="ti ti-calendar" style="font-size:13px;vertical-align:-1px" aria-hidden="true"></i> <span id="art-date"></span></span>
+    <span><i class="ti ti-eye" style="font-size:13px;vertical-align:-1px" aria-hidden="true"></i> <span id="art-views"></span> views</span>
+    <span id="art-badge-wrap"></span>
+  </div>
+  <div class="article-img" id="art-img"><i class="ti ti-news" aria-hidden="true"></i></div>
+  <div class="article-body" id="art-body"></div>
+  <div class="engage-bar">
+    <button class="engage-btn" id="like-btn" onclick="toggleLike()"><i class="ti ti-heart" aria-hidden="true"></i> <span id="like-count">0</span> Like</button>
+    <button class="engage-btn" onclick="downloadPostCard()"><i class="ti ti-download" aria-hidden="true"></i> Download</button>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div id="view-login" class="hidden">
+  <div class="login-card">
+    <div class="login-back" onclick="goHome()"><i class="ti ti-arrow-left" aria-hidden="true"></i> Back to site</div>
+    <div class="login-logo">
+      <div class="login-logo-mark">B</div>
+      <div class="login-logo-text">BUZA<span>MEDIA</span></div>
+    </div>
+    <p class="login-subtitle">Sign in to manage and publish stories.</p>
+    <div class="login-error hidden" id="login-error"><i class="ti ti-alert-circle" aria-hidden="true"></i> Invalid email or password.</div>
+    <div class="login-field"><label>Email</label>
+      <div class="login-input-wrap"><i class="ti ti-mail" aria-hidden="true"></i><input type="email" id="login-email" value="admin@buzamedia.com" placeholder="Email"></div>
+    </div>
+    <div class="login-field"><label>Password</label>
+      <div class="login-input-wrap"><i class="ti ti-lock" aria-hidden="true"></i><input type="password" id="login-password" value="buza2026" placeholder="Password"></div>
+    </div>
+    <button class="login-btn" onclick="doLogin()"><i class="ti ti-login-2" aria-hidden="true"></i> Sign in</button>
+    <div class="login-hint">Demo credentials pre-filled.<br>Email <code>admin@buzamedia.com</code> · Password <code>buza2026</code></div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="view-admin" class="hidden">
+  <div class="mobile-admin-nav">
+    <button class="mob-nav-btn active" onclick="adminNav(this,'compose')"><i class="ti ti-pencil-plus" aria-hidden="true"></i> New post</button>
+    <button class="mob-nav-btn" onclick="adminNav(this,'posts')"><i class="ti ti-news" aria-hidden="true"></i> Posts</button>
+    <button class="mob-nav-btn" onclick="adminNav(this,'insights')"><i class="ti ti-chart-pie" aria-hidden="true"></i> Insights</button>
+    <button class="mob-nav-btn" onclick="adminNav(this,'trending')"><i class="ti ti-trending-up" aria-hidden="true"></i> Trending</button>
+    <button class="mob-nav-btn" onclick="adminNav(this,'social')"><i class="ti ti-share" aria-hidden="true"></i> Social</button>
+  </div>
+  <div class="admin-layout">
+    <div class="admin-sidebar">
+      <h3>Buza Media admin</h3>
+      <button class="sidebar-item active" onclick="adminNav(this,'compose')"><i class="ti ti-pencil-plus" aria-hidden="true"></i> New post</button>
+      <button class="sidebar-item" onclick="adminNav(this,'posts')"><i class="ti ti-news" aria-hidden="true"></i> All posts</button>
+      <button class="sidebar-item" onclick="adminNav(this,'insights')"><i class="ti ti-chart-pie" aria-hidden="true"></i> Insights</button>
+      <button class="sidebar-item" onclick="adminNav(this,'trending')"><i class="ti ti-trending-up" aria-hidden="true"></i> Trending</button>
+      <button class="sidebar-item" onclick="adminNav(this,'social')"><i class="ti ti-share" aria-hidden="true"></i> Social links</button>
+      <div class="sidebar-stats">
+        <div class="stat-row">Total posts <strong id="stat-total">0</strong></div>
+        <div class="stat-row">Published <strong id="stat-pub">0</strong></div>
+        <div class="stat-row">Drafts <strong id="stat-draft">0</strong></div>
+        <div class="stat-row">Breaking <strong id="stat-breaking">0</strong></div>
+      </div>
+    </div>
+    <div>
+      <!-- COMPOSE -->
+      <div id="panel-compose">
+        <div class="admin-section">
+          <div class="admin-section-title"><i class="ti ti-pencil-plus" aria-hidden="true"></i> Compose new post</div>
+          <div class="admin-section-sub">Fill in the details below to publish a story to Buza Media.</div>
+
+          <!-- CLOUD IMAGE URL FIELD -->
+          <div class="form-group">
+            <label><i class="ti ti-link" aria-hidden="true"></i> Cover image URL <span style="font-size:.72rem;color:var(--muted);font-weight:400">(from Cloudinary / S3 / any cloud storage)</span></label>
+            <div class="cloud-info">
+              <i class="ti ti-info-circle" aria-hidden="true"></i>
+              Upload your image to Cloudinary, AWS S3, or Google Cloud — then paste the link here. The image must be publicly accessible.
+            </div>
+            <div class="img-url-wrap" id="img-url-wrap-compose">
+              <div class="img-url-input-row">
+                <span class="img-url-icon"><i class="ti ti-photo" aria-hidden="true"></i></span>
+                <input class="img-url-input" type="url" id="p-image-url" placeholder="https://res.cloudinary.com/your-cloud/image/upload/photo.jpg" oninput="previewImg(this,'compose')">
+                <button class="img-url-clear" onclick="clearImgUrl('compose')" title="Clear URL" aria-label="Clear URL"><i class="ti ti-x" aria-hidden="true"></i></button>
+              </div>
+              <div class="img-placeholder"><i class="ti ti-cloud-upload" aria-hidden="true"></i> Paste a cloud storage image URL above to preview it</div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group"><label><i class="ti ti-typography" aria-hidden="true"></i> Headline <span class="req">*</span></label><input type="text" id="p-title" placeholder="Enter headline..."></div>
+            <div class="form-group"><label><i class="ti ti-category" aria-hidden="true"></i> Category</label>
+              <select id="p-category">
+                <option value="Politics">Politics</option><option value="Tech">Tech</option>
+                <option value="Business">Business</option><option value="Sports">Sports</option>
+                <option value="World News">World News</option><option value="Entertainment">Entertainment</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label><i class="ti ti-user-edit" aria-hidden="true"></i> Author / Reporter</label><input type="text" id="p-author" placeholder="Reporter name"></div>
+            <div class="form-group"><label><i class="ti ti-tags" aria-hidden="true"></i> Tags</label><input type="text" id="p-tags" placeholder="economy, budget, reform"><span class="field-hint">Separate with commas</span></div>
+          </div>
+          <div class="form-group"><label><i class="ti ti-align-left" aria-hidden="true"></i> Excerpt</label><input type="text" id="p-excerpt" placeholder="Short preview shown on cards..."></div>
+          <div class="form-group">
+            <label><i class="ti ti-article" aria-hidden="true"></i> Article body</label>
+            <div class="toolbar">
+              <button class="toolbar-btn" onclick="fmtText('**','**')"><b>B</b></button>
+              <button class="toolbar-btn" onclick="fmtText('*','*')"><i>I</i></button>
+              <button class="toolbar-btn" onclick="fmtText('\n\n','')">¶</button>
+              <button class="toolbar-btn" onclick="fmtText('## ','')">H2</button>
+              <button class="toolbar-btn" onclick="fmtText('- ','')">• List</button>
+              <button class="toolbar-btn" onclick="fmtText('"','"')">" "</button>
+            </div>
+            <textarea id="p-body" class="with-toolbar" placeholder="Write the full article here..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:0"><label><i class="ti ti-flag" aria-hidden="true"></i> Status</label><select id="p-status"><option value="published">Published</option><option value="draft">Draft</option></select></div>
+            <div class="form-group" style="margin-bottom:0"><label>&nbsp;</label>
+              <div class="toggle-row"><div class="toggle-row-label"><i class="ti ti-bolt" aria-hidden="true"></i> Breaking news</div><label class="switch"><input type="checkbox" id="p-breaking"><span class="switch-slider"></span></label></div>
+            </div>
+          </div>
+        </div>
+        <div class="actions-bar">
+          <button class="btn btn-primary" onclick="savePost()"><i class="ti ti-send" aria-hidden="true"></i> Publish post</button>
+          <button class="btn btn-secondary" onclick="saveDraft()"><i class="ti ti-device-floppy" aria-hidden="true"></i> Save draft</button>
+          <button class="btn btn-secondary" onclick="clearForm()"><i class="ti ti-x" aria-hidden="true"></i> Clear</button>
+        </div>
+      </div>
+
+      <!-- POSTS -->
+      <div id="panel-posts" class="hidden">
+        <div class="admin-section">
+          <div class="admin-section-title"><i class="ti ti-news" aria-hidden="true"></i> All posts</div>
+          <div class="admin-section-sub">Manage, edit, and publish your stories.</div>
+          <div class="filter-bar"><input type="text" class="search-input" placeholder="Search posts..." oninput="searchPosts(this.value)"></div>
+          <div class="filter-bar" style="margin-top:-.4rem">
+            <button class="filter-btn active" onclick="filterAdmin(this,'all')">All</button>
+            <button class="filter-btn" onclick="filterAdmin(this,'published')">Published</button>
+            <button class="filter-btn" onclick="filterAdmin(this,'draft')">Drafts</button>
+            <button class="filter-btn" onclick="filterAdmin(this,'breaking')">Breaking</button>
+          </div>
+          <table class="posts-table"><thead><tr><th>Post</th><th>Category</th><th>Status</th><th>Stats</th><th>Actions</th></tr></thead><tbody id="posts-tbody"></tbody></table>
+          <div class="post-card-list" id="posts-cards"></div>
+        </div>
+      </div>
+
+      <!-- INSIGHTS -->
+      <div id="panel-insights" class="hidden">
+        <div class="admin-section">
+          <div class="admin-section-title"><i class="ti ti-chart-pie" aria-hidden="true"></i> Insights</div>
+          <div class="admin-section-sub">Overview of your content performance.</div>
+          <div class="insights-grid">
+            <div class="insight-card"><div class="insight-label"><i class="ti ti-news" aria-hidden="true"></i> Total posts</div><div class="insight-value" id="ins-total">0</div></div>
+            <div class="insight-card"><div class="insight-label"><i class="ti ti-send" aria-hidden="true"></i> Published</div><div class="insight-value" id="ins-pub">0</div></div>
+            <div class="insight-card"><div class="insight-label"><i class="ti ti-eye" aria-hidden="true"></i> Total views</div><div class="insight-value" id="ins-views">0</div></div>
+            <div class="insight-card"><div class="insight-label"><i class="ti ti-heart" aria-hidden="true"></i> Total likes</div><div class="insight-value" id="ins-likes">0</div></div>
+          </div>
+          <div class="section-label" style="margin-bottom:.6rem"><h2 style="font-size:.88rem">Most viewed</h2></div>
+          <div id="ins-viewed"></div>
+          <div class="section-label" style="margin:.75rem 0 .6rem"><h2 style="font-size:.88rem">Most liked</h2></div>
+          <div id="ins-liked"></div>
+        </div>
+      </div>
+
+      <!-- TRENDING -->
+      <div id="panel-trending" class="hidden">
+        <div class="admin-section">
+          <div class="admin-section-title"><i class="ti ti-trending-up" aria-hidden="true"></i> Manage trending</div>
+          <div class="admin-section-sub">Toggle posts to appear as trending on the public site.</div>
+          <div id="trending-list"></div>
+        </div>
+      </div>
+
+      <!-- SOCIAL -->
+      <div id="panel-social" class="hidden">
+        <div class="admin-section">
+          <div class="admin-section-title"><i class="ti ti-share" aria-hidden="true"></i> Social media links</div>
+          <div class="admin-section-sub">These links are saved in the database site_settings table and shown wherever your hosted site uses them.</div>
+          <div class="social-input-row"><div class="social-input-icon si-fb"><i class="ti ti-brand-facebook" aria-hidden="true"></i></div><span class="social-input-label">Facebook</span><input type="text" id="soc-fb" placeholder="https://facebook.com/buzamedia"></div>
+          <div class="social-input-row"><div class="social-input-icon si-tw"><i class="ti ti-brand-x" aria-hidden="true"></i></div><span class="social-input-label">X / Twitter</span><input type="text" id="soc-tw" placeholder="https://x.com/buzamedia"></div>
+          <div class="social-input-row"><div class="social-input-icon si-ig"><i class="ti ti-brand-instagram" aria-hidden="true"></i></div><span class="social-input-label">Instagram</span><input type="text" id="soc-ig" placeholder="https://instagram.com/buzamedia"></div>
+          <div class="social-input-row"><div class="social-input-icon si-yt"><i class="ti ti-brand-youtube" aria-hidden="true"></i></div><span class="social-input-label">YouTube</span><input type="text" id="soc-yt" placeholder="https://youtube.com/@buzamedia"></div>
+          <div class="social-input-row"><div class="social-input-icon si-tt"><i class="ti ti-brand-tiktok" aria-hidden="true"></i></div><span class="social-input-label">TikTok</span><input type="text" id="soc-tt" placeholder="https://tiktok.com/@buzamedia"></div>
+          <div class="social-input-row"><div class="social-input-icon si-wa"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i></div><span class="social-input-label">WhatsApp</span><input type="text" id="soc-wa" placeholder="https://wa.me/255700000000"></div>
+          <div class="actions-bar"><button class="btn btn-primary" onclick="saveSocial()"><i class="ti ti-check" aria-hidden="true"></i> Save links</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay hidden" id="modal-overlay">
+  <div class="modal">
+    <h3>Edit post</h3>
+    <div class="form-group">
+      <label><i class="ti ti-link" aria-hidden="true"></i> Cover image URL</label>
+      <div class="img-url-wrap" id="img-url-wrap-edit">
+        <div class="img-url-input-row">
+          <span class="img-url-icon"><i class="ti ti-photo" aria-hidden="true"></i></span>
+          <input class="img-url-input" type="url" id="m-image-url" placeholder="https://res.cloudinary.com/..." oninput="previewImg(this,'edit')">
+          <button class="img-url-clear" onclick="clearImgUrl('edit')" aria-label="Clear URL"><i class="ti ti-x" aria-hidden="true"></i></button>
+        </div>
+        <div class="img-placeholder"><i class="ti ti-cloud-upload" aria-hidden="true"></i> Paste cloud image URL to preview</div>
+      </div>
+    </div>
+    <div class="form-group"><label>Headline</label><input type="text" id="m-title"></div>
+    <div class="form-group"><label>Category</label>
+      <select id="m-category"><option value="Politics">Politics</option><option value="Tech">Tech</option><option value="Business">Business</option><option value="Sports">Sports</option><option value="World News">World News</option><option value="Entertainment">Entertainment</option></select>
+    </div>
+    <div class="form-group"><label>Excerpt</label><input type="text" id="m-excerpt"></div>
+    <div class="form-group"><label>Status</label><select id="m-status"><option value="published">Published</option><option value="draft">Draft</option></select></div>
+    <div class="form-group"><label>Body</label><textarea id="m-body" style="min-height:150px"></textarea></div>
+    <div class="toggle-row" style="margin-bottom:1rem"><div class="toggle-row-label"><i class="ti ti-bolt" aria-hidden="true"></i> Breaking news</div><label class="switch"><input type="checkbox" id="m-breaking"><span class="switch-slider"></span></label></div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveEdit()"><i class="ti ti-check" aria-hidden="true"></i> Save</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DB='bm_v9',LK='bm_lk',VW='bm_vw',VI='bm_vis',SC='bm_soc';
+const ICONS={Politics:'ti-building-bank',Tech:'ti-cpu',Business:'ti-chart-bar',Sports:'ti-ball-football','World News':'ti-world',Entertainment:'ti-stars'};
+let posts=[],likes={},views={},social={},editId=null,currentCat='all',asearch='',afilt='all',isLoggedIn=false,currentArticleId=null;
+
+function visId(){let v=localStorage.getItem(VI);if(!v){v='v'+Date.now().toString(36)+Math.random().toString(36).slice(2);localStorage.setItem(VI,v);}return v;}
+function load(){
+  try{posts=JSON.parse(localStorage.getItem(DB)||'[]');}catch(e){posts=[];}
+  try{likes=JSON.parse(localStorage.getItem(LK)||'{}');}catch(e){likes={};}
+  try{views=JSON.parse(localStorage.getItem(VW)||'{}');}catch(e){views={};}
+  try{social=JSON.parse(localStorage.getItem(SC)||'{}');}catch(e){social={};}
+  if(!posts.length)seed();
+}
+function saveDB(){localStorage.setItem(DB,JSON.stringify(posts));}
+function saveLikes(){localStorage.setItem(LK,JSON.stringify(likes));}
+function saveViews(){localStorage.setItem(VW,JSON.stringify(views));}
+function saveSocStore(){localStorage.setItem(SC,JSON.stringify(social));}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+function fmtS(iso){return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+function fmtF(iso){return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+function icon(cat){return ICONS[cat]||'ti-news';}
+function getLikes(id){return(likes[id]||[]).length;}
+function getViews(id){return views[id]||0;}
+function iLiked(id){return(likes[id]||[]).includes(visId());}
+
+function seed(){
+  const b=Date.now();
+  const sample=[
+    ['Parliament passes historic budget reform bill','Politics','Sarah Chen','Lawmakers approved sweeping fiscal changes reshaping the national budget framework.','In a landmark vote, parliament approved a sweeping budget reform bill.\n\nKey provisions include a new independent oversight body and mandatory public spending disclosures.\n\nOpposition leaders vowed to monitor implementation closely.','https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=1200',true,true,3600000],
+    ['New AI chip breaks speed records in benchmarks','Tech','James Okafor','A next-generation processor outperformed all existing benchmarks in AI compute efficiency.','A new AI processing chip has shattered existing benchmark records.\n\nThe chip delivers 4.2 times the throughput of its predecessor while consuming 30% less power.\n\nCloud providers announced plans to integrate the new hardware this quarter.','https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200',false,true,7200000],
+    ['Markets surge as central bank signals rate pause','Business','Maria Lopez','Stock indices climbed sharply after the central bank signalled it would hold rates steady.','Financial markets rallied after the central bank governor signalled that interest rates would remain unchanged.\n\nThe S&P 500 rose 2.1%, bond yields fell, and the currency strengthened against major peers.',  'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1200',false,false,10800000],
+    ['National team advances to championship finals','Sports','David Abudu','A stunning comeback secured a place in the championship series for the first time in two decades.','The national team delivered one of the most dramatic performances in recent memory, overcoming a 12-point deficit.\n\nCapacity crowds erupted as the final buzzer sounded.','https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=1200',false,false,14400000],
+    ['UN summit calls for accelerated climate finance','World News','Emma Richter','World leaders agreed to a new multilateral fund targeting climate adaptation in vulnerable nations.','Delegates from 138 countries committed to a new multilateral fund helping developing nations adapt to climate change.\n\nThe fund is valued at an estimated $180 billion over five years.','https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1200',false,false,18000000],
+    ['Box office record broken as sequel tops opening weekend','Entertainment','Priya Nair','The long-awaited follow-up surpassed all projections, setting a new franchise opening-weekend record.','The highly anticipated sequel dominated the global box office, shattering franchise records.\n\nAudiences gave the film strong marks in early exit polls, praising the performances and production design.','https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1200',false,true,21600000],
+  ];
+  posts=sample.map(([title,category,author,excerpt,body,photo,breaking,trending,ago])=>{
+    const id=uid();
+    views[id]=Math.floor(Math.random()*800+80);
+    likes[id]=[];
+    return {id,title,category,author,excerpt,body,photo,tags:[],status:'published',breaking,trending,date:new Date(b-ago).toISOString()};
+  });
+  saveDB();saveViews();saveLikes();
+}
+
+/* ── IMAGE URL PREVIEW ── */
+function previewImg(input,ctx){
+  const url=input.value.trim();
+  const wrap=document.getElementById('img-url-wrap-'+ctx);
+  const existing=wrap.querySelector('.img-preview-box,.img-error-box,.img-placeholder');
+  if(existing)existing.remove();
+  if(!url){
+    const ph=document.createElement('div');ph.className='img-placeholder';
+    ph.innerHTML='<i class="ti ti-cloud-upload" aria-hidden="true"></i> Paste a cloud storage image URL above to preview it';
+    wrap.appendChild(ph);return;
+  }
+  const img=new Image();
+  img.onload=()=>{
+    const box=document.createElement('div');box.className='img-preview-box';
+    const im=document.createElement('img');im.src=url;im.alt='Cover preview';box.appendChild(im);
+    const ov=document.createElement('div');ov.className='img-overlay';
+    ov.innerHTML='<i class="ti ti-check-circle" aria-hidden="true"></i> Image loaded successfully from cloud storage';
+    box.appendChild(ov);wrap.appendChild(box);
+  };
+  img.onerror=()=>{
+    const err=document.createElement('div');err.className='img-error-box';
+    err.innerHTML='<i class="ti ti-alert-circle" aria-hidden="true"></i> Cannot load this URL — check the link is correct and publicly accessible.';
+    wrap.appendChild(err);
+  };
+  img.src=url;
+}
+function clearImgUrl(ctx){
+  const input=document.getElementById(ctx==='compose'?'p-image-url':'m-image-url');
+  input.value='';previewImg(input,ctx);
+}
+
+function imgHtml(p){return p.photo?`<img src="${p.photo}" alt="">`:`<i class="ti ${icon(p.category)} card-img-icon" aria-hidden="true"></i>`;}
+
+function renderPublic(){
+  const pub=posts.filter(p=>p.status==='published'&&(currentCat==='all'||p.category===currentCat));
+  const featured=pub[0],rest=pub.slice(1);
+  const fa=document.getElementById('featured-area'),lg=document.getElementById('latest-grid');
+  document.getElementById('latest-label').textContent=currentCat==='all'?'Latest updates':currentCat+' — Latest';
+  if(!featured){fa.innerHTML='';lg.innerHTML=`<div class="empty-state"><i class="ti ti-news" style="font-size:2.5rem;display:block;margin-bottom:.5rem;opacity:.35" aria-hidden="true"></i><p style="color:var(--muted)">No stories yet.</p></div>`;return;}
+  fa.innerHTML=`<div class="hero-grid"><div class="hero-card featured" onclick="openArticle('${featured.id}')">
+    <div class="card-img">${imgHtml(featured)}<span class="card-img-label">${featured.category}</span>${featured.breaking?'<span class="breaking-badge" style="position:absolute;top:10px;right:10px">Breaking</span>':''}
+    </div>
+    <div class="card-body"><div class="card-category">${featured.category}</div><div class="card-title">${featured.title}</div>
+    <div class="card-excerpt">${featured.excerpt||''}</div>
+    <div class="card-meta"><span>By ${featured.author||'Staff'}</span>·<span>${fmtS(featured.date)}</span><span><i class="ti ti-eye" style="font-size:12px;vertical-align:-1px" aria-hidden="true"></i> ${getViews(featured.id).toLocaleString()}</span>${featured.trending?'<span class="card-tag">Trending</span>':''}</div>
+    </div></div></div>`;
+  lg.innerHTML=rest.map(p=>`<div class="small-card" onclick="openArticle('${p.id}')">
+    <div class="card-img">${imgHtml(p)}<span class="card-img-label">${p.category}</span>${p.breaking?'<span class="breaking-badge" style="position:absolute;top:6px;right:6px;font-size:.58rem">Breaking</span>':''}
+    </div>
+    <div class="card-body"><div class="card-category">${p.category}</div><div class="card-title">${p.title}</div>
+    <div class="card-excerpt" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${p.excerpt||''}</div>
+    <div class="card-meta"><span>${p.author||'Staff'}</span>·<span>${fmtS(p.date)}</span><span><i class="ti ti-eye" style="font-size:12px;vertical-align:-1px" aria-hidden="true"></i> ${getViews(p.id).toLocaleString()}</span>${p.trending?'<span class="card-tag">Trending</span>':''}</div>
+    </div></div>`).join('');
+}
+
+function filterCategory(btn,cat){
+  document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');currentCat=cat;
+  document.getElementById('pub-section-title').textContent=cat==='all'?"Today's top stories":cat;
+  renderPublic();
+}
+
+function openArticle(id){
+  const p=posts.find(x=>x.id===id);if(!p)return;
+  currentArticleId=id;if(!views[id])views[id]=0;views[id]++;saveViews();
+  document.getElementById('art-category').textContent=p.category;
+  document.getElementById('art-title').textContent=p.title;
+  document.getElementById('art-author').textContent=p.author||'Staff';
+  document.getElementById('art-date').textContent=fmtF(p.date);
+  document.getElementById('art-views').textContent=views[id].toLocaleString();
+  document.getElementById('art-badge-wrap').innerHTML=p.breaking?'<span class="breaking-badge">Breaking</span>':'';
+  document.getElementById('art-img').innerHTML=p.photo?`<img src="${p.photo}" alt="">`:'<i class="ti ti-news" aria-hidden="true"></i>';
+  document.getElementById('art-body').innerHTML=(p.body||'').split('\n\n').filter(Boolean).map(t=>`<p>${t.replace(/\n/g,'<br>')}</p>`).join('');
+  updateLikeBtn();
+  ['view-public','view-login','view-admin'].forEach(v=>document.getElementById(v).classList.add('hidden'));
+  document.getElementById('view-article').classList.remove('hidden');window.scrollTo(0,0);
+}
+function closeArticle(){document.getElementById('view-article').classList.add('hidden');document.getElementById('view-public').classList.remove('hidden');renderPublic();}
+function goHome(){['view-login','view-admin','view-article'].forEach(v=>document.getElementById(v).classList.add('hidden'));document.getElementById('view-public').classList.remove('hidden');if(isLoggedIn){document.querySelectorAll('.nav-mode-tab').forEach(t=>t.classList.remove('active'));document.getElementById('tab-public').classList.add('active');}window.scrollTo(0,0);}
+function goToLoginScreen(){if(isLoggedIn)return;['view-public','view-article','view-admin'].forEach(v=>document.getElementById(v).classList.add('hidden'));document.getElementById('view-login').classList.remove('hidden');document.getElementById('login-error').classList.add('hidden');window.scrollTo(0,0);}
+function goToAdminOrLogin(){if(isLoggedIn){switchMode(document.getElementById('tab-admin'),'admin');}else{goToLoginScreen();}}
+function doLogin(){const e=document.getElementById('login-email').value.trim(),pw=document.getElementById('login-password').value.trim();if(e==='admin@buzamedia.com'&&pw==='buza2026'){isLoggedIn=true;document.getElementById('login-error').classList.add('hidden');renderNavLoggedIn();switchMode(document.getElementById('tab-admin'),'admin');showToast('Welcome back!','success');}else{document.getElementById('login-error').classList.remove('hidden');}}
+function doLogout(){isLoggedIn=false;renderNavLoggedOut();goHome();showToast('Signed out.','success');}
+function renderNavLoggedIn(){document.getElementById('nav-controls').innerHTML=`<button class="nav-mode-tab active" onclick="switchMode(this,'public')" id="tab-public">Live Site</button><button class="nav-mode-tab" onclick="switchMode(this,'admin')" id="tab-admin">Admin</button><div class="nav-user"><div class="nav-user-avatar">AD</div><span class="nav-user-name">Admin</span></div><button class="nav-logout-btn" onclick="doLogout()"><i class="ti ti-logout-2" aria-hidden="true"></i> Log out</button>`;}
+function renderNavLoggedOut(){document.getElementById('nav-controls').innerHTML=`<button class="nav-mode-tab active" onclick="switchMode(this,'public')" id="tab-public">Live Site</button><button class="nav-mode-tab" onclick="goToAdminOrLogin()" id="tab-admin">Admin</button><button class="nav-login-btn" onclick="goToLoginScreen()"><i class="ti ti-lock" aria-hidden="true"></i> Admin Login</button>`;}
+function switchMode(btn,mode){document.querySelectorAll('.nav-mode-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');document.getElementById('view-public').classList.toggle('hidden',mode!=='public');document.getElementById('view-admin').classList.toggle('hidden',mode!=='admin');['view-login','view-article'].forEach(v=>document.getElementById(v).classList.add('hidden'));if(mode==='admin'){updateStats();renderPostsTable();renderInsights();renderTrending();}window.scrollTo(0,0);}
+
+function updateLikeBtn(){const liked=iLiked(currentArticleId);const btn=document.getElementById('like-btn');btn.classList.toggle('liked',liked);btn.innerHTML=`<i class="ti ti-heart" aria-hidden="true"></i> <span id="like-count">${getLikes(currentArticleId).toLocaleString()}</span> ${liked?'Liked':'Like'}`;}
+function toggleLike(){if(!likes[currentArticleId])likes[currentArticleId]=[];const vid=visId();const idx=likes[currentArticleId].indexOf(vid);if(idx>-1)likes[currentArticleId].splice(idx,1);else likes[currentArticleId].push(vid);saveLikes();updateLikeBtn();}
+
+function fmtText(pre,suf){const ta=document.getElementById('p-body');const s=ta.selectionStart,e=ta.selectionEnd,sel=ta.value.substring(s,e);ta.value=ta.value.substring(0,s)+pre+sel+suf+ta.value.substring(e);ta.focus();ta.selectionStart=s+pre.length;ta.selectionEnd=s+pre.length+sel.length;}
+
+function savePost(st=null){
+  const t=document.getElementById('p-title').value.trim();if(!t){showToast('Headline required.','error');return;}
+  const status=st||document.getElementById('p-status').value;
+  const p={id:uid(),title:t,category:document.getElementById('p-category').value,author:document.getElementById('p-author').value.trim()||'Staff',excerpt:document.getElementById('p-excerpt').value.trim(),body:document.getElementById('p-body').value.trim(),tags:document.getElementById('p-tags').value.split(',').map(s=>s.trim()).filter(Boolean),status,breaking:document.getElementById('p-breaking').checked,trending:false,photo:document.getElementById('p-image-url').value.trim()||null,date:new Date().toISOString()};
+  posts.unshift(p);views[p.id]=0;likes[p.id]=[];saveDB();saveViews();saveLikes();clearForm();renderPublic();showToast(status==='published'?'Post published!':'Draft saved.','success');
+}
+function saveDraft(){savePost('draft');}
+function clearForm(){
+  ['p-title','p-author','p-tags','p-excerpt','p-body'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('p-category').selectedIndex=0;document.getElementById('p-status').value='published';document.getElementById('p-breaking').checked=false;
+  clearImgUrl('compose');
+}
+
+function updateStats(){const pub=posts.filter(p=>p.status==='published').length;document.getElementById('stat-total').textContent=posts.length;document.getElementById('stat-pub').textContent=pub;document.getElementById('stat-draft').textContent=posts.filter(p=>p.status==='draft').length;document.getElementById('stat-breaking').textContent=posts.filter(p=>p.breaking).length;}
+
+function adminNav(btn,panel){
+  document.querySelectorAll('.sidebar-item,.mob-nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll(`[onclick*="adminNav"][onclick*="'${panel}'"]`).forEach(b=>b.classList.add('active'));
+  ['compose','posts','insights','trending','social'].forEach(p=>document.getElementById('panel-'+p).classList.toggle('hidden',p!==panel));
+  if(panel==='posts')renderPostsTable();if(panel==='insights')renderInsights();if(panel==='trending')renderTrending();if(panel==='social')loadSocialFields();
+}
+
+function filterAdmin(btn,f){afilt=f;document.querySelectorAll('#panel-posts .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderPostsTable();}
+function searchPosts(v){asearch=v;renderPostsTable();}
+function getFiltered(){let f=posts.filter(p=>{if(afilt==='published')return p.status==='published';if(afilt==='draft')return p.status==='draft';if(afilt==='breaking')return p.breaking;return true;});if(asearch){const q=asearch.toLowerCase();f=f.filter(p=>p.title.toLowerCase().includes(q)||(p.author||'').toLowerCase().includes(q)||p.category.toLowerCase().includes(q));}return f;}
+
+function renderPostsTable(){
+  const f=getFiltered();
+  const thumbHtml=p=>p.photo?`<img class="post-thumb" src="${p.photo}" alt="">`:`<div class="post-thumb-placeholder"><i class="ti ${icon(p.category)}" aria-hidden="true"></i></div>`;
+  document.getElementById('posts-tbody').innerHTML=f.length===0?`<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--muted)">No posts found.</td></tr>`:f.map(p=>`<tr><td class="post-title-cell">${thumbHtml(p)}<div><div style="max-width:160px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${p.title}</div><p style="font-size:.72rem;color:var(--muted)">${p.author||'Staff'}</p></div></td><td><span class="card-tag">${p.category}</span></td><td><span class="badge badge-${p.status}">${p.status}</span>${p.breaking?'<span class="badge badge-breaking" style="margin-left:3px">Brk</span>':''}</td><td style="font-size:.72rem;color:var(--muted)"><span title="views" style="display:inline-flex;align-items:center;gap:3px"><i class="ti ti-eye" style="font-size:12px" aria-hidden="true"></i>${getViews(p.id)}</span> <span title="likes" style="display:inline-flex;align-items:center;gap:3px"><i class="ti ti-heart" style="font-size:12px" aria-hidden="true"></i>${getLikes(p.id)}</span></td><td><div style="display:flex;gap:.3rem"><button class="btn btn-sm btn-secondary" onclick="openEdit('${p.id}')"><i class="ti ti-edit" aria-hidden="true"></i></button><button class="btn btn-sm btn-secondary" style="font-size:.7rem" onclick="toggleStatus('${p.id}')">${p.status==='published'?'Unpub':'Pub'}</button><button class="btn btn-sm btn-danger" onclick="deletePost('${p.id}')"><i class="ti ti-trash" aria-hidden="true"></i></button></div></td></tr>`).join('');
+  document.getElementById('posts-cards').innerHTML=f.length===0?`<p style="text-align:center;padding:2rem;color:var(--muted)">No posts found.</p>`:f.map(p=>`<div class="post-card-item">${p.photo?`<img class="post-card-thumb" src="${p.photo}" alt="">`:`<div style="width:56px;height:56px;border-radius:8px;background:var(--bg);display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0"><i class="ti ${icon(p.category)}" style="font-size:20px" aria-hidden="true"></i></div>`}<div class="post-card-item-body"><div class="post-card-item-title">${p.title}</div><div class="post-card-item-meta"><span class="badge badge-${p.status}">${p.status}</span>${p.breaking?'<span class="badge badge-breaking">Breaking</span>':''}<span class="card-tag">${p.category}</span><span style="display:flex;align-items:center;gap:3px"><i class="ti ti-eye" style="font-size:12px" aria-hidden="true"></i>${getViews(p.id)}</span><span style="display:flex;align-items:center;gap:3px"><i class="ti ti-heart" style="font-size:12px" aria-hidden="true"></i>${getLikes(p.id)}</span></div><div class="post-card-item-actions"><button class="btn btn-sm btn-secondary" onclick="openEdit('${p.id}')"><i class="ti ti-edit" aria-hidden="true"></i> Edit</button><button class="btn btn-sm btn-secondary" onclick="toggleStatus('${p.id}')">${p.status==='published'?'Unpublish':'Publish'}</button><button class="btn btn-sm btn-danger" onclick="deletePost('${p.id}')"><i class="ti ti-trash" aria-hidden="true"></i></button></div></div></div>`).join('');
+}
+
+function renderInsights(){
+  const pub=posts.filter(p=>p.status==='published');
+  document.getElementById('ins-total').textContent=posts.length;document.getElementById('ins-pub').textContent=pub.length;
+  document.getElementById('ins-views').textContent=posts.reduce((s,p)=>s+getViews(p.id),0).toLocaleString();
+  document.getElementById('ins-likes').textContent=posts.reduce((s,p)=>s+getLikes(p.id),0).toLocaleString();
+  const byViews=[...pub].sort((a,b)=>getViews(b.id)-getViews(a.id)).slice(0,5);
+  const byLikes=[...pub].sort((a,b)=>getLikes(b.id)-getLikes(a.id)).slice(0,5);
+  const iItem=(p,i,type)=>`<div class="insight-post-item"><div class="rank-badge">${i+1}</div><div class="insight-thumb">${p.photo?`<img src="${p.photo}" alt="">`:`<i class="ti ${icon(p.category)}" aria-hidden="true"></i>`}</div><div><div class="insight-post-title">${p.title}</div><div class="insight-post-stat"><i class="ti ${type==='views'?'ti-eye':'ti-heart'}" aria-hidden="true"></i>${type==='views'?getViews(p.id).toLocaleString()+' views':getLikes(p.id).toLocaleString()+' likes'} · ${p.category}</div></div></div>`;
+  document.getElementById('ins-viewed').innerHTML=byViews.map((p,i)=>iItem(p,i,'views')).join('');
+  document.getElementById('ins-liked').innerHTML=byLikes.map((p,i)=>iItem(p,i,'likes')).join('');
+}
+
+function renderTrending(){
+  const pub=posts.filter(p=>p.status==='published');
+  document.getElementById('trending-list').innerHTML=pub.length===0?'<p style="color:var(--muted);font-size:.83rem">No published posts.</p>':pub.map(p=>`<div style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.65rem .75rem;border-radius:8px;border:.5px solid var(--border);margin-bottom:.5rem;background:${p.trending?'var(--tag-bg)':'#fff'}"><div style="min-width:0;display:flex;align-items:center;gap:.6rem"><div style="width:38px;height:38px;border-radius:6px;background:linear-gradient(135deg,#1a1a2e,#0f3460);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center">${p.photo?`<img src="${p.photo}" alt="" style="width:100%;height:100%;object-fit:cover">`:`<i class="ti ${icon(p.category)}" style="font-size:15px;color:rgba(255,255,255,.3)" aria-hidden="true"></i>`}</div><div><div style="font-size:.84rem;font-weight:500;color:var(--text);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:200px">${p.title}</div><div style="font-size:.72rem;color:var(--muted)">${p.category} · ${fmtS(p.date)}</div></div></div><button class="btn btn-sm ${p.trending?'btn-primary':'btn-secondary'}" style="flex-shrink:0" onclick="toggleTrend('${p.id}')"><i class="ti ti-trending-up" aria-hidden="true"></i> ${p.trending?'Remove':'Add'}</button></div>`).join('');
+}
+
+function toggleTrend(id){const p=posts.find(x=>x.id===id);if(!p)return;p.trending=!p.trending;saveDB();renderTrending();renderPublic();showToast(p.trending?'Added to trending!':'Removed.','success');}
+function toggleStatus(id){const p=posts.find(x=>x.id===id);if(!p)return;p.status=p.status==='published'?'draft':'published';saveDB();renderPostsTable();updateStats();renderPublic();showToast('Status updated.','success');}
+function deletePost(id){if(!confirm('Delete this post permanently?'))return;posts=posts.filter(p=>p.id!==id);saveDB();renderPostsTable();updateStats();renderPublic();showToast('Post deleted.','success');}
+
+function openEdit(id){
+  const p=posts.find(x=>x.id===id);if(!p)return;editId=id;
+  document.getElementById('m-title').value=p.title;document.getElementById('m-excerpt').value=p.excerpt||'';document.getElementById('m-body').value=p.body||'';document.getElementById('m-status').value=p.status;document.getElementById('m-breaking').checked=!!p.breaking;document.getElementById('m-category').value=p.category;
+  const urlInput=document.getElementById('m-image-url');urlInput.value=p.photo||'';
+  const wrap=document.getElementById('img-url-wrap-edit');
+  const existing=wrap.querySelector('.img-preview-box,.img-error-box,.img-placeholder');if(existing)existing.remove();
+  if(p.photo){const box=document.createElement('div');box.className='img-preview-box';const im=document.createElement('img');im.src=p.photo;im.alt='Cover preview';box.appendChild(im);const ov=document.createElement('div');ov.className='img-overlay';ov.innerHTML='<i class="ti ti-check-circle" aria-hidden="true"></i> Current cover image';box.appendChild(ov);wrap.appendChild(box);}
+  else{const ph=document.createElement('div');ph.className='img-placeholder';ph.innerHTML='<i class="ti ti-cloud-upload" aria-hidden="true"></i> Paste cloud image URL to preview';wrap.appendChild(ph);}
+  document.getElementById('modal-overlay').classList.remove('hidden');
+}
+function closeModal(){document.getElementById('modal-overlay').classList.add('hidden');editId=null;}
+function saveEdit(){
+  const p=posts.find(x=>x.id===editId);if(!p)return;
+  p.title=document.getElementById('m-title').value;p.excerpt=document.getElementById('m-excerpt').value;p.body=document.getElementById('m-body').value;p.status=document.getElementById('m-status').value;p.breaking=document.getElementById('m-breaking').checked;p.category=document.getElementById('m-category').value;p.photo=document.getElementById('m-image-url').value.trim()||null;
+  saveDB();closeModal();renderPostsTable();updateStats();renderPublic();showToast('Post updated.','success');
+}
+
+function loadSocialFields(){['fb','tw','ig','yt','tt','wa'].forEach(k=>{const el=document.getElementById('soc-'+k);if(el)el.value=social[k]||'';});}
+function saveSocial(){['fb','tw','ig','yt','tt','wa'].forEach(k=>{const el=document.getElementById('soc-'+k);if(el)social[k]=el.value.trim();});saveSocStore();showToast('Social links saved.','success');}
+
+function wrapText(ctx,text,x,y,mw,lh,ml){const words=text.split(' ');let line='',lines=[];for(let n=0;n<words.length;n++){const tl=line+words[n]+' ';if(ctx.measureText(tl).width>mw&&n>0){lines.push(line.trim());line=words[n]+' ';}else{line=tl;}}lines.push(line.trim());if(ml&&lines.length>ml){lines=lines.slice(0,ml);let last=lines[ml-1];while(ctx.measureText(last+'…').width>mw&&last.length>0)last=last.slice(0,-1);lines[ml-1]=last+'…';}lines.forEach((l,i)=>ctx.fillText(l,x,y+i*lh));return lines.length;}
+function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function downloadPostCard(){
+  const p=posts.find(x=>x.id===currentArticleId);if(!p)return;
+  const W=1080,H=1350,canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');const iH=620;
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+  function draw(){
+    const g=ctx.createLinearGradient(0,iH-200,0,iH);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.55)');ctx.fillStyle=g;ctx.fillRect(0,iH-200,W,200);
+    ctx.font='700 28px Arial';const cw=ctx.measureText(p.category.toUpperCase()).width;ctx.fillStyle='#e63946';rr(ctx,48,iH-78,cw+44,46,8);ctx.fill();ctx.fillStyle='#fff';ctx.fillText(p.category.toUpperCase(),70,iH-46);
+    if(p.breaking){ctx.font='700 24px Arial';const bw=ctx.measureText('BREAKING').width;ctx.fillStyle='#e63946';rr(ctx,W-bw-90,iH-78,bw+42,46,8);ctx.fill();ctx.fillStyle='#fff';ctx.fillText('BREAKING',W-bw-69,iH-46);}
+    ctx.fillStyle='#1a1a2e';ctx.font='700 26px Arial';ctx.fillText('BUZA MEDIA',48,70);ctx.fillStyle='#e63946';ctx.fillRect(218,52,3,22);
+    ctx.fillStyle='#1a1a1e';ctx.font='700 52px Arial';const tl=wrapText(ctx,p.title,48,iH+90,W-96,62,4);
+    if(p.excerpt){ctx.fillStyle='#6c757d';ctx.font='400 30px Arial';wrapText(ctx,p.excerpt,48,iH+90+tl*62+28,W-96,42,3);}
+    const my=H-90;ctx.strokeStyle='#e0e0e0';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(48,my-40);ctx.lineTo(W-48,my-40);ctx.stroke();
+    ctx.fillStyle='#1a1a1e';ctx.font='600 28px Arial';ctx.fillText('By '+(p.author||'Staff'),48,my);ctx.fillStyle='#6c757d';ctx.font='400 26px Arial';ctx.fillText(fmtS(p.date),48,my+38);
+    ctx.fillStyle='#e63946';ctx.font='600 26px Arial';const tag='buzamedia.com';const tw=ctx.measureText(tag).width;ctx.fillText(tag,W-48-tw,my+18);
+    canvas.toBlob(blob=>{const a=document.createElement('a');a.download=`buza-media-${(p.title||'post').toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,40)}.png`;a.href=URL.createObjectURL(blob);document.body.appendChild(a);a.click();document.body.removeChild(a);showToast('Downloaded!','success');},'image/png');
+  }
+  if(p.photo){const img=new Image();img.crossOrigin='anonymous';img.onload=()=>{const sc=Math.max(W/img.width,iH/img.height);ctx.drawImage(img,(img.width-W/sc)/2,(img.height-iH/sc)/2,W/sc,iH/sc,0,0,W,iH);draw();};img.onerror=()=>{const gr=ctx.createLinearGradient(0,0,W,iH);gr.addColorStop(0,'#1a1a2e');gr.addColorStop(1,'#0f3460');ctx.fillStyle=gr;ctx.fillRect(0,0,W,iH);draw();};img.src=p.photo;}
+  else{const gr=ctx.createLinearGradient(0,0,W,iH);gr.addColorStop(0,'#1a1a2e');gr.addColorStop(1,'#0f3460');ctx.fillStyle=gr;ctx.fillRect(0,0,W,iH);draw();}
+}
+
+function showToast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type+' show';setTimeout(()=>t.classList.remove('show'),3000);}
+document.getElementById('modal-overlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
+document.getElementById('pub-date').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+load();renderPublic();updateStats();
+</script>
