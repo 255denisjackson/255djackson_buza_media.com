@@ -1,0 +1,2194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buza Media</title>
+<link rel="icon" class="brand" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ-VEGp5-p5kvixOHe0YYJI3i-ax0Fe1Pd36-7mycylVQ&s=10">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<style>
+  .brand{
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--primary:#1a1a2e;--accent:#2065fe;--accent-hover:#1751d1;--breaking:#e63946;--accent2:#457b9d;--bg:#f8f9fa;--card:#fff;--border:#e0e0e0;--text:#1a1a1e;--muted:#6c757d;--tag-bg:#eef2ff;--tag-color:#3730a3}
+html,body{width:100%;overflow-x:hidden}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);transition:background-image .5s ease}
+.hidden{display:none!important}
+
+nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width:100%}
+.nav-top{display:flex;align-items:center;justify-content:space-between;padding:0 1.25rem;height:54px;gap:.75rem}
+.nav-brand{display:flex;align-items:center;gap:.5rem;cursor:pointer;flex-shrink:0}
+.nav-brand-mark{width:30px;height:30px;border-radius:7px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:.95rem;font-weight:700;color:#fff;flex-shrink:0}
+.nav-brand-text{font-size:1.1rem;font-weight:700;letter-spacing:.3px;white-space:nowrap}
+.nav-brand-text span{color:var(--accent)}
+.nav-controls{display:flex;gap:.5rem;align-items:center;flex-shrink:0}
+.nav-mode-tab{background:none;border:none;color:rgba(255,255,255,.6);padding:5px 11px;cursor:pointer;font-size:.8rem;border-radius:5px;transition:.15s}
+.nav-mode-tab:hover{color:#fff;background:rgba(255,255,255,.1)}
+.nav-mode-tab.active{color:#fff;background:rgba(255,255,255,.15)}
+.nav-login-btn{background:#fff;border:1.5px solid var(--accent);color:var(--accent);padding:7px 14px;border-radius:7px;cursor:pointer;font-size:.8rem;font-weight:600;transition:.15s;white-space:nowrap;display:flex;align-items:center;gap:.35rem}
+.nav-login-btn:hover{background:var(--accent);color:#fff}
+.nav-follow-btn{background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.35);color:#fff;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:.8rem;font-weight:600;transition:.15s;white-space:nowrap;display:flex;align-items:center;gap:.35rem}
+.nav-follow-btn:hover{background:rgba(255,255,255,.2)}
+.nav-follow-btn.following{background:var(--accent);border-color:var(--accent)}
+.nav-user{display:flex;align-items:center;gap:.5rem;background:rgba(255,255,255,.1);padding:5px 8px 5px 5px;border-radius:24px;flex-shrink:0}
+.nav-user-avatar{width:26px;height:26px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:700;flex-shrink:0}
+.nav-user-name{font-size:.79rem;font-weight:500;white-space:nowrap}
+.nav-logout-btn{background:rgba(255,255,255,.12);border:none;color:#fff;cursor:pointer;font-size:.76rem;font-weight:600;padding:6px 12px;border-radius:18px;display:flex;align-items:center;gap:.3rem;white-space:nowrap;transition:.15s}
+.nav-logout-btn:hover{background:var(--accent)}
+
+.nav-cats{background:rgba(0,0,0,.25);border-top:1px solid rgba(255,255,255,.08)}
+.nav-cats-inner{display:flex;align-items:center;padding:0 1.25rem;overflow-x:auto;gap:0;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.nav-cats-inner::-webkit-scrollbar{display:none}
+.cat-tab{background:none;border:none;color:rgba(255,255,255,.65);padding:9px 13px;cursor:pointer;font-size:.8rem;font-weight:500;border-bottom:2px solid transparent;white-space:nowrap;transition:.15s}
+.cat-tab:hover{color:#fff}
+.cat-tab.active{color:#fff;border-bottom-color:var(--accent)}
+
+#view-public,#view-admin{padding:1.25rem}
+.pub-header{max-width:1100px;margin:0 auto .85rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+.pub-header h1{font-size:1.4rem;font-weight:700;color:var(--primary)}
+.pub-header p{font-size:.79rem;color:var(--muted);margin-top:.15rem}
+.pub-header-right{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.lang-toggle{display:flex;background:var(--tag-bg);border-radius:20px;padding:3px;gap:2px}
+.lang-btn{border:none;background:none;padding:5px 12px;border-radius:16px;font-size:.74rem;font-weight:700;color:var(--muted);cursor:pointer;transition:.15s}
+.lang-btn.active{background:var(--accent);color:#fff}
+.lang-status{font-size:.72rem;color:var(--muted);display:flex;align-items:center;gap:.35rem}
+.lang-status .spin-sm{width:12px;height:12px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--accent);animation:spin .7s linear infinite}
+
+.hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;max-width:1100px;margin:0 auto 1.75rem}
+.hero-card{background:var(--card);border-radius:12px;border:.5px solid var(--border);overflow:hidden;cursor:pointer;transition:.15s}
+.hero-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.1)}
+.hero-card.featured{grid-column:1/-1;display:grid;grid-template-columns:1fr 400px}
+.card-img{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);height:210px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;flex-shrink:0;touch-action:manipulation}
+.heart-burst{position:absolute;top:50%;font-size:54px;pointer-events:none;transform:translate(-50%,-50%) scale(0);text-shadow:0 2px 14px rgba(0,0,0,.4);animation:heartPop .85s ease forwards;z-index:6;filter:none}
+@keyframes heartPop{
+  0%{transform:translate(-50%,-50%) scale(0) rotate(-8deg);opacity:0}
+  18%{transform:translate(-50%,-50%) scale(1.2) rotate(4deg);opacity:1}
+  35%{transform:translate(-50%,-50%) scale(.96) rotate(0deg);opacity:1}
+  100%{transform:translate(-50%,-72%) scale(1.05);opacity:0}
+}
+.card-img img{width:100%;height:100%;object-fit:cover}
+.hero-card.featured .card-img{height:270px}
+.card-img-icon{font-size:3rem;opacity:.2}
+.card-img-label{position:absolute;bottom:10px;left:10px;background:var(--accent);color:#fff;font-size:.67rem;font-weight:700;padding:3px 9px;border-radius:4px;text-transform:uppercase;letter-spacing:.4px}
+.card-body{padding:1.1rem}
+.card-category{font-size:.69rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.6px;margin-bottom:.35rem}
+.card-title{font-size:.97rem;font-weight:600;line-height:1.4;margin-bottom:.45rem;color:var(--text)}
+.hero-card.featured .card-title{font-size:1.25rem}
+.card-excerpt{font-size:.82rem;color:var(--muted);line-height:1.6;margin-bottom:.7rem}
+.card-meta{font-size:.72rem;color:var(--muted);display:flex;align-items:center;gap:.45rem;flex-wrap:wrap}
+.card-tag{background:var(--tag-bg);color:var(--tag-color);font-size:.66rem;font-weight:500;padding:2px 7px;border-radius:4px}
+.breaking-badge{background:var(--breaking);color:#fff;font-size:.63rem;font-weight:700;padding:2px 7px;border-radius:3px;text-transform:uppercase;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.card-img video{width:100%;height:100%;object-fit:cover}
+.card-video-badge{position:absolute;top:10px;left:10px;background:rgba(26,26,46,.72);color:#fff;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px}
+.hero-card.featured.portrait{display:flex;align-items:stretch}
+.hero-card.featured.portrait .card-img{width:380px;height:auto;flex-shrink:0}
+.hero-card.featured.portrait .card-body{flex:1}
+.small-card.portrait{flex-direction:row}
+.small-card.portrait .card-img{width:110px;height:auto;flex-shrink:0}
+.small-card.portrait .card-body{flex:1}
+
+.section-label{max-width:1100px;margin:0 auto .7rem}
+.section-label h2{font-size:.97rem;font-weight:600;color:var(--text)}
+.section-line{height:2px;background:var(--accent);width:34px;margin-top:4px}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:1rem;max-width:1100px;margin:0 auto 2rem}
+.small-card{background:var(--card);border-radius:10px;border:.5px solid var(--border);overflow:hidden;cursor:pointer;transition:.15s;display:flex;flex-direction:column}
+.small-card:hover{transform:translateY(-1px);box-shadow:0 3px 12px rgba(0,0,0,.08)}
+.small-card .card-img{height:135px}
+.small-card .card-body{flex:1}
+.small-card .card-title{font-size:.9rem}
+.small-card .card-excerpt{font-size:.79rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.empty-state{text-align:center;padding:3rem;color:var(--muted);grid-column:1/-1}
+.empty-state i{font-size:2.5rem;display:block;margin-bottom:.5rem;opacity:.35}
+.load-more-wrap{max-width:1100px;margin:-.75rem auto 2rem;text-align:center}
+.load-more-btn{background:var(--card);border:1.5px solid var(--accent);color:var(--accent);padding:11px 22px;border-radius:24px;cursor:pointer;font-size:.88rem;font-weight:600;transition:.15s}
+.load-more-btn:hover{background:var(--accent);color:#fff}
+
+
+#view-article{max-width:780px;margin:0 auto;padding:1.5rem 1.25rem}
+.back-btn{background:none;border:.5px solid var(--border);color:var(--muted);padding:6px 13px;border-radius:6px;cursor:pointer;font-size:.83rem;margin-bottom:1.25rem;display:inline-flex;align-items:center;gap:.4rem}
+.back-btn:hover{border-color:var(--accent);color:var(--accent)}
+.article-category{font-size:.72rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.45rem}
+.article-title{font-size:1.85rem;font-weight:700;line-height:1.3;margin-bottom:.7rem}
+.article-meta{font-size:.81rem;color:var(--muted);display:flex;gap:.85rem;flex-wrap:wrap;padding-bottom:.9rem;border-bottom:.5px solid var(--border);margin-bottom:1.25rem}
+.article-img{background:linear-gradient(135deg,#1a1a2e,#0f3460);height:280px;border-radius:10px;margin-bottom:1.4rem;display:flex;align-items:center;justify-content:center;font-size:3.5rem;color:rgba(255,255,255,.35);overflow:hidden;position:relative;touch-action:manipulation}
+.article-img img,.article-img video,.article-img iframe{width:100%;height:100%;object-fit:cover;display:block;border:none}
+.article-hero{display:contents}
+.article-hero-text{display:contents}
+.article-hero.portrait{display:flex;gap:1.5rem;align-items:flex-start;margin-bottom:0}
+.article-hero.portrait .article-hero-text{display:block;flex:1;order:2;min-width:0}
+.article-hero.portrait .article-img{order:1;width:300px;height:380px;flex-shrink:0;margin-bottom:0}
+@media(max-width:640px){
+  .article-hero.portrait{flex-direction:column}
+  .article-hero.portrait .article-img{width:100%;height:280px}
+}
+.article-body{font-size:1rem;line-height:1.8;color:var(--text);margin-bottom:1.5rem}
+.article-body p{margin-bottom:1rem}
+
+.engage-bar{display:flex;align-items:center;gap:.6rem;padding:1rem 0;border-top:.5px solid var(--border);border-bottom:.5px solid var(--border);margin-bottom:1.5rem;flex-wrap:wrap}
+.engage-btn{display:flex;align-items:center;gap:.4rem;background:var(--bg);border:.5px solid var(--border);padding:8px 14px;border-radius:20px;cursor:pointer;font-size:.84rem;font-weight:500;color:var(--text);transition:.15s}
+.engage-btn:hover{border-color:var(--accent2);color:var(--accent2)}
+.engage-btn.liked{background:#eff6ff;border-color:#93c5fd;color:var(--accent)}
+.engage-btn.liked i{color:var(--accent)}
+.engage-btn i{font-size:17px}
+.share-wrap{position:relative;margin-left:auto}
+.share-menu{position:absolute;top:calc(100% + 8px);right:0;background:#fff;border:.5px solid var(--border);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.12);padding:.5rem;display:flex;gap:.4rem;z-index:20}
+.share-menu a,.share-menu button{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;font-size:16px;text-decoration:none;color:#fff}
+.share-fb{background:#1877f2}.share-tw{background:#1a1a2e}.share-wa{background:#25d366}.share-copy{background:var(--muted)}
+
+#view-login{display:flex;align-items:center;justify-content:center;min-height:560px;padding:2rem 1.25rem}
+.login-card{background:var(--card);border-radius:16px;border:.5px solid var(--border);padding:2.25rem 2rem;max-width:380px;width:100%;box-shadow:0 8px 28px rgba(0,0,0,.07)}
+.login-logo{display:flex;flex-direction:column;align-items:center;gap:.6rem;margin-bottom:1.5rem}
+.login-logo-mark{width:52px;height:52px;border-radius:13px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700;color:#fff}
+.login-logo-text{font-size:1.25rem;font-weight:700;color:var(--primary)}
+.login-logo-text span{color:var(--accent)}
+.login-subtitle{font-size:.85rem;color:var(--muted);text-align:center;margin-bottom:1.5rem}
+.login-field{margin-bottom:1.1rem}
+.login-field label{display:block;font-size:.8rem;font-weight:500;color:var(--text);margin-bottom:.4rem}
+.login-input-wrap{position:relative}
+.login-input-wrap i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:17px}
+.login-field input{width:100%;border:.5px solid var(--border);border-radius:9px;padding:10px 12px 10px 38px;font-size:.88rem;outline:none;transition:.15s;font-family:inherit}
+.login-field input:focus{border-color:var(--accent2);box-shadow:0 0 0 3px rgba(69,123,157,.12)}
+.login-error{background:#fef2f2;color:#b91c1c;font-size:.79rem;padding:8px 12px;border-radius:8px;margin-bottom:1rem;display:flex;align-items:center;gap:.4rem;border:.5px solid #fecaca}
+.login-btn{width:100%;background:var(--accent);color:#fff;border:none;padding:11px;border-radius:9px;font-size:.9rem;font-weight:600;cursor:pointer;transition:.15s;display:flex;align-items:center;justify-content:center;gap:.45rem;margin-top:.4rem}
+.login-btn:hover{background:var(--accent-hover)}
+.login-hint{text-align:center;font-size:.76rem;color:var(--muted);margin-top:1.1rem;padding-top:1rem;border-top:.5px solid var(--border)}
+.login-hint code{background:var(--bg);padding:1px 6px;border-radius:4px;font-size:.74rem}
+.login-back{display:flex;align-items:center;gap:.4rem;font-size:.81rem;color:var(--muted);cursor:pointer;margin-bottom:1.25rem;width:fit-content}
+.login-back:hover{color:var(--accent)}
+
+#view-admin{padding:1.25rem}
+.admin-layout{display:grid;grid-template-columns:210px 1fr;gap:1.25rem;max-width:1200px;margin:0 auto}
+.admin-sidebar{background:var(--card);border-radius:12px;border:.5px solid var(--border);padding:1.1rem;height:fit-content;position:sticky;top:96px}
+.admin-sidebar h3{font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.7rem}
+.sidebar-item{display:flex;align-items:center;gap:.55rem;padding:.48rem .7rem;border-radius:6px;cursor:pointer;font-size:.84rem;color:var(--text);border:none;background:none;width:100%;text-align:left;margin-bottom:.12rem;transition:.12s}
+.sidebar-item:hover{background:var(--bg)}
+.sidebar-item.active{background:var(--tag-bg);color:#3730a3;font-weight:500}
+.sidebar-item i{font-size:15px}
+.sidebar-stats{margin-top:1.1rem;padding-top:.9rem;border-top:.5px solid var(--border)}
+.stat-row{display:flex;justify-content:space-between;font-size:.77rem;padding:.28rem 0;color:var(--muted)}
+.stat-row strong{color:var(--text)}
+
+.mobile-admin-nav{display:none;gap:.4rem;overflow-x:auto;padding-bottom:.5rem;margin-bottom:1rem;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.mobile-admin-nav::-webkit-scrollbar{display:none}
+.mob-nav-btn{background:var(--card);border:.5px solid var(--border);color:var(--text);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:.8rem;white-space:nowrap;display:flex;align-items:center;gap:.35rem;transition:.12s;flex-shrink:0}
+.mob-nav-btn:hover{border-color:var(--accent2);color:var(--accent2)}
+.mob-nav-btn.active{background:var(--tag-bg);color:#3730a3;border-color:#c7d2fe;font-weight:500}
+
+.admin-section{background:var(--card);border-radius:14px;border:.5px solid var(--border);padding:1.6rem;margin-bottom:1.1rem;box-shadow:0 1px 3px rgba(0,0,0,.03)}
+.admin-section-title{font-size:1.02rem;font-weight:700;margin-bottom:.3rem;display:flex;align-items:center;gap:.5rem;color:var(--primary)}
+.admin-section-sub{font-size:.81rem;color:var(--muted);margin-bottom:1.4rem}
+.insights-summary{display:flex;gap:.85rem;flex-wrap:wrap;margin-bottom:1.4rem}
+.insights-stat{background:var(--tag-bg);border-radius:10px;padding:.9rem 1.4rem;min-width:130px}
+.insights-stat-num{font-size:1.5rem;font-weight:700;color:var(--primary)}
+.insights-stat-label{font-size:.76rem;color:var(--muted);margin-top:.15rem}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.1rem}
+.form-group{display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.1rem}
+.form-group label{font-size:.8rem;font-weight:600;color:var(--text);display:flex;align-items:center;gap:.3rem}
+.form-group label i{font-size:14px;color:var(--accent2)}
+.form-group .req{color:var(--accent);font-weight:700}
+.form-group input,.form-group select,.form-group textarea{border:1.5px solid var(--border);border-radius:10px;padding:10px 13px;font-size:.88rem;color:var(--text);background:#fbfbfc;outline:none;font-family:inherit;transition:.15s;width:100%}
+.form-group input:hover,.form-group select:hover,.form-group textarea:hover{border-color:#c7ccd1}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent2);background:#fff;box-shadow:0 0 0 4px rgba(69,123,157,.1)}
+.form-group textarea{min-height:130px;resize:vertical;line-height:1.65}
+.field-hint{font-size:.72rem;color:var(--muted)}
+
+.toolbar{display:flex;gap:.3rem;padding:.5rem;background:var(--bg);border-radius:9px 9px 0 0;border:1.5px solid var(--border);border-bottom:none;flex-wrap:wrap}
+.toolbar-btn{background:#fff;border:.5px solid var(--border);border-radius:6px;padding:5px 9px;cursor:pointer;font-size:.76rem;color:var(--text);transition:.1s}
+.toolbar-btn:hover{background:var(--tag-bg);color:#3730a3;border-color:#c7d2fe}
+.form-group textarea.with-toolbar{border-radius:0 0 10px 10px;border-top:none}
+
+.upload-zone{border:2px dashed var(--border);border-radius:12px;padding:1.75rem 1.25rem;text-align:center;cursor:pointer;transition:.15s;background:#fbfbfc;position:relative}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--accent2);background:var(--tag-bg)}
+.upload-zone i{font-size:2.1rem;color:var(--accent2);margin-bottom:.5rem;display:block}
+.upload-zone-title{font-size:.87rem;font-weight:600;color:var(--text);margin-bottom:.2rem}
+.upload-zone-sub{font-size:.76rem;color:var(--muted)}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-preview{position:relative;border-radius:12px;overflow:hidden;border:1.5px solid var(--border)}
+.upload-preview img{width:100%;height:220px;object-fit:cover;display:block}
+.upload-preview-remove{position:absolute;top:8px;right:8px;background:rgba(26,26,46,.75);color:#fff;border:none;width:30px;height:30px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:.12s}
+.upload-preview-remove:hover{background:var(--accent)}
+.upload-preview-name{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.6));color:#fff;font-size:.75rem;padding:18px 10px 8px}
+
+.btn{padding:9px 19px;border-radius:9px;border:none;cursor:pointer;font-size:.86rem;font-weight:600;transition:.15s;display:inline-flex;align-items:center;gap:.4rem}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 2px 6px rgba(32,101,254,.25)}
+.btn-primary:hover{background:var(--accent-hover);box-shadow:0 3px 9px rgba(32,101,254,.32)}
+.btn-secondary{background:#fff;color:var(--text);border:1.5px solid var(--border)}
+.btn-secondary:hover{border-color:var(--accent2);color:var(--accent2)}
+.btn-danger{background:#fff0f0;color:#c1121f;border:1.5px solid #fecaca}
+.btn-danger:hover{background:#fee2e2}
+.btn-sm{padding:5px 11px;font-size:.76rem}
+.actions-bar{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;padding-top:.3rem}
+.badge{font-size:.68rem;font-weight:600;padding:2px 7px;border-radius:4px;display:inline-block}
+.badge-published{background:#d1fae5;color:#065f46}
+.badge-draft{background:#fef9c3;color:#78350f}
+.badge-breaking{background:#fee2e2;color:#991b1b}
+
+.toggle-row{display:flex;align-items:center;justify-content:space-between;background:var(--bg);border-radius:10px;padding:.8rem 1rem;border:1px solid var(--border)}
+.toggle-row-label{display:flex;align-items:center;gap:.6rem;font-size:.85rem;font-weight:500}
+.toggle-row-label i{font-size:18px;color:var(--breaking)}
+.switch{position:relative;width:42px;height:24px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0}
+.switch-slider{position:absolute;inset:0;background:#ccc;border-radius:24px;cursor:pointer;transition:.2s}
+.switch-slider:before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.switch input:checked+.switch-slider{background:var(--breaking)}
+.switch input:checked+.switch-slider:before{transform:translateX(18px)}
+
+.social-input-row{display:flex;align-items:center;gap:.6rem;margin-bottom:.85rem}
+.social-input-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;font-size:17px}
+.si-fb{background:#1877f2}.si-tw{background:#1a1a2e}.si-ig{background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)}.si-yt{background:#ff0000}.si-tt{background:#000}.si-wa{background:#25d366}
+.social-input-row input{flex:1;border:1.5px solid var(--border);border-radius:9px;padding:9px 12px;font-size:.85rem;font-family:inherit;outline:none}
+.social-input-row input:focus{border-color:var(--accent2);box-shadow:0 0 0 3px rgba(69,123,157,.1)}
+.social-input-label{font-size:.83rem;font-weight:600;color:var(--text);min-width:78px}
+
+.posts-table{width:100%;border-collapse:collapse;font-size:.83rem}
+.posts-table th{text-align:left;padding:.55rem .7rem;font-size:.69rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;border-bottom:.5px solid var(--border)}
+.posts-table td{padding:.6rem .7rem;border-bottom:.5px solid var(--border);vertical-align:middle}
+.posts-table tr:last-child td{border-bottom:none}
+.posts-table tr:hover td{background:var(--bg)}
+.post-title-cell{font-weight:500;max-width:240px;display:flex;align-items:center;gap:.5rem}
+.post-thumb{width:36px;height:36px;border-radius:6px;object-fit:cover;flex-shrink:0;background:var(--bg)}
+.post-thumb-placeholder{width:36px;height:36px;border-radius:6px;background:var(--bg);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;flex-shrink:0}
+.post-title-cell p{font-size:.72rem;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+
+.post-card-list{display:none;flex-direction:column;gap:.65rem}
+.post-card-item{background:var(--card);border:.5px solid var(--border);border-radius:10px;padding:1rem;display:flex;gap:.75rem}
+.post-card-item-body{flex:1;min-width:0}
+.post-card-item-title{font-size:.88rem;font-weight:600;color:var(--text);margin-bottom:.25rem}
+.post-card-item-meta{font-size:.74rem;color:var(--muted);margin-bottom:.6rem;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+.post-card-item-actions{display:flex;gap:.4rem;flex-wrap:wrap}
+.post-card-thumb{width:56px;height:56px;border-radius:8px;object-fit:cover;flex-shrink:0;background:var(--bg)}
+
+.toast{position:fixed;bottom:1.25rem;right:1.25rem;background:#1a1a2e;color:#fff;padding:.7rem 1.1rem;border-radius:8px;font-size:.84rem;transform:translateY(80px);opacity:0;transition:.3s;z-index:999;display:flex;align-items:center;gap:.45rem;max-width:calc(100vw - 2.5rem)}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:#065f46}
+.toast.error{background:#991b1b}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:flex-end;justify-content:center}
+.modal{background:#fff;border-radius:14px 14px 0 0;padding:1.75rem 1.5rem 2rem;width:100%;max-height:88vh;overflow-y:auto}
+.modal h3{font-size:1rem;font-weight:700;margin-bottom:1rem;color:var(--primary)}
+.modal-actions{display:flex;gap:.65rem;justify-content:flex-end;margin-top:1.1rem}
+
+.filter-bar{display:flex;gap:.45rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
+.filter-btn{background:#fff;border:.5px solid var(--border);color:var(--muted);padding:5px 11px;border-radius:6px;cursor:pointer;font-size:.78rem;transition:.12s;white-space:nowrap}
+.filter-btn:hover,.filter-btn.active{background:var(--tag-bg);color:#3730a3;border-color:#c7d2fe}
+.search-input{border:.5px solid var(--border);border-radius:6px;padding:6px 11px;font-size:.81rem;outline:none;width:100%;font-family:inherit}
+.search-input:focus{border-color:var(--accent2)}
+
+@media(max-width:900px){
+  .hero-card.featured{grid-template-columns:1fr}
+  .hero-card.featured .card-img{height:200px}
+  .admin-layout{grid-template-columns:180px 1fr;gap:1rem}
+  .form-row{grid-template-columns:1fr}
+}
+@media(max-width:640px){
+  #view-public,#view-admin{padding:.85rem}
+  #view-article{padding:1rem .9rem}
+  .nav-top{padding:0 .9rem;height:50px}
+  .nav-brand-text{font-size:.95rem}
+  .nav-mode-tab{font-size:.73rem;padding:4px 8px}
+  .nav-login-btn{font-size:.73rem;padding:6px 11px}
+  .nav-follow-btn{font-size:.73rem;padding:6px 11px}
+  .nav-user-name{display:none}
+  .nav-cats-inner{padding:0 .9rem}
+  .cat-tab{font-size:.75rem;padding:8px 10px}
+  .hero-grid{grid-template-columns:1fr;gap:1rem;margin-bottom:1.4rem}
+  .hero-card.featured{grid-column:1;display:block}
+  .hero-card.featured .card-img{height:200px}
+  .hero-card.featured .card-title{font-size:1.22rem;line-height:1.4}
+  .hero-card.featured .card-excerpt{font-size:.95rem}
+  .card-img{height:200px}
+  .card-img-icon{font-size:2.2rem}
+  .card-body{padding:1.1rem}
+  .card-category{font-size:.75rem}
+  .card-title{font-size:1.14rem;line-height:1.45}
+  .card-excerpt{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:.95rem;line-height:1.6}
+  .card-meta{font-size:.8rem}
+  .cards-grid{grid-template-columns:1fr;gap:1.25rem}
+  .small-card{flex-direction:column}
+  .small-card .card-img{width:100%;height:200px;border-radius:0}
+  .small-card .card-img-icon{font-size:2.2rem}
+  .small-card .card-body{padding:1.1rem}
+  .small-card .card-title{font-size:1.14rem!important;line-height:1.45}
+  .small-card .card-excerpt{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:.95rem!important}
+  .small-card .card-meta{font-size:.8rem}
+  .article-title{font-size:1.45rem}
+  .article-body{font-size:1.05rem;line-height:1.85}
+  .article-img{height:180px;font-size:2.5rem}
+  .engage-bar{gap:.4rem}
+  .engage-btn{padding:7px 11px;font-size:.79rem}
+  .share-wrap{margin-left:0;order:99;width:100%}
+  .admin-layout{display:block}
+  .admin-sidebar{display:none}
+  .mobile-admin-nav{display:flex}
+  .admin-section{padding:1.1rem}
+  .form-row{grid-template-columns:1fr}
+  .posts-table{display:none}
+  .post-card-list{display:flex}
+  .modal-overlay{align-items:flex-end}
+  .modal{border-radius:16px 16px 0 0;padding:1.25rem 1rem 1.75rem}
+  .pub-header h1{font-size:1.15rem}
+  .actions-bar{gap:.4rem}
+  .btn{padding:7px 13px;font-size:.8rem}
+  .login-card{padding:1.75rem 1.4rem}
+  .social-link{padding:8px 13px;font-size:.78rem}
+}
+@media(max-width:380px){
+  .nav-mode-tab{display:none}
+  .nav-brand-text{font-size:.88rem}
+  .cat-tab{font-size:.72rem;padding:7px 9px}
+  .hero-card.featured .card-img{height:150px}
+  .card-img{height:140px}
+  .small-card .card-img{height:150px}
+  .article-title{font-size:1.2rem}
+  .btn{padding:6px 11px;font-size:.77rem}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-top">
+    <div class="nav-brand" onclick="goHome()">
+      <img class="brand" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ-VEGp5-p5kvixOHe0YYJI3i-ax0Fe1Pd36-7mycylVQ&s=10" alt="BUZA Media logo">
+      <div class="nav-brand-text">BUZA<span>MEDIA</span></div>
+    </div>
+    <div class="nav-controls" id="nav-controls">
+      <button class="nav-mode-tab active" onclick="switchMode(this,'public')" id="tab-public">Live Site</button>
+      <button class="nav-mode-tab" onclick="goToAdminOrLogin()" id="tab-admin">Admin</button>
+      <button class="nav-follow-btn" id="follow-btn" onclick="toggleFollow()"><i class="ti ti-bell-plus" aria-hidden="true"></i> Follow</button>
+      <button class="nav-login-btn" id="login-btn" onclick="goToLoginScreen()"><i class="ti ti-lock" aria-hidden="true"></i> Admin Login</button>
+    </div>
+  </div>
+  <div class="nav-cats">
+    <div class="nav-cats-inner">
+      <button class="cat-tab active" onclick="filterCategory(this,'all')">All Stories</button>
+      <button class="cat-tab" onclick="filterCategory(this,'Politics')">Politics</button>
+      <button class="cat-tab" onclick="filterCategory(this,'Tech')">Tech</button>
+      <button class="cat-tab" onclick="filterCategory(this,'Business')">Business</button>
+      <button class="cat-tab" onclick="filterCategory(this,'Sports')">Sports</button>
+      <button class="cat-tab" onclick="filterCategory(this,'World News')">World News</button>
+      <button class="cat-tab" onclick="filterCategory(this,'Entertainment')">Entertainment</button>
+    </div>
+  </div>
+</nav>
+
+<div id="view-public">
+  <div class="pub-header" id="pub-header">
+    <div><h1 id="pub-section-title">Today's top stories</h1><p id="pub-date"></p></div>
+    <div class="pub-header-right">
+      <span class="lang-status hidden" id="lang-status"><span class="spin-sm" aria-hidden="true"></span> Translating…</span>
+      <div class="lang-toggle" role="group" aria-label="Display language">
+        <button class="lang-btn active" data-lang="original" onclick="setDisplayLang('original')" title="Show articles exactly as written">Original</button>
+        <button class="lang-btn" data-lang="en" onclick="setDisplayLang('en')" title="Translate all articles to English">EN</button>
+        <button class="lang-btn" data-lang="sw" onclick="setDisplayLang('sw')" title="Tafsiri makala zote kwa Kiswahili">SW</button>
+      </div>
+    </div>
+  </div>
+  <div id="featured-area"></div>
+  <div class="section-label"><h2 id="latest-label">Latest updates</h2><div class="section-line"></div></div>
+  <div class="cards-grid" id="latest-grid"></div>
+  <div id="load-more-wrap" class="load-more-wrap hidden"><button class="load-more-btn" onclick="loadMorePosts()">Show more stories</button></div>
+</div>
+
+<div id="view-article" class="hidden">
+  <button class="back-btn" onclick="closeArticle()"><i class="ti ti-arrow-left" aria-hidden="true"></i> Back</button>
+  <div class="article-hero" id="article-hero">
+    <div class="article-hero-text">
+      <div class="article-category" id="art-category"></div>
+      <div class="article-title" id="art-title"></div>
+      <div class="article-meta">
+        <span><i class="ti ti-user" style="font-size:13px;vertical-align:-1px" aria-hidden="true"></i> <span id="art-author"></span></span>
+        <span><i class="ti ti-calendar" style="font-size:13px;vertical-align:-1px" aria-hidden="true"></i> <span id="art-date"></span></span>
+        <span><i class="ti ti-eye" style="font-size:13px;vertical-align:-1px" aria-hidden="true"></i> <span id="art-views">0</span> views</span>
+        <span id="art-badge-wrap"></span>
+      </div>
+    </div>
+    <div class="article-img" id="art-img" onclick="articleImgTap(event)"><i class="ti ti-news" aria-hidden="true"></i></div>
+  </div>
+  <div class="article-body" id="art-body"></div>
+
+  <div class="engage-bar">
+    <button class="engage-btn" id="like-btn" onclick="toggleLike()"><i class="ti ti-heart" aria-hidden="true"></i> <span id="like-count">0</span> Like</button>
+    <button class="engage-btn" onclick="downloadPostCard()"><i class="ti ti-download" aria-hidden="true"></i> Download banner</button>
+    <button class="engage-btn hidden" id="download-video-btn" onclick="downloadVideo()"><i class="ti ti-video" aria-hidden="true"></i> Download video</button>
+    <div class="share-wrap">
+      <button class="engage-btn" onclick="toggleShareMenu()"><i class="ti ti-share-3" aria-hidden="true"></i> Share</button>
+      <div class="share-menu hidden" id="share-menu">
+        <a href="#" class="share-fb" onclick="return shareTo('facebook')" aria-label="Share to Facebook"><i class="ti ti-brand-facebook" aria-hidden="true"></i></a>
+        <a href="#" class="share-tw" onclick="return shareTo('twitter')" aria-label="Share to X"><i class="ti ti-brand-x" aria-hidden="true"></i></a>
+        <a href="#" class="share-wa" onclick="return shareTo('whatsapp')" aria-label="Share to WhatsApp"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i></a>
+        <button class="share-copy" onclick="copyLink()" aria-label="Copy link"><i class="ti ti-link" aria-hidden="true"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="view-login" class="hidden">
+  <div class="login-card">
+    <div class="login-back" onclick="goHome()"><i class="ti ti-arrow-left" aria-hidden="true"></i> Back to site</div>
+    <div class="login-logo">
+      <img class="brand" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ-VEGp5-p5kvixOHe0YYJI3i-ax0Fe1Pd36-7mycylVQ&s=10" alt="BUZA Media logo">
+      <div class="login-logo-text">BUZA<span>MEDIA</span></div>
+    </div>
+    <p class="login-subtitle">Sign in to the admin dashboard to publish and manage stories.</p>
+    <div class="login-error hidden" id="login-error"><i class="ti ti-alert-circle" aria-hidden="true"></i> <span>Invalid email or password.</span></div>
+    <div class="login-field">
+      <label>Email</label>
+      <div class="login-input-wrap"><i class="ti ti-mail" aria-hidden="true"></i>
+        <input type="email" id="login-email" placeholder="username"></div>
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <div class="login-input-wrap"><i class="ti ti-lock" aria-hidden="true"></i>
+        <input type="password" id="login-password" placeholder="Enter your password"></div>
+    </div>
+    <button class="login-btn" onclick="doLogin()"><i class="ti ti-login-2" aria-hidden="true"></i> Sign in</button>
+  </div>
+</div>
+
+<div id="view-admin" class="hidden">
+  <div class="mobile-admin-nav">
+    <button class="mob-nav-btn active" onclick="adminNav(this,'compose')"><i class="ti ti-pencil-plus" aria-hidden="true"></i> New post</button>
+    <button class="mob-nav-btn" onclick="adminNav(this,'posts')"><i class="ti ti-news" aria-hidden="true"></i> All posts</button>
+    <button class="mob-nav-btn" onclick="adminNav(this,'trending')"><i class="ti ti-trending-up" aria-hidden="true"></i> Trending</button>
+    <button class="mob-nav-btn" onclick="adminNav(this,'insights')"><i class="ti ti-chart-bar" aria-hidden="true"></i> Insights</button>
+    <button class="mob-nav-btn" onclick="adminNav(this,'social')"><i class="ti ti-share" aria-hidden="true"></i> Social links</button>
+    <button class="mob-nav-btn" onclick="adminNav(this,'sheet')"><i class="ti ti-table" aria-hidden="true"></i> Google Sheet</button>
+    <div style="flex:1"></div>
+    <div style="background:var(--tag-bg);border-radius:8px;padding:6px 10px;font-size:.74rem;color:#3730a3;white-space:nowrap;display:flex;gap:.5rem;align-items:center">
+      <span>Posts: <strong id="mob-stat-total">0</strong></span><span>·</span><span>Live: <strong id="mob-stat-pub">0</strong></span>
+    </div>
+  </div>
+
+  <div class="admin-layout">
+    <div class="admin-sidebar">
+      <h3>Buza Media admin</h3>
+      <button class="sidebar-item active" onclick="adminNav(this,'compose')"><i class="ti ti-pencil-plus" aria-hidden="true"></i> New post</button>
+      <button class="sidebar-item" onclick="adminNav(this,'posts')"><i class="ti ti-news" aria-hidden="true"></i> All posts</button>
+      <button class="sidebar-item" onclick="adminNav(this,'trending')"><i class="ti ti-trending-up" aria-hidden="true"></i> Trending</button>
+      <button class="sidebar-item" onclick="adminNav(this,'insights')"><i class="ti ti-chart-bar" aria-hidden="true"></i> Insights</button>
+      <button class="sidebar-item" onclick="adminNav(this,'social')"><i class="ti ti-share" aria-hidden="true"></i> Social links</button>
+      <button class="sidebar-item" onclick="adminNav(this,'sheet')"><i class="ti ti-table" aria-hidden="true"></i> Google Sheet</button>
+      <div class="sidebar-stats">
+        <div class="stat-row">Total posts <strong id="stat-total">0</strong></div>
+        <div class="stat-row">Published <strong id="stat-pub">0</strong></div>
+        <div class="stat-row">Drafts <strong id="stat-draft">0</strong></div>
+        <div class="stat-row">Breaking <strong id="stat-breaking">0</strong></div>
+      </div>
+    </div>
+
+    <div>
+      <div id="panel-compose">
+        <div class="admin-section">
+          <div class="admin-section-title"><i class="ti ti-pencil-plus" aria-hidden="true"></i> Compose new post</div>
+          <div class="admin-section-sub">Fill in the details below to publish a new story to Buza Media.</div>
+          <div class="form-group">
+            <label><i class="ti ti-photo" aria-hidden="true"></i> Cover photo</label>
+            <div id="upload-zone-wrap">
+              <div class="upload-zone" id="upload-zone">
+                <i class="ti ti-cloud-upload" aria-hidden="true"></i>
+                <div class="upload-zone-title">Click to upload or drag a photo here</div>
+                <div class="upload-zone-sub">PNG, JPG up to 5MB · landscape or portrait both work</div>
+                <input type="file" id="p-photo" accept="image/*" onchange="handlePhotoUpload(this)">
+              </div>
+            </div>
+            <span class="field-hint">Portrait photos automatically display beside the text; landscape photos display on top, as usual.</span>
+            <input type="text" id="p-photo-url" placeholder="Or paste an image URL instead of uploading…" style="margin-top:.6rem">
+            <span class="field-hint">Pasting a URL is recommended when publishing to Google Sheets — uploaded files are stored as long text and can exceed the sheet's cell size limit.</span>
+          </div>
+          <div class="form-group">
+            <label><i class="ti ti-video" aria-hidden="true"></i> Attach video (optional)</label>
+            <div id="video-upload-zone-wrap">
+              <div class="upload-zone" id="video-upload-zone">
+                <i class="ti ti-video" aria-hidden="true"></i>
+                <div class="upload-zone-title">Click to upload or drag a video here</div>
+                <div class="upload-zone-sub">MP4, WebM up to 20MB · the cover photo above is used as its poster</div>
+                <input type="file" id="p-video" accept="video/*" onchange="handleVideoUpload(this)">
+              </div>
+            </div>
+            <input type="text" id="p-video-url" placeholder="Or paste a YouTube / video URL instead of uploading…" style="margin-top:.6rem">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label><i class="ti ti-typography" aria-hidden="true"></i> Headline <span class="req">*</span></label>
+              <input type="text" id="p-title" placeholder="Enter a compelling headline...">
+            </div>
+            <div class="form-group">
+              <label><i class="ti ti-category" aria-hidden="true"></i> Category</label>
+              <select id="p-category">
+                <option value="Politics">Politics</option><option value="Tech">Tech</option>
+                <option value="Business">Business</option><option value="Sports">Sports</option>
+                <option value="World News">World News</option><option value="Entertainment">Entertainment</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label><i class="ti ti-user-edit" aria-hidden="true"></i> Author / reporter</label>
+              <input type="text" id="p-author" placeholder="Reporter name">
+            </div>
+            <div class="form-group">
+              <label><i class="ti ti-tags" aria-hidden="true"></i> Tags</label>
+              <input type="text" id="p-tags" placeholder="economy, policy, breaking">
+              <span class="field-hint">Separate tags with commas</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label><i class="ti ti-align-left" aria-hidden="true"></i> Summary / excerpt</label>
+            <input type="text" id="p-excerpt" placeholder="Brief description shown in card previews...">
+          </div>
+          <div class="form-group">
+            <label><i class="ti ti-article" aria-hidden="true"></i> Article body</label>
+            <div class="toolbar">
+              <button class="toolbar-btn" onclick="insertFormat('**','**')"><b>B</b></button>
+              <button class="toolbar-btn" onclick="insertFormat('*','*')"><i>I</i></button>
+              <button class="toolbar-btn" onclick="insertFormat('\n\n','')">¶</button>
+              <button class="toolbar-btn" onclick="insertFormat('## ','')">H2</button>
+              <button class="toolbar-btn" onclick="insertFormat('### ','')">H3</button>
+              <button class="toolbar-btn" onclick="insertFormat('- ','')">• List</button>
+              <button class="toolbar-btn" onclick="insertFormat('"','"')">" "</button>
+            </div>
+            <textarea id="p-body" class="with-toolbar" placeholder="Write your full article here..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:0">
+              <label><i class="ti ti-flag" aria-hidden="true"></i> Status</label>
+              <select id="p-status"><option value="published">Published</option><option value="draft">Save as draft</option></select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>&nbsp;</label>
+              <div class="toggle-row">
+                <div class="toggle-row-label"><i class="ti ti-bolt" aria-hidden="true"></i> Breaking news</div>
+                <label class="switch"><input type="checkbox" id="p-breaking"><span class="switch-slider"></span></label>
+              </div>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <div class="toggle-row">
+              <div class="toggle-row-label"><i class="ti ti-table" aria-hidden="true"></i> Also publish to Google Sheet</div>
+              <label class="switch"><input type="checkbox" id="p-to-sheet" checked><span class="switch-slider"></span></label>
+            </div>
+            <span class="field-hint">Requires an Apps Script Web App URL — set it up once under the Google Sheet tab.</span>
+          </div>
+        </div>
+        <div class="actions-bar">
+          <button class="btn btn-primary" onclick="savePost()"><i class="ti ti-send" aria-hidden="true"></i> Publish post</button>
+          <button class="btn btn-secondary" onclick="saveDraft()"><i class="ti ti-device-floppy" aria-hidden="true"></i> Save draft</button>
+          <button class="btn btn-secondary" onclick="clearForm()"><i class="ti ti-x" aria-hidden="true"></i> Clear</button>
+        </div>
+      </div>
+
+      <div id="panel-posts" class="hidden">
+        <div class="admin-section">
+          <div class="admin-section-title"><i class="ti ti-news" aria-hidden="true"></i> All posts</div>
+          <div class="admin-section-sub">Manage, edit, and publish your stories.</div>
+          <div class="filter-bar"><input type="text" class="search-input" placeholder="Search posts..." oninput="searchPosts(this.value)"></div>
+          <div class="filter-bar" style="margin-top:-.4rem">
+            <button class="filter-btn active" onclick="filterAdmin(this,'all')">All</button>
+            <button class="filter-btn" onclick="filterAdmin(this,'published')">Published</button>
+            <button class="filter-btn" onclick="filterAdmin(this,'draft')">Drafts</button>
+            <button class="filter-btn" onclick="filterAdmin(this,'breaking')">Breaking</button>
+          </div>
+          <table class="posts-table">
+            <thead><tr><th>Post</th><th>Category</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody id="posts-tbody"></tbody>
+          </table>
+          <div class="post-card-list" id="posts-cards"></div>
+        </div>
+      </div>
+
+      <div id="panel-trending" class="hidden">
+        <div class="admin-section">
+          <div class="admin-section-title"><i class="ti ti-trending-up" aria-hidden="true"></i> Manage trending</div>
+          <div class="admin-section-sub">Toggle posts to feature as trending on the public site.</div>
+          <div id="trending-list"></div>
+        </div>
+      </div>
+
+      <div id="panel-insights" class="hidden">
+        <div class="admin-section">
+          <div class="admin-section-title"><i class="ti ti-chart-bar" aria-hidden="true"></i> Insights</div>
+          <div class="admin-section-sub">Views and likes are counted per browser/device, since this site stores them locally rather than through a shared server — so totals reflect activity from this device only, not every visitor site-wide.</div>
+          <div class="insights-summary" id="insights-summary"></div>
+          <div id="insights-list"></div>
+        </div>
+      </div>
+
+      <div id="panel-social" class="hidden">
+        <div class="admin-section">
+          <div class="admin-section-title"><i class="ti ti-share" aria-hidden="true"></i> Social media links</div>
+          <div class="admin-section-sub">These show as labeled buttons in the site footer so visitors instantly recognize each platform.</div>
+          <div class="social-input-row"><div class="social-input-icon si-fb"><i class="ti ti-brand-facebook" aria-hidden="true"></i></div><span class="social-input-label">Facebook</span><input type="text" id="soc-fb" placeholder="https://facebook.com/buzamedia"></div>
+          <div class="social-input-row"><div class="social-input-icon si-tw"><i class="ti ti-brand-x" aria-hidden="true"></i></div><span class="social-input-label">X / Twitter</span><input type="text" id="soc-tw" placeholder="https://x.com/buzamedia"></div>
+          <div class="social-input-row"><div class="social-input-icon si-ig"><i class="ti ti-brand-instagram" aria-hidden="true"></i></div><span class="social-input-label">Instagram</span><input type="text" id="soc-ig" placeholder="https://instagram.com/buzamedia"></div>
+          <div class="social-input-row"><div class="social-input-icon si-yt"><i class="ti ti-brand-youtube" aria-hidden="true"></i></div><span class="social-input-label">YouTube</span><input type="text" id="soc-yt" placeholder="https://youtube.com/@buzamedia"></div>
+          <div class="social-input-row"><div class="social-input-icon si-tt"><i class="ti ti-brand-tiktok" aria-hidden="true"></i></div><span class="social-input-label">TikTok</span><input type="text" id="soc-tt" placeholder="https://tiktok.com/@buzamedia"></div>
+          <div class="social-input-row"><div class="social-input-icon si-wa"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i></div><span class="social-input-label">WhatsApp</span><input type="text" id="soc-wa" placeholder="https://wa.me/255700000000"></div>
+          <div class="actions-bar"><button class="btn btn-primary" onclick="saveSocialLinks()"><i class="ti ti-check" aria-hidden="true"></i> Save links</button></div>
+        </div>
+      </div>
+
+      <div id="panel-sheet" class="hidden">
+        <div class="admin-section">
+          <div class="admin-section-title"><i class="ti ti-table" aria-hidden="true"></i> Google Sheet database</div>
+          <div class="admin-section-sub">Connect a Google Sheet as the live database for Buza Media. Add a row in the sheet, click Sync, and it appears on the site instantly — no code changes needed.</div>
+
+          <div style="display:flex;align-items:center;gap:.5rem;padding:.7rem .9rem;border-radius:9px;background:var(--bg);border:.5px solid var(--border);margin-bottom:1.2rem">
+            <span id="sheet-status-dot" style="width:9px;height:9px;border-radius:50%;background:var(--muted);flex-shrink:0"></span>
+            <span id="sheet-status-text" style="font-size:.81rem;color:var(--muted)">Not connected — showing local demo data.</span>
+          </div>
+
+          <div class="form-group">
+            <label><i class="ti ti-link" aria-hidden="true"></i> Google Sheet ID</label>
+            <input type="text" id="sheet-id" placeholder="1AbCDefGhIjKLmNoPQRstuVWxyZ0123456789abcdefghi">
+            <span class="field-hint">Copy this from your sheet's URL: docs.google.com/spreadsheets/d/<strong>THIS_PART</strong>/edit</span>
+          </div>
+          <div class="form-group">
+            <label><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Sheet / tab name</label>
+            <input type="text" id="sheet-tab" placeholder="Articles" value="Articles">
+            <span class="field-hint">The name on the tab at the bottom of your spreadsheet.</span>
+          </div>
+          <div class="form-group" style="margin-bottom:.6rem">
+            <label><i class="ti ti-list-details" aria-hidden="true"></i> Required column headers (row 1 of your sheet)</label>
+            <span class="field-hint">ID · Title · Subtitle · Category · Author · Date · Image URL · Video URL · Article · Breaking News (Yes/No) · Featured (Yes/No) · Tags · Status (optional: published/draft) · Orientation (optional: landscape/portrait)</span>
+          </div>
+          <div class="form-group">
+            <label><i class="ti ti-plug-connected" aria-hidden="true"></i> Apps Script Web App URL (optional — enables posting from this form)</label>
+            <input type="text" id="sheet-write-url" placeholder="https://script.google.com/macros/s/XXXXXXXXXXXX/exec">
+            <span class="field-hint">Reading the sheet (above) needs nothing extra. To let the Compose form add rows directly to your sheet: open your sheet → Extensions → Apps Script → delete any starter code → paste the script below (after picking your own secret key, see next field) → Deploy → <strong>New deployment</strong> → type "Web app" → Execute as: <strong>Me</strong> → Who has access: <strong>Anyone</strong> → Deploy → copy the URL ending in <code>/exec</code> and paste it here.</span>
+          </div>
+          <div class="form-group">
+            <label><i class="ti ti-key" aria-hidden="true"></i> Secret key (shared with your Apps Script)</label>
+            <input type="text" id="sheet-write-secret" placeholder="choose any private phrase, e.g. buza-2026-newsroom">
+            <span class="field-hint">This is what makes posting <em>authorized</em> instead of open to anyone who finds your URL. Pick any private phrase, paste it into the <code>SECRET</code> line of the script below, and paste the exact same phrase here. Requests without the right key are rejected before they touch your sheet.</span>
+          </div>
+          <div class="form-group">
+            <label><i class="ti ti-code" aria-hidden="true"></i> Apps Script code to deploy</label>
+            <textarea readonly style="font-family:monospace;font-size:.74rem;min-height:230px;background:var(--bg)" onclick="this.select()">// Set this to the same phrase you paste into "Secret key" above.
+var SECRET="choose-any-private-phrase";
+
+function doPost(e){
+  try{
+    var data=JSON.parse(e.postData.contents);
+    if(data.secret!==SECRET){
+      return ContentService.createTextOutput(JSON.stringify({status:"error",message:"Unauthorized: secret key did not match."}))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    var sheet=SpreadsheetApp.getActiveSpreadsheet().getSheetByName(data.sheet||"Articles");
+    if(!sheet)throw new Error("Sheet tab not found: "+data.sheet);
+    sheet.appendRow([data.id,data.title,data.subtitle,data.category,data.author,
+      data.date,data.image,data.video,data.article,data.breaking,
+      data.featured,data.tags,data.status,data.orientation]);
+    return ContentService.createTextOutput(JSON.stringify({status:"success"}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }catch(err){
+    return ContentService.createTextOutput(JSON.stringify({status:"error",message:String(err)}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}</textarea>
+            <span class="field-hint">This script never asks anyone visiting your site to sign in with Google, and never shows a "Google hasn't verified this app" warning — that screen only ever appears to <strong>you</strong>, once, the moment you personally authorize the deployment. Because it's "Execute as: Me," it always runs with your permissions, quietly, for every request. Note: browsers can't read an Apps Script Web App's response due to CORS, so the site can't confirm success/failure after sending — double-check the sheet itself, or open Apps Script → Executions to see real error messages (like a rejected secret key). Also remember: if you edit the script again later, you must create <strong>another new deployment</strong> — saving alone does not update the live URL.</span>
+          </div>
+          <div class="actions-bar">
+            <button class="btn btn-primary" onclick="connectAndSync()"><i class="ti ti-plug-connected" aria-hidden="true"></i> Connect &amp; sync now</button>
+            <button class="btn btn-secondary" onclick="syncFromSheet(true)"><i class="ti ti-refresh" aria-hidden="true"></i> Sync now</button>
+            <button class="btn btn-secondary" onclick="useLocalDemoData()"><i class="ti ti-database" aria-hidden="true"></i> Use local demo data</button>
+          </div>
+          <div class="admin-section-sub" style="margin-top:1rem;margin-bottom:0">
+            <strong>How it works:</strong> the sheet must be shared as "Anyone with the link — Viewer". Once connected, Buza Media reads your sheet's rows as articles every time the site loads (cached briefly in this browser for speed). Editing a post here in the admin panel only changes your local copy — to update the live site for everyone, edit the row in Google Sheets and sync again.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-overlay">
+  <div class="modal">
+    <h3>Edit post</h3>
+    <div class="form-group">
+      <label><i class="ti ti-photo" aria-hidden="true"></i> Cover photo</label>
+      <div id="m-upload-zone-wrap">
+        <div class="upload-zone" id="m-upload-zone">
+          <i class="ti ti-cloud-upload" aria-hidden="true"></i>
+          <div class="upload-zone-title">Click to upload or drag a photo here</div>
+          <div class="upload-zone-sub">PNG, JPG up to 5MB</div>
+          <input type="file" id="m-photo" accept="image/*" onchange="handlePhotoUpload(this,true)">
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label><i class="ti ti-video" aria-hidden="true"></i> Video (optional)</label>
+      <div id="m-video-upload-zone-wrap">
+        <div class="upload-zone" id="m-video-upload-zone">
+          <i class="ti ti-video" aria-hidden="true"></i>
+          <div class="upload-zone-title">Click to upload or drag a video here</div>
+          <div class="upload-zone-sub">MP4, WebM up to 20MB</div>
+          <input type="file" id="m-video" accept="video/*" onchange="handleVideoUpload(this,true)">
+        </div>
+      </div>
+    </div>
+    <div class="form-group"><label>Headline</label><input type="text" id="m-title"></div>
+    <div class="form-group"><label>Category</label>
+      <select id="m-category">
+        <option value="Politics">Politics</option><option value="Tech">Tech</option>
+        <option value="Business">Business</option><option value="Sports">Sports</option>
+        <option value="World News">World News</option><option value="Entertainment">Entertainment</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Excerpt</label><input type="text" id="m-excerpt"></div>
+    <div class="form-group"><label>Status</label>
+      <select id="m-status"><option value="published">Published</option><option value="draft">Draft</option></select>
+    </div>
+    <div class="form-group"><label>Body</label><textarea id="m-body" style="min-height:150px"></textarea></div>
+    <div class="toggle-row" style="margin-bottom:1rem">
+      <div class="toggle-row-label"><i class="ti ti-bolt" aria-hidden="true"></i> Breaking news</div>
+      <label class="switch"><input type="checkbox" id="m-breaking"><span class="switch-slider"></span></label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEdit()"><i class="ti ti-check" aria-hidden="true"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DB_KEY='buzamedia_v6';
+const SOCIAL_KEY='buzamedia_social_v1';
+const LIKES_KEY='buzamedia_likes_v1';
+const VIEWS_KEY='buzamedia_views_v1';
+const FOLLOW_KEY='buzamedia_follow_v1';
+const VISITOR_KEY='buzamedia_visitor_id';
+const CAT_ICONS={Politics:'ti-building-bank',Tech:'ti-cpu',Business:'ti-chart-bar',Sports:'ti-ball-football','World News':'ti-world',Entertainment:'ti-stars'};
+let posts=[],editingId=null,adminFilter2='all',currentSearch='',currentCat='all',isLoggedIn=false,currentArticleId=null;
+const MOBILE_PAGE_SIZE=4;
+let mobileVisibleCount=MOBILE_PAGE_SIZE;
+function isMobileView(){return window.matchMedia('(max-width:640px)').matches;}
+let pendingPhoto=null,pendingPhotoEdit=null;
+let pendingVideo=null,pendingVideoEdit=null;
+let pendingPhotoOrientation='landscape',pendingPhotoEditOrientation='landscape';
+
+/* ==========================================================================
+   TRANSLATION
+   Since you post articles in both English and Swahili, this lets a reader
+   pick one display language ("EN" or "SW") and every article — regardless
+   of which language it was written in — is shown translated into that one
+   language. "Original" turns translation off and shows articles exactly as
+   written.
+
+   NOTE ON HOW THIS WORKS: there's no paid translation account connected
+   here. This uses Google Translate's free public web endpoint (the same
+   one translate.google.com itself calls), which needs no API key — but
+   it's unofficial and unrate-limited-by-us, so it can occasionally be slow
+   or briefly unavailable. If a request fails, the original text is shown
+   instead of breaking anything. For a guaranteed, production-grade version
+   later, swap TRANSLATE_ENDPOINT-based translateText() for the official
+   Google Cloud Translation API (needs an API key + billing).
+   ========================================================================== */
+const TRANSLATE_ENDPOINT='https://translate.googleapis.com/translate_a/single';
+const LANG_KEY='buzamedia_display_lang';
+const TRANS_CACHE_KEY='buzamedia_translation_cache_v1';
+let displayLang=localStorage.getItem(LANG_KEY)||'original'; // 'original' | 'en' | 'sw'
+let translationCache={};
+try{translationCache=JSON.parse(localStorage.getItem(TRANS_CACHE_KEY)||'{}');}catch(e){translationCache={};}
+let translatingKeys=new Set();
+
+function saveTranslationCache(){
+  try{localStorage.setItem(TRANS_CACHE_KEY,JSON.stringify(translationCache));}catch(e){/* storage full or unavailable — cache just won't persist across reloads */}
+}
+
+async function translateText(text,target){
+  const clean=(text||'').toString();
+  if(!clean.trim())return clean;
+  const key=target+'::'+clean;
+  if(translationCache[key]!==undefined)return translationCache[key];
+  try{
+    const url=`${TRANSLATE_ENDPOINT}?client=gtx&sl=auto&tl=${target}&dt=t&q=${encodeURIComponent(clean)}`;
+    const res=await fetch(url);
+    if(!res.ok)throw new Error('translate http '+res.status);
+    const data=await res.json();
+    const translated=(data[0]||[]).map(chunk=>chunk[0]).join('');
+    translationCache[key]=translated;
+    return translated;
+  }catch(e){
+    console.error('Buza Media: translation request failed, showing original text instead.',e);
+    return clean;
+  }
+}
+
+// Returns the {title, excerpt, body} to actually display for a post, given
+// the current displayLang — original text immediately, or a cached
+// translation once it's ready (falls back to original while it's pending).
+function getDisplayText(post){
+  if(displayLang==='original')return {title:post.title||'',excerpt:post.excerpt||'',body:post.body||''};
+  const key=displayLang+'::post::'+post.id;
+  return translationCache[key]||{title:post.title||'',excerpt:post.excerpt||'',body:post.body||''};
+}
+
+async function translatePostIfNeeded(post,lang){
+  const key=lang+'::post::'+post.id;
+  if(translationCache[key])return;
+  const [title,excerpt,body]=await Promise.all([
+    translateText(post.title||'',lang),
+    translateText(post.excerpt||'',lang),
+    translateText(post.body||'',lang)
+  ]);
+  translationCache[key]={title,excerpt,body};
+  saveTranslationCache();
+}
+
+// Kicks off translation for whichever posts are currently on screen, then
+// quietly re-renders once they're ready. Safe to call often — anything
+// already cached or already in-flight is skipped.
+function kickOffTranslations(list){
+  if(displayLang==='original'||!list.length)return;
+  const todo=list.filter(p=>{
+    const key=displayLang+'::post::'+p.id;
+    return !translationCache[key]&&!translatingKeys.has(key);
+  });
+  if(!todo.length)return;
+  const statusEl=document.getElementById('lang-status');
+  if(statusEl)statusEl.classList.remove('hidden');
+  todo.forEach(p=>translatingKeys.add(displayLang+'::post::'+p.id));
+  Promise.all(todo.map(p=>translatePostIfNeeded(p,displayLang).finally(()=>translatingKeys.delete(displayLang+'::post::'+p.id))))
+    .then(()=>{
+      if(statusEl)statusEl.classList.add('hidden');
+      renderPublic();
+      if(currentArticleId&&!document.getElementById('view-article').classList.contains('hidden'))renderArticleText(currentArticleId);
+    });
+}
+
+function setDisplayLang(lang){
+  displayLang=lang;
+  try{localStorage.setItem(LANG_KEY,lang);}catch(e){}
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang));
+  renderPublic();
+  if(currentArticleId&&!document.getElementById('view-article').classList.contains('hidden'))renderArticleText(currentArticleId);
+}
+
+let socialLinks={fb:'',tw:'',ig:'',yt:'',tt:'',wa:''};
+let likesStore={};
+let viewsStore={};
+let isFollowing=false;
+let knownPostIds=null;
+
+function getVisitorId(){
+  let v=localStorage.getItem(VISITOR_KEY);
+  if(!v){v='v-'+Date.now().toString(36)+Math.random().toString(36).slice(2);localStorage.setItem(VISITOR_KEY,v);}
+  return v;
+}
+function loadDB(){try{const d=localStorage.getItem(DB_KEY);posts=d?JSON.parse(d):[];}catch(e){posts=[];}if(!posts.length)seed();}
+function saveDB(){localStorage.setItem(DB_KEY,JSON.stringify(posts));}
+function loadSocial(){try{const d=localStorage.getItem(SOCIAL_KEY);if(d)socialLinks=JSON.parse(d);else{socialLinks={fb:'https://facebook.com/buzamedia',tw:'https://x.com/buzamedia',ig:'https://instagram.com/buzamedia',yt:'https://youtube.com/@buzamedia',tt:'https://tiktok.com/@buzamedia',wa:'https://wa.me/255700000000'};localStorage.setItem(SOCIAL_KEY,JSON.stringify(socialLinks));}}catch(e){}}
+function saveSocial(){localStorage.setItem(SOCIAL_KEY,JSON.stringify(socialLinks));}
+function loadLikes(){try{const d=localStorage.getItem(LIKES_KEY);likesStore=d?JSON.parse(d):{};}catch(e){likesStore={};}}
+function saveLikes(){localStorage.setItem(LIKES_KEY,JSON.stringify(likesStore));}
+function loadViews(){try{const d=localStorage.getItem(VIEWS_KEY);viewsStore=d?JSON.parse(d):{};}catch(e){viewsStore={};}}
+function saveViews(){localStorage.setItem(VIEWS_KEY,JSON.stringify(viewsStore));}
+function recordView(id){viewsStore[id]=(viewsStore[id]||0)+1;saveViews();}
+function loadFollow(){isFollowing=localStorage.getItem(FOLLOW_KEY)==='1';updateFollowBtn();}
+
+// Remembers which post IDs we've already seen so we only notify about posts
+// that appear AFTER someone starts following — not the ones already on site.
+function primeKnownPostIds(){
+  knownPostIds=new Set(posts.filter(p=>p.status==='published').map(p=>p.id));
+}
+function checkForNewPostsAndNotify(){
+  if(!knownPostIds)return; // not primed yet, skip this pass
+  const nowPublished=posts.filter(p=>p.status==='published');
+  const freshOnes=nowPublished.filter(p=>!knownPostIds.has(p.id));
+  freshOnes.forEach(p=>knownPostIds.add(p.id));
+  nowPublished.forEach(p=>knownPostIds.add(p.id));
+  if(freshOnes.length&&isFollowing&&'Notification' in window&&Notification.permission==='granted'){
+    freshOnes.slice(0,3).forEach(p=>{
+      try{new Notification('Buza Media — new post',{body:p.title});}catch(e){}
+    });
+  }
+}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+function fmtDate(iso){return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+function fmtDateShort(iso){return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+function icon(cat){return CAT_ICONS[cat]||'ti-news';}
+
+/* =========================================================================
+   GOOGLE SHEETS DATABASE INTEGRATION
+   -------------------------------------------------------------------------
+   This block turns a public Google Sheet into Buza Media's live database.
+   No backend, no MySQL/Firebase/Supabase — the sheet itself is the source
+   of truth for published articles once connected.
+
+   HOW IT WORKS
+   Every Google Sheet exposes a free "Visualization Query" (gviz) endpoint
+   the moment it's shared as "Anyone with the link — Viewer":
+
+     https://docs.google.com/spreadsheets/d/<SHEET_ID>/gviz/tq?tqx=out:json&sheet=<TAB_NAME>
+
+   That URL always returns the CURRENT contents of the sheet as JSON
+   (wrapped in a small JS snippet we strip out). So the flow is:
+
+     add/edit a row in Google Sheets → click "Sync now" (or reload the
+     page, which auto-syncs if a sheet is connected) → the article appears
+     everywhere on the site: home feed, category filters, search, the
+     article view, share cards — all of it, because they all just read
+     from the same in-memory `posts` array this file already uses.
+
+   The admin Compose/Edit/Delete tools you already have keep working —
+   they still edit the local `posts` array and persist to localStorage —
+   but that's now treated as a *local working copy*. Whoever visits the
+   live GitHub Pages site with a fresh browser will always be handed the
+   Google Sheet's current data, because that's what gets fetched on load.
+   ========================================================================= */
+
+const SHEET_CFG_KEY='buzamedia_sheet_cfg_v1';
+// Default Google Sheet the site loads on first visit — exactly like a pre-filled login
+// credential. Anyone using this admin panel can change it in the Google Sheet tab and
+// click "Connect & sync now" to point the site at a different spreadsheet instead.
+const DEFAULT_SHEET_ID='1jKHdiVKQg_vOIQLlaMm4ooeDdk8_-EoSKS4v9bw5nqo';
+// Default Apps Script Web App URL (doPost endpoint) that new posts get written to.
+// Pre-filled here so the admin posting form works out of the box; it can still be
+// overridden from the Google Sheet settings panel and that override wins on load.
+const DEFAULT_WRITE_URL='https://script.google.com/macros/s/AKfycbzXjsuG_KikOLxrwgLv_xoBuD6ShFnM7GXP8kqvYwbqG5TZvNIGTO-2P8xzbOOJtg24/exec';
+let sheetConfig={sheetId:DEFAULT_SHEET_ID,sheetName:'Articles',writeUrl:DEFAULT_WRITE_URL,writeSecret:'',connected:false,lastSync:null};
+
+function loadSheetConfig(){
+  try{
+    const d=localStorage.getItem(SHEET_CFG_KEY);
+    if(d){
+      const saved=JSON.parse(d);
+      // Guard: if an older visit saved an empty writeUrl (from before a default
+      // was hardcoded), don't let that stale blank value clobber the default.
+      if(!saved.writeUrl)delete saved.writeUrl;
+      sheetConfig=Object.assign(sheetConfig,saved);
+    }
+  }catch(e){}
+}
+function saveSheetConfigLS(){
+  try{localStorage.setItem(SHEET_CFG_KEY,JSON.stringify(sheetConfig));}catch(e){}
+}
+
+function initSheetPanelUI(){
+  const idEl=document.getElementById('sheet-id'),tabEl=document.getElementById('sheet-tab'),writeEl=document.getElementById('sheet-write-url'),secretEl=document.getElementById('sheet-write-secret');
+  if(idEl)idEl.value=sheetConfig.sheetId||'';
+  if(tabEl)tabEl.value=sheetConfig.sheetName||'Articles';
+  if(writeEl)writeEl.value=sheetConfig.writeUrl||'';
+  if(secretEl)secretEl.value=sheetConfig.writeSecret||'';
+  updateSheetStatusUI(sheetConfig.connected,sheetConfig.lastSync);
+}
+
+function updateSheetStatusUI(connected,detail){
+  const dot=document.getElementById('sheet-status-dot'),txt=document.getElementById('sheet-status-text');
+  if(!dot||!txt)return;
+  if(connected){
+    dot.style.background='#16a34a';
+    const when=sheetConfig.lastSync?new Date(sheetConfig.lastSync).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}):'';
+    txt.textContent=`Connected — last synced ${when||'just now'} · ${posts.length} article${posts.length===1?'':'s'} loaded from Google Sheets.`;
+    txt.style.color='var(--text)';
+  }else{
+    dot.style.background=detail?'#e63946':'var(--muted)';
+    txt.textContent=detail?`Sync failed: ${detail}`:'Not connected — showing local demo data.';
+    txt.style.color=detail?'#e63946':'var(--muted)';
+  }
+}
+
+// gviz wraps its JSON in `google.visualization.Query.setResponse({...});` — strip that wrapper.
+function parseGvizText(text){
+  const start=text.indexOf('{'),end=text.lastIndexOf('}');
+  return JSON.parse(text.substring(start,end+1));
+}
+function gvizToRows(gviz){
+  const cols=gviz.table.cols.map(c=>(c.label||c.id||'').trim());
+  const rows=gviz.table.rows.map(r=>r.c.map(cell=>(cell&&cell.v!==null&&cell.v!==undefined)?cell.v:''));
+  return {cols,rows};
+}
+function yn(val){const v=String(val||'').trim().toLowerCase();return v==='yes'||v==='true'||v==='1';}
+function sheetExcerpt(text,len){if(!text)return '';const plain=String(text).replace(/<[^>]+>/g,'');return plain.length>len?plain.substring(0,len).trim()+'…':plain;}
+function getYouTubeId(url){
+  if(!url)return null;
+  const m=String(url).match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return m?m[1]:null;
+}
+function parseSheetDate(raw){
+  if(raw instanceof Date)return raw;
+  if(typeof raw==='string'&&raw.startsWith('Date(')){
+    const m=raw.match(/Date\((\d+),(\d+),(\d+)/);
+    if(m)return new Date(+m[1],+m[2],+m[3]);
+  }
+  const parsed=new Date(raw);
+  return isNaN(parsed)?new Date():parsed;
+}
+
+// Map one sheet row into the exact post object shape the rest of Buza Media expects.
+function mapRowToPost(cols,row,idx){
+  const get=(name)=>{
+    const i=cols.findIndex(c=>c.toLowerCase().replace(/\s+/g,'')===name.toLowerCase().replace(/\s+/g,''));
+    return i>-1?row[i]:'';
+  };
+  const rawId=get('ID');
+  const id='sheet-'+(rawId!==''&&rawId!==undefined?String(rawId).trim():String(idx+1));
+  const video=String(get('Video URL')||'').trim();
+  const subtitle=String(get('Subtitle')||'').trim();
+  const article=String(get('Article')||'').trim();
+  const statusRaw=String(get('Status')||'').trim().toLowerCase();
+  const orientationRaw=String(get('Orientation')||'').trim().toLowerCase();
+
+  return {
+    id,
+    title:String(get('Title')||'Untitled article').trim(),
+    category:String(get('Category')||'General').trim(),
+    author:String(get('Author')||'Buza Media Staff').trim(),
+    excerpt:subtitle||sheetExcerpt(article,140),
+    body:article,
+    tags:String(get('Tags')||'').split(',').map(t=>t.trim()).filter(Boolean),
+    status:statusRaw==='draft'?'draft':'published',
+    breaking:yn(get('Breaking News')),
+    trending:yn(get('Featured')),
+    photo:String(get('Image URL')||'').trim()||null,
+    video:video||null,
+    mediaType:video?'video':'photo',
+    orientation:orientationRaw==='portrait'?'portrait':'landscape',
+    date:parseSheetDate(get('Date')).toISOString(),
+    _rowIndex:idx // row order in the sheet — used as a tiebreaker below
+  };
+}
+
+async function fetchSheetPosts(sheetId,sheetName){
+  const url=`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}&_=${Date.now()}`;
+  const res=await fetch(url);
+  if(!res.ok)throw new Error('Could not reach the sheet (HTTP '+res.status+')');
+  const text=await res.text();
+  const gviz=parseGvizText(text);
+  const {cols,rows}=gvizToRows(gviz);
+  const mapped=rows.filter(r=>r.some(cell=>cell!=='')).map((row,i)=>mapRowToPost(cols,row,i));
+  // Sort newest-first by Date. If two rows have the same (or both missing/
+  // unparseable) dates — common if a posting form like AppSheet doesn't
+  // reliably fill the Date column — fall back to sheet row order, since
+  // new rows are normally appended toward the bottom of the sheet.
+  mapped.sort((a,b)=>{
+    const byDate=new Date(b.date)-new Date(a.date);
+    if(byDate!==0)return byDate;
+    return b._rowIndex-a._rowIndex;
+  });
+  return mapped;
+}
+
+function connectAndSync(){
+  const idEl=document.getElementById('sheet-id'),tabEl=document.getElementById('sheet-tab'),writeEl=document.getElementById('sheet-write-url'),secretEl=document.getElementById('sheet-write-secret');
+  const id=(idEl.value||'').trim();
+  if(!id){showToast('Paste your Google Sheet ID first.','error');return;}
+  sheetConfig.sheetId=id;
+  sheetConfig.sheetName=(tabEl.value||'Articles').trim()||'Articles';
+  sheetConfig.writeUrl=(writeEl&&writeEl.value||'').trim();
+  sheetConfig.writeSecret=(secretEl&&secretEl.value||'').trim();
+  saveSheetConfigLS();
+  syncFromSheet(true);
+}
+
+// Appends one row to the connected sheet via a Google Apps Script Web App (doPost).
+// This is the standard, reliable pattern for "browser -> Apps Script -> Sheet" writes:
+//
+//   1. Content-Type is text/plain on purpose, so the browser treats this as a
+//      "simple request" and skips the CORS preflight (OPTIONS) call — Apps Script
+//      Web Apps don't answer preflight requests correctly, which is the #1 cause
+//      of "Failed to fetch" / CORS errors when posting to them.
+//   2. mode:'no-cors' is used because Apps Script's /exec endpoint responds via an
+//      internal redirect to a googleusercontent.com URL that does NOT carry CORS
+//      headers back to your site's origin — so even a successful write throws a
+//      CORS error in the browser console if read normally. no-cors tells the
+//      browser "send it, but I won't read the response," which sidesteps that
+//      entirely. The request still reaches Apps Script and the row still gets
+//      written; we just can't read a success/failure status back in JS.
+async function postRowToSheet(post){
+  if(!sheetConfig.writeUrl)throw new Error('No Apps Script Web App URL configured yet.');
+  const payload={
+    id:post.id,title:post.title,subtitle:post.excerpt,category:post.category,
+    author:post.author,date:post.date,image:post.photo||'',video:post.video||'',
+    article:post.body,breaking:post.breaking?'Yes':'No',featured:post.trending?'Yes':'No',
+    tags:(post.tags||[]).join(', '),status:post.status,orientation:post.orientation,
+    sheet:sheetConfig.sheetName||'Articles',secret:sheetConfig.writeSecret||''
+  };
+  // With mode:'no-cors' the response is always an opaque object (status 0, unreadable).
+  // A thrown error here means the request itself never went out (bad URL, offline,
+  // blocked by browser) — not that Apps Script rejected it. That's an unavoidable
+  // trade-off of talking to Apps Script from a static site with no backend of its own.
+  await fetch(sheetConfig.writeUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+}
+
+async function syncFromSheet(manual){
+  if(!sheetConfig.sheetId){
+    if(manual)showToast('Enter a Sheet ID and click "Connect & sync now" first.','error');
+    return;
+  }
+  if(manual)showToast('Syncing from Google Sheets…','success');
+  try{
+    const fetched=await fetchSheetPosts(sheetConfig.sheetId,sheetConfig.sheetName);
+    if(!fetched.length)throw new Error('sheet has no rows yet, or headers don\'t match');
+    posts=fetched;
+    saveDB();
+    checkForNewPostsAndNotify();
+    sheetConfig.connected=true;
+    sheetConfig.lastSync=new Date().toISOString();
+    saveSheetConfigLS();
+    updateSheetStatusUI(true);
+    updateStats();
+    renderPublic();
+    if(!document.getElementById('panel-posts').classList.contains('hidden'))renderPostsTable();
+    if(!document.getElementById('panel-trending').classList.contains('hidden'))renderTrending();
+    if(!document.getElementById('panel-insights').classList.contains('hidden'))renderInsights();
+    if(manual)showToast(`Synced ${fetched.length} article${fetched.length===1?'':'s'} from Google Sheets!`,'success');
+  }catch(err){
+    console.error('Buza Media: sheet sync failed.',err);
+    sheetConfig.connected=false;
+    saveSheetConfigLS();
+    updateSheetStatusUI(false,err.message);
+    if(manual)showToast('Sync failed — check the Sheet ID and sharing settings.','error');
+  }
+}
+
+function useLocalDemoData(){
+  sheetConfig.sheetId='';
+  sheetConfig.connected=false;
+  sheetConfig.lastSync=null;
+  saveSheetConfigLS();
+  const idEl=document.getElementById('sheet-id');if(idEl)idEl.value='';
+  loadDB();
+  updateSheetStatusUI(false);
+  updateStats();
+  renderPublic();
+  if(!document.getElementById('panel-posts').classList.contains('hidden'))renderPostsTable();
+  if(!document.getElementById('panel-trending').classList.contains('hidden'))renderTrending();
+  if(!document.getElementById('panel-insights').classList.contains('hidden'))renderInsights();
+  showToast('Switched back to local demo data.','success');
+}
+
+function seed(){
+  posts=[
+    {id:uid(),title:'Parliament passes historic budget reform bill',category:'Politics',author:'Sarah Chen',excerpt:'Lawmakers approved sweeping fiscal changes after weeks of heated debate, reshaping the national budget framework for the next decade.',body:'In a landmark vote, parliament approved a sweeping budget reform bill.\n\nThe legislation passed with a majority after weeks of intense debate. Key provisions include a new independent oversight body and mandatory public spending disclosures.\n\nOpposition leaders acknowledged the result while vowing to monitor implementation closely.',tags:['parliament','budget'],status:'published',breaking:true,trending:true,photo:null,date:new Date(Date.now()-3600000).toISOString()},
+    {id:uid(),title:'New AI chip breaks speed records in independent benchmarks',category:'Tech',author:'James Okafor',excerpt:'A next-generation processor has outperformed all existing benchmarks, signaling a major leap in AI compute efficiency.',body:'A new AI processing chip has shattered existing benchmark records across every major performance category.\n\nThe chip delivers 4.2 times the throughput of its predecessor while consuming 30% less power.\n\nCloud providers have already announced plans to integrate the new hardware into their infrastructure.',tags:['AI','chips'],status:'published',breaking:false,trending:true,photo:null,date:new Date(Date.now()-7200000).toISOString()},
+    {id:uid(),title:'Markets surge as central bank signals rate pause',category:'Business',author:'Maria Lopez',excerpt:'Stock indices climbed sharply after the central bank indicated it would hold interest rates steady for two more quarters.',body:'Financial markets rallied after the central bank governor signaled that interest rates would remain unchanged for at least two quarters.\n\nThe S&P 500 rose 2.1%, bond yields fell, and the currency strengthened against major peers.\n\n"This is the clarity markets have been waiting for," said one senior economist.',tags:['markets','rates'],status:'published',breaking:false,trending:false,photo:null,date:new Date(Date.now()-10800000).toISOString()},
+    {id:uid(),title:'National team advances to championship finals',category:'Sports',author:'David Abudu',excerpt:'A stunning comeback secured a place in the championship series for the first time in over two decades.',body:'The national team delivered one of the most dramatic performances in recent memory, overcoming a 12-point deficit in the final quarter.\n\nCapacity crowds erupted as the final buzzer sounded. The coach praised the squad\'s resilience under pressure.\n\nThe finals are set for next month, with tickets selling out within minutes.',tags:['championship','finals'],status:'published',breaking:false,trending:false,photo:null,date:new Date(Date.now()-14400000).toISOString()},
+    {id:uid(),title:'UN summit calls for accelerated climate finance',category:'World News',author:'Emma Richter',excerpt:'World leaders agreed to a new multilateral fund targeting climate adaptation in the most vulnerable nations.',body:'Delegates from 138 countries reached a landmark agreement, committing to a new multilateral fund dedicated to helping developing nations adapt to climate change.\n\nThe proposed fund is valued at an estimated $180 billion over five years.\n\nEnvironmental groups cautiously welcomed the announcement while calling for binding timelines.',tags:['climate','UN'],status:'published',breaking:false,trending:false,photo:null,date:new Date(Date.now()-18000000).toISOString()},
+    {id:uid(),title:'Box office record broken as sequel tops opening weekend',category:'Entertainment',author:'Priya Nair',excerpt:'The long-awaited follow-up surpassed all projections, setting a new record for the franchise\'s biggest opening weekend.',body:'The highly anticipated sequel dominated the global box office, pulling in figures that shattered records for the franchise.\n\nAudiences gave the film strong marks in early exit polls, with reviewers praising the performances and production design.\n\nStreaming rights have already been negotiated, with a platform premiere scheduled for 90 days after the theatrical run.',tags:['film','box office'],status:'published',breaking:false,trending:true,photo:null,date:new Date(Date.now()-21600000).toISOString()},
+  ];saveDB();
+}
+
+function cardImgHtml(p){
+  const media=p.photo?`<img src="${p.photo}" alt="">`:`<i class="ti ${icon(p.category)} card-img-icon" aria-hidden="true"></i>`;
+  const badge=p.mediaType==='video'?'<span class="card-video-badge"><i class="ti ti-player-play-filled" aria-hidden="true"></i></span>':'';
+  return media+badge;
+}
+
+function renderSocialFooter(){
+  const items=[
+    {key:'fb',icon:'ti-brand-facebook',label:'Facebook',cls:'sl-fb'},
+    {key:'tw',icon:'ti-brand-x',label:'X / Twitter',cls:'sl-tw'},
+    {key:'ig',icon:'ti-brand-instagram',label:'Instagram',cls:'sl-ig'},
+    {key:'yt',icon:'ti-brand-youtube',label:'YouTube',cls:'sl-yt'},
+    {key:'tt',icon:'ti-brand-tiktok',label:'TikTok',cls:'sl-tt'},
+    {key:'wa',icon:'ti-brand-whatsapp',label:'WhatsApp',cls:'sl-wa'}
+  ];
+  const el=document.getElementById('footer-social');
+  if(!el)return;
+  el.innerHTML=items.filter(i=>socialLinks[i.key]).map(i=>
+    `<a class="social-link ${i.cls}" href="${socialLinks[i.key]}" target="_blank" rel="noopener"><i class="ti ${i.icon}" aria-hidden="true"></i> ${i.label}</a>`
+  ).join('');
+}
+
+function renderPublic(){
+  // Always sort newest-first here, regardless of whatever order `posts` is
+  // currently in — this is what actually decides what's "up top" vs "down
+  // below", so it's the one place that has to be right no matter how the
+  // array was built (local compose, sheet sync, AppSheet, edits, etc.).
+  const pub=posts.filter(p=>p.status==='published'&&(currentCat==='all'||p.category===currentCat))
+    .sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const featured=pub[0],rest=pub.slice(1);
+  const fa=document.getElementById('featured-area'),lg=document.getElementById('latest-grid');
+  document.getElementById('latest-label').textContent=currentCat==='all'?'Latest updates':currentCat+' — Latest';
+  applyTopStoryGradient(featured?featured.photo:null);
+  if(!featured){fa.innerHTML=`<div style="max-width:1100px;margin:0 auto 1.5rem"><div class="empty-state"><i class="ti ti-news" aria-hidden="true"></i><p>No published articles yet.</p></div></div>`;lg.innerHTML='';return;}
+  const featuredText=getDisplayText(featured);
+  fa.innerHTML=`<div class="hero-grid"><div class="hero-card featured ${featured.orientation==='portrait'?'portrait':''}" onclick="openArticle('${featured.id}')">
+    <div class="card-img" onclick="cardImgTap(event,'${featured.id}')">${cardImgHtml(featured)}
+      <span class="card-img-label">${featured.category}</span>
+      ${featured.breaking?'<span class="breaking-badge" style="position:absolute;top:10px;right:10px">Breaking</span>':''}
+    </div>
+    <div class="card-body">
+      <div class="card-category">${featured.category}</div>
+      <div class="card-title">${featuredText.title}</div>
+      <div class="card-excerpt">${featuredText.excerpt||''}</div>
+      <div class="card-meta"><span>By ${featured.author||'Staff'}</span>·<span>${fmtDateShort(featured.date)}</span>${featured.trending?'<span class="card-tag">Trending</span>':''}<span><i class="ti ti-eye" aria-hidden="true"></i> ${(viewsStore[featured.id]||0).toLocaleString()}</span></div>
+    </div>
+  </div></div>`;
+  const mobile=isMobileView();
+  const visible=mobile?rest.slice(0,mobileVisibleCount):rest;
+  lg.innerHTML=visible.map(p=>{
+    const t=getDisplayText(p);
+    return `<div class="small-card ${p.orientation==='portrait'?'portrait':''}" onclick="openArticle('${p.id}')">
+    <div class="card-img" onclick="cardImgTap(event,'${p.id}')">${cardImgHtml(p)}
+      <span class="card-img-label">${p.category}</span>
+      ${p.breaking?'<span class="breaking-badge" style="position:absolute;top:6px;right:6px;font-size:.58rem">Breaking</span>':''}
+    </div>
+    <div class="card-body">
+      <div class="card-category">${p.category}</div>
+      <div class="card-title">${t.title}</div>
+      <div class="card-excerpt">${t.excerpt||''}</div>
+      <div class="card-meta"><span>${p.author||'Staff'}</span>·<span>${fmtDateShort(p.date)}</span>${p.trending?'<span class="card-tag">Trending</span>':''}<span><i class="ti ti-eye" aria-hidden="true"></i> ${(viewsStore[p.id]||0).toLocaleString()}</span></div>
+    </div>
+  </div>`;
+  }).join('');
+  const moreWrap=document.getElementById('load-more-wrap');
+  if(mobile&&rest.length>visible.length){
+    moreWrap.classList.remove('hidden');
+    moreWrap.querySelector('.load-more-btn').textContent=`Show more stories (${rest.length-visible.length} left)`;
+  }else{
+    moreWrap.classList.add('hidden');
+  }
+  kickOffTranslations([featured,...visible]);
+}
+
+// Extracts an average color from the top story's photo and paints it as a
+// Colors the very top of the page background (not a separate box) using an
+// average color pulled from the top story's photo, fading down into the
+// site's normal background further down the page. No extra markup — this
+// only ever touches the existing <body> element's background-image.
+let topStoryGradientFor=null;
+function applyTopStoryGradient(imgUrl){
+  if(!imgUrl){document.body.style.backgroundImage='';topStoryGradientFor=null;return;}
+  if(topStoryGradientFor===imgUrl)return; // already applied for this exact image
+  topStoryGradientFor=imgUrl;
+  const img=new Image();
+  img.crossOrigin='anonymous';
+  img.onload=()=>{
+    try{
+      const size=24;
+      const canvas=document.createElement('canvas');
+      canvas.width=size;canvas.height=size;
+      const ctx=canvas.getContext('2d');
+      ctx.drawImage(img,0,0,size,size);
+      const data=ctx.getImageData(0,0,size,size).data;
+      let r=0,g=0,b=0,count=0;
+      for(let i=0;i<data.length;i+=4){r+=data[i];g+=data[i+1];b+=data[i+2];count++;}
+      r=Math.round(r/count);g=Math.round(g/count);b=Math.round(b/count);
+      if(topStoryGradientFor===imgUrl){
+        document.body.style.backgroundImage=`linear-gradient(180deg, rgba(${r},${g},${b},.32) 0%, rgba(${r},${g},${b},0) 520px)`;
+        document.body.style.backgroundRepeat='no-repeat';
+      }
+    }catch(e){
+      // Most likely a CORS-restricted image host that won't allow reading
+      // pixel data back out of the canvas — just skip the gradient quietly.
+      document.body.style.backgroundImage='';
+    }
+  };
+  img.onerror=()=>{document.body.style.backgroundImage='';};
+  img.src=imgUrl;
+}
+function loadMorePosts(){
+  mobileVisibleCount+=MOBILE_PAGE_SIZE;
+  renderPublic();
+}
+
+function filterCategory(btn,cat){
+  document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');currentCat=cat;mobileVisibleCount=MOBILE_PAGE_SIZE;
+  document.getElementById('pub-section-title').textContent=cat==='all'?"Today's top stories":cat;
+  renderPublic();
+}
+
+function openArticle(id){
+  const p=posts.find(x=>x.id===id);if(!p)return;
+  currentArticleId=id;
+  recordView(id);
+  document.getElementById('art-category').textContent=p.category;
+  document.getElementById('art-author').textContent=p.author||'Staff reporter';
+  document.getElementById('art-date').textContent=fmtDate(p.date);
+  document.getElementById('art-views').textContent=(viewsStore[id]||0).toLocaleString();
+  document.getElementById('art-badge-wrap').innerHTML=p.breaking?'<span class="breaking-badge">Breaking news</span>':'';
+  const ytId=p.mediaType==='video'&&p.video?getYouTubeId(p.video):null;
+  if(p.mediaType==='video'&&p.video&&ytId){
+    document.getElementById('art-img').innerHTML=`<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${ytId}" title="${(p.title||'').replace(/"/g,'&quot;')}" frameborder="0" style="border:none" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+  }else if(p.mediaType==='video'&&p.video){
+    document.getElementById('art-img').innerHTML=`<video src="${p.video}" ${p.photo?`poster="${p.photo}"`:''} controls playsinline></video>`;
+  }else{
+    document.getElementById('art-img').innerHTML=p.photo?`<img src="${p.photo}" alt="">`:'<i class="ti ti-news" aria-hidden="true"></i>';
+  }
+  document.getElementById('article-hero').classList.toggle('portrait',p.orientation==='portrait');
+  document.getElementById('download-video-btn').classList.toggle('hidden',!(p.mediaType==='video'&&p.video)||!!ytId);
+  renderArticleText(id);
+  document.getElementById('view-public').classList.add('hidden');
+  document.getElementById('view-login').classList.add('hidden');
+  document.getElementById('view-admin').classList.add('hidden');
+  document.getElementById('view-article').classList.remove('hidden');
+  document.getElementById('share-menu').classList.add('hidden');
+  renderLikeState();
+  window.scrollTo(0,0);
+  kickOffTranslations([p]);
+}
+
+// Fills in just the title + body text for the open article, using whatever
+// getDisplayText() currently returns (original, or a ready translation).
+// Pulled out on its own so a translation finishing later can refresh just
+// the text without re-running the whole openArticle flow (which would
+// double-count the view and reset scroll position).
+function renderArticleText(id){
+  const p=posts.find(x=>x.id===id);if(!p)return;
+  const t=getDisplayText(p);
+  document.getElementById('art-title').textContent=t.title;
+  document.getElementById('art-body').innerHTML=(t.body||'').split('\n\n').filter(Boolean).map(chunk=>`<p>${chunk.replace(/\n/g,'<br>')}</p>`).join('');
+}
+
+
+function closeArticle(){
+  document.getElementById('view-article').classList.add('hidden');
+  document.getElementById('view-public').classList.remove('hidden');
+}
+
+function goHome(){
+  document.querySelectorAll('.nav-mode-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-public').classList.add('active');
+  document.getElementById('view-public').classList.remove('hidden');
+  document.getElementById('view-login').classList.add('hidden');
+  document.getElementById('view-admin').classList.add('hidden');
+  document.getElementById('view-article').classList.add('hidden');
+  window.scrollTo(0,0);
+}
+
+function goToLoginScreen(){
+  if(isLoggedIn){return;}
+  document.querySelectorAll('.nav-mode-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('view-public').classList.add('hidden');
+  document.getElementById('view-article').classList.add('hidden');
+  document.getElementById('view-admin').classList.add('hidden');
+  document.getElementById('view-login').classList.remove('hidden');
+  document.getElementById('login-error').classList.add('hidden');
+  window.scrollTo(0,0);
+}
+
+function goToAdminOrLogin(){
+  if(!isLoggedIn){goToLoginScreen();return;}
+  switchMode(document.getElementById('tab-admin'),'admin');
+}
+
+function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pass=document.getElementById('login-password').value.trim();
+  const err=document.getElementById('login-error');
+  if(email==='admin@buzamedia.com'&&pass==='buza2026'){
+    isLoggedIn=true;err.classList.add('hidden');
+    renderNavLoggedIn();
+    switchMode(document.getElementById('tab-admin'),'admin');
+    showToast('Welcome back to Buza Media!','success');
+  }else{err.classList.remove('hidden');}
+}
+
+function renderNavLoggedIn(){
+  document.getElementById('nav-controls').innerHTML=`
+    <button class="nav-mode-tab active" onclick="switchMode(this,'public')" id="tab-public">Live Site</button>
+    <button class="nav-mode-tab" onclick="switchMode(this,'admin')" id="tab-admin">Admin</button>
+    <button class="nav-follow-btn" id="follow-btn" onclick="toggleFollow()"><i class="ti ti-bell-plus" aria-hidden="true"></i> Follow</button>
+    <div class="nav-user">
+      <div class="nav-user-avatar">AD</div><span class="nav-user-name">Admin</span>
+    </div>
+    <button class="nav-logout-btn" onclick="doLogout()"><i class="ti ti-logout-2" aria-hidden="true"></i> Log out</button>`;
+  updateFollowBtn();
+}
+function renderNavLoggedOut(){
+  document.getElementById('nav-controls').innerHTML=`
+    <button class="nav-mode-tab active" onclick="switchMode(this,'public')" id="tab-public">Live Site</button>
+    <button class="nav-mode-tab" onclick="goToAdminOrLogin()" id="tab-admin">Admin</button>
+    <button class="nav-follow-btn" id="follow-btn" onclick="toggleFollow()"><i class="ti ti-bell-plus" aria-hidden="true"></i> Follow</button>
+    <button class="nav-login-btn" id="login-btn" onclick="goToLoginScreen()"><i class="ti ti-lock" aria-hidden="true"></i> Admin Login</button>`;
+  updateFollowBtn();
+}
+function doLogout(){
+  isLoggedIn=false;
+  renderNavLoggedOut();
+  goHome();
+  showToast('You have been logged out.','success');
+}
+
+function switchMode(btn,mode){
+  document.querySelectorAll('.nav-mode-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('view-public').classList.toggle('hidden',mode!=='public');
+  document.getElementById('view-admin').classList.toggle('hidden',mode!=='admin');
+  document.getElementById('view-login').classList.add('hidden');
+  document.getElementById('view-article').classList.add('hidden');
+  if(mode==='admin'){updateStats();renderPostsTable();renderTrending();loadSocialFormFields();}
+  window.scrollTo(0,0);
+}
+
+function handlePhotoUpload(input,isEdit){
+  const file=input.files[0];if(!file)return;
+  if(file.size>5*1024*1024){showToast('Image must be under 5MB.','error');return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const dataUrl=e.target.result;
+    const probe=new Image();
+    probe.onload=function(){
+      const orientation=probe.naturalHeight>probe.naturalWidth?'portrait':'landscape';
+      if(isEdit)pendingPhotoEditOrientation=orientation;else pendingPhotoOrientation=orientation;
+    };
+    probe.src=dataUrl;
+    if(isEdit){
+      pendingPhotoEdit=dataUrl;
+      document.getElementById('m-upload-zone-wrap').innerHTML=`<div class="upload-preview"><img src="${dataUrl}" alt=""><button class="upload-preview-remove" onclick="removePhoto(true)" aria-label="Remove photo"><i class="ti ti-x" aria-hidden="true"></i></button><div class="upload-preview-name">${file.name}</div></div>`;
+    }else{
+      pendingPhoto=dataUrl;
+      document.getElementById('upload-zone-wrap').innerHTML=`<div class="upload-preview"><img src="${dataUrl}" alt=""><button class="upload-preview-remove" onclick="removePhoto(false)" aria-label="Remove photo"><i class="ti ti-x" aria-hidden="true"></i></button><div class="upload-preview-name">${file.name}</div></div>`;
+    }
+  };
+  reader.readAsDataURL(file);
+}
+function removePhoto(isEdit){
+  if(isEdit){pendingPhotoEdit=null;pendingPhotoEditOrientation='landscape';document.getElementById('m-upload-zone-wrap').innerHTML=`<div class="upload-zone" id="m-upload-zone"><i class="ti ti-cloud-upload" aria-hidden="true"></i><div class="upload-zone-title">Click to upload or drag a photo here</div><div class="upload-zone-sub">PNG, JPG up to 5MB</div><input type="file" id="m-photo" accept="image/*" onchange="handlePhotoUpload(this,true)"></div>`;}
+  else{pendingPhoto=null;pendingPhotoOrientation='landscape';document.getElementById('upload-zone-wrap').innerHTML=`<div class="upload-zone" id="upload-zone"><i class="ti ti-cloud-upload" aria-hidden="true"></i><div class="upload-zone-title">Click to upload or drag a photo here</div><div class="upload-zone-sub">PNG, JPG up to 5MB · landscape or portrait both work</div><input type="file" id="p-photo" accept="image/*" onchange="handlePhotoUpload(this)"></div>`;}
+}
+
+function handleVideoUpload(input,isEdit){
+  const file=input.files[0];if(!file)return;
+  if(!file.type.startsWith('video/')){showToast('Please choose a video file.','error');return;}
+  if(file.size>20*1024*1024){showToast('Video must be under 20MB.','error');return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const dataUrl=e.target.result;
+    if(isEdit){
+      pendingVideoEdit=dataUrl;
+      document.getElementById('m-video-upload-zone-wrap').innerHTML=`<div class="upload-preview"><video src="${dataUrl}" style="width:100%;height:220px;object-fit:cover" muted></video><button class="upload-preview-remove" onclick="removeVideo(true)" aria-label="Remove video"><i class="ti ti-x" aria-hidden="true"></i></button><div class="upload-preview-name">${file.name}</div></div>`;
+    }else{
+      pendingVideo=dataUrl;
+      document.getElementById('video-upload-zone-wrap').innerHTML=`<div class="upload-preview"><video src="${dataUrl}" style="width:100%;height:220px;object-fit:cover" muted></video><button class="upload-preview-remove" onclick="removeVideo(false)" aria-label="Remove video"><i class="ti ti-x" aria-hidden="true"></i></button><div class="upload-preview-name">${file.name}</div></div>`;
+    }
+  };
+  reader.readAsDataURL(file);
+}
+function removeVideo(isEdit){
+  if(isEdit){pendingVideoEdit=null;document.getElementById('m-video-upload-zone-wrap').innerHTML=`<div class="upload-zone" id="m-video-upload-zone"><i class="ti ti-video" aria-hidden="true"></i><div class="upload-zone-title">Click to upload or drag a video here</div><div class="upload-zone-sub">MP4, WebM up to 20MB</div><input type="file" id="m-video" accept="video/*" onchange="handleVideoUpload(this,true)"></div>`;}
+  else{pendingVideo=null;document.getElementById('video-upload-zone-wrap').innerHTML=`<div class="upload-zone" id="video-upload-zone"><i class="ti ti-video" aria-hidden="true"></i><div class="upload-zone-title">Click to upload or drag a video here</div><div class="upload-zone-sub">MP4, WebM up to 20MB · the cover photo above is used as its poster</div><input type="file" id="p-video" accept="video/*" onchange="handleVideoUpload(this)"></div>`;}
+}
+
+function savePost(st=null){
+  const t=document.getElementById('p-title').value.trim();
+  if(!t){showToast('Please enter a headline.','error');return;}
+  const status=st||document.getElementById('p-status').value;
+  const photoUrl=(document.getElementById('p-photo-url').value||'').trim();
+  const videoUrl=(document.getElementById('p-video-url').value||'').trim();
+  const photo=photoUrl||pendingPhoto;
+  const video=videoUrl||pendingVideo;
+  const newPost={id:uid(),title:t,category:document.getElementById('p-category').value,author:document.getElementById('p-author').value.trim()||'Staff',excerpt:document.getElementById('p-excerpt').value.trim(),body:document.getElementById('p-body').value.trim(),tags:document.getElementById('p-tags').value.split(',').map(s=>s.trim()).filter(Boolean),status,breaking:document.getElementById('p-breaking').checked,trending:false,photo,video,mediaType:video?'video':'photo',orientation:pendingPhotoOrientation,date:new Date().toISOString()};
+  posts.unshift(newPost);
+  saveDB();clearForm();updateStats();renderPublic();
+  checkForNewPostsAndNotify();
+  showToast(status==='published'?'Post published!':'Draft saved.','success');
+
+  const toSheetEl=document.getElementById('p-to-sheet');
+  if(toSheetEl&&toSheetEl.checked){
+    if(!sheetConfig.writeUrl){
+      showToast('Saved locally. To also publish to Google Sheets, add an Apps Script Web App URL under the Google Sheet tab.','error');
+    }else{
+      postRowToSheet(newPost)
+        .then(()=>showToast('Sent to Google Sheets — check your sheet to confirm the row landed.','success'))
+        .catch(err=>{console.error('Buza Media: post-to-sheet failed.',err);showToast('Saved locally, but the request to Google Sheets never went out — check the Apps Script URL is correct.','error');});
+    }
+  }
+}
+function saveDraft(){savePost('draft');}
+function clearForm(){
+  ['p-title','p-author','p-tags','p-excerpt','p-body','p-photo-url','p-video-url'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('p-category').selectedIndex=0;
+  document.getElementById('p-status').value='published';
+  document.getElementById('p-breaking').checked=false;
+  document.getElementById('p-to-sheet').checked=true;
+  removePhoto(false);
+  removeVideo(false);
+}
+function insertFormat(pre,suf){
+  const ta=document.getElementById('p-body');
+  const s=ta.selectionStart,e=ta.selectionEnd,sel=ta.value.substring(s,e);
+  ta.value=ta.value.substring(0,s)+pre+sel+suf+ta.value.substring(e);
+  ta.focus();ta.selectionStart=s+pre.length;ta.selectionEnd=s+pre.length+sel.length;
+}
+
+function updateStats(){
+  const pub=posts.filter(p=>p.status==='published').length;
+  const draft=posts.filter(p=>p.status==='draft').length;
+  const brk=posts.filter(p=>p.breaking).length;
+  document.getElementById('stat-total').textContent=posts.length;
+  document.getElementById('stat-pub').textContent=pub;
+  document.getElementById('stat-draft').textContent=draft;
+  document.getElementById('stat-breaking').textContent=brk;
+  document.getElementById('mob-stat-total').textContent=posts.length;
+  document.getElementById('mob-stat-pub').textContent=pub;
+}
+
+function adminNav(btn,panel){
+  document.querySelectorAll('.sidebar-item,.mob-nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll(`[onclick*="adminNav"][onclick*="'${panel}'"]`).forEach(b=>b.classList.add('active'));
+  ['compose','posts','trending','insights','social','sheet'].forEach(p=>document.getElementById('panel-'+p).classList.toggle('hidden',p!==panel));
+  if(panel==='posts')renderPostsTable();
+  if(panel==='trending')renderTrending();
+  if(panel==='insights')renderInsights();
+  if(panel==='social')loadSocialFormFields();
+  if(panel==='sheet')initSheetPanelUI();
+}
+
+function loadSocialFormFields(){
+  document.getElementById('soc-fb').value=socialLinks.fb||'';
+  document.getElementById('soc-tw').value=socialLinks.tw||'';
+  document.getElementById('soc-ig').value=socialLinks.ig||'';
+  document.getElementById('soc-yt').value=socialLinks.yt||'';
+  document.getElementById('soc-tt').value=socialLinks.tt||'';
+  document.getElementById('soc-wa').value=socialLinks.wa||'';
+}
+function saveSocialLinks(){
+  socialLinks={
+    fb:document.getElementById('soc-fb').value.trim(),
+    tw:document.getElementById('soc-tw').value.trim(),
+    ig:document.getElementById('soc-ig').value.trim(),
+    yt:document.getElementById('soc-yt').value.trim(),
+    tt:document.getElementById('soc-tt').value.trim(),
+    wa:document.getElementById('soc-wa').value.trim(),
+  };
+  saveSocial();renderSocialFooter();
+  showToast('Social links updated.','success');
+}
+
+function filterAdmin(btn,f){
+  adminFilter2=f;
+  document.querySelectorAll('#panel-posts .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');renderPostsTable();
+}
+function searchPosts(v){currentSearch=v;renderPostsTable();}
+
+function getFiltered(){
+  let f=posts.filter(p=>{
+    if(adminFilter2==='published')return p.status==='published';
+    if(adminFilter2==='draft')return p.status==='draft';
+    if(adminFilter2==='breaking')return p.breaking;
+    return true;
+  });
+  if(currentSearch){const q=currentSearch.toLowerCase();f=f.filter(p=>p.title.toLowerCase().includes(q)||(p.author||'').toLowerCase().includes(q)||p.category.toLowerCase().includes(q));}
+  return f.sort((a,b)=>new Date(b.date)-new Date(a.date));
+}
+
+function renderPostsTable(){
+  const f=getFiltered();
+  const noData=`<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--muted)">No posts found.</td></tr>`;
+  document.getElementById('posts-tbody').innerHTML=f.length===0?noData:f.map(p=>`<tr>
+    <td class="post-title-cell">${p.photo?`<img class="post-thumb" src="${p.photo}" alt="">`:`<div class="post-thumb-placeholder"><i class="ti ${icon(p.category)}" aria-hidden="true"></i></div>`}<div><div>${p.title}</div><p>${p.author||'Staff'} · ${p.category}</p></div></td>
+    <td><span class="card-tag">${p.category}</span></td>
+    <td><span class="badge badge-${p.status}">${p.status}</span>${p.breaking?'<span class="badge badge-breaking" style="margin-left:4px">Breaking</span>':''}</td>
+    <td style="font-size:.74rem;color:var(--muted)">${fmtDateShort(p.date)}</td>
+    <td><div style="display:flex;gap:.3rem">
+      <button class="btn btn-sm btn-secondary" onclick="openEdit('${p.id}')"><i class="ti ti-edit" aria-hidden="true"></i></button>
+      <button class="btn btn-sm btn-secondary" style="font-size:.7rem" onclick="toggleStatus('${p.id}')">${p.status==='published'?'Unpublish':'Publish'}</button>
+      <button class="btn btn-sm btn-danger" onclick="deletePost('${p.id}')"><i class="ti ti-trash" aria-hidden="true"></i></button>
+    </div></td>
+  </tr>`).join('');
+  document.getElementById('posts-cards').innerHTML=f.length===0?`<p style="text-align:center;padding:2rem;color:var(--muted)">No posts found.</p>`:f.map(p=>`
+  <div class="post-card-item">
+    ${p.photo?`<img class="post-card-thumb" src="${p.photo}" alt="">`:`<div class="post-thumb-placeholder" style="width:56px;height:56px;border-radius:8px"><i class="ti ${icon(p.category)}" aria-hidden="true" style="font-size:20px"></i></div>`}
+    <div class="post-card-item-body">
+      <div class="post-card-item-title">${p.title}</div>
+      <div class="post-card-item-meta">
+        <span class="card-tag">${p.category}</span><span class="badge badge-${p.status}">${p.status}</span>
+        ${p.breaking?'<span class="badge badge-breaking">Breaking</span>':''}<span>${fmtDateShort(p.date)}</span>
+      </div>
+      <div class="post-card-item-actions">
+        <button class="btn btn-sm btn-secondary" onclick="openEdit('${p.id}')"><i class="ti ti-edit" aria-hidden="true"></i> Edit</button>
+        <button class="btn btn-sm btn-secondary" onclick="toggleStatus('${p.id}')">${p.status==='published'?'Unpublish':'Publish'}</button>
+        <button class="btn btn-sm btn-danger" onclick="deletePost('${p.id}')"><i class="ti ti-trash" aria-hidden="true"></i></button>
+      </div>
+    </div>
+  </div>`).join('');
+}
+
+function renderTrending(){
+  const pub=posts.filter(p=>p.status==='published');
+  document.getElementById('trending-list').innerHTML=pub.length===0?'<p style="color:var(--muted);font-size:.83rem">No published posts yet.</p>':pub.map(p=>`
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.65rem .75rem;border-radius:8px;border:.5px solid var(--border);margin-bottom:.5rem;background:${p.trending?'var(--tag-bg)':'#fff'}">
+    <div style="min-width:0;display:flex;align-items:center;gap:.6rem">
+      ${p.photo?`<img src="${p.photo}" alt="" style="width:38px;height:38px;border-radius:6px;object-fit:cover;flex-shrink:0">`:`<div class="post-thumb-placeholder" style="width:38px;height:38px"><i class="ti ${icon(p.category)}" aria-hidden="true" style="font-size:15px"></i></div>`}
+      <div style="min-width:0">
+        <div style="font-size:.85rem;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.title}</div>
+        <div style="font-size:.72rem;color:var(--muted)">${p.category} · ${fmtDateShort(p.date)}</div>
+      </div>
+    </div>
+    <button class="btn btn-sm ${p.trending?'btn-primary':'btn-secondary'}" style="flex-shrink:0" onclick="toggleTrending('${p.id}')">
+      <i class="ti ti-trending-up" aria-hidden="true"></i> ${p.trending?'Remove':'Add'}
+    </button>
+  </div>`).join('');
+}
+
+function toggleTrending(id){const p=posts.find(x=>x.id===id);if(p){p.trending=!p.trending;saveDB();renderTrending();renderPublic();showToast(p.trending?'Added to trending!':'Removed.','success');}}
+
+function renderInsights(){
+  const pub=posts.filter(p=>p.status==='published');
+  const totalViews=pub.reduce((sum,p)=>sum+(viewsStore[p.id]||0),0);
+  const totalLikes=pub.reduce((sum,p)=>sum+((likesStore[p.id]||[]).length),0);
+  document.getElementById('insights-summary').innerHTML=`
+    <div class="insights-stat"><div class="insights-stat-num">${totalViews.toLocaleString()}</div><div class="insights-stat-label">Total views</div></div>
+    <div class="insights-stat"><div class="insights-stat-num">${totalLikes.toLocaleString()}</div><div class="insights-stat-label">Total likes</div></div>
+    <div class="insights-stat"><div class="insights-stat-num">${pub.length}</div><div class="insights-stat-label">Published posts</div></div>`;
+  const ranked=[...pub].sort((a,b)=>(viewsStore[b.id]||0)-(viewsStore[a.id]||0));
+  document.getElementById('insights-list').innerHTML=ranked.length===0?'<p style="color:var(--muted);font-size:.83rem">No published posts yet.</p>':ranked.map(p=>{
+    const v=viewsStore[p.id]||0,l=(likesStore[p.id]||[]).length;
+    return `
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.65rem .75rem;border-radius:8px;border:.5px solid var(--border);margin-bottom:.5rem;background:#fff">
+    <div style="min-width:0;display:flex;align-items:center;gap:.6rem">
+      ${p.photo?`<img src="${p.photo}" alt="" style="width:38px;height:38px;border-radius:6px;object-fit:cover;flex-shrink:0">`:`<div class="post-thumb-placeholder" style="width:38px;height:38px"><i class="ti ${icon(p.category)}" aria-hidden="true" style="font-size:15px"></i></div>`}
+      <div style="min-width:0">
+        <div style="font-size:.85rem;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.title}</div>
+        <div style="font-size:.72rem;color:var(--muted)">${p.category} · ${fmtDateShort(p.date)}</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:1rem;flex-shrink:0;font-size:.8rem;color:var(--muted)">
+      <span><i class="ti ti-eye" aria-hidden="true"></i> ${v.toLocaleString()}</span>
+      <span><i class="ti ti-heart" aria-hidden="true"></i> ${l.toLocaleString()}</span>
+    </div>
+  </div>`;}).join('');
+}
+function toggleStatus(id){const p=posts.find(x=>x.id===id);if(p){p.status=p.status==='published'?'draft':'published';saveDB();renderPostsTable();updateStats();renderPublic();showToast('Status updated.','success');}}
+function deletePost(id){if(confirm('Delete this post permanently?')){posts=posts.filter(p=>p.id!==id);saveDB();renderPostsTable();updateStats();renderPublic();showToast('Post deleted.','success');}}
+
+function openEdit(id){
+  const p=posts.find(x=>x.id===id);if(!p)return;editingId=id;pendingPhotoEdit=p.photo;pendingVideoEdit=p.video||null;pendingPhotoEditOrientation=p.orientation||'landscape';
+  document.getElementById('m-title').value=p.title;
+  document.getElementById('m-excerpt').value=p.excerpt||'';
+  document.getElementById('m-body').value=p.body||'';
+  document.getElementById('m-status').value=p.status;
+  document.getElementById('m-breaking').checked=!!p.breaking;
+  document.getElementById('m-category').value=p.category;
+  document.getElementById('m-upload-zone-wrap').innerHTML=p.photo?
+    `<div class="upload-preview"><img src="${p.photo}" alt=""><button class="upload-preview-remove" onclick="removePhoto(true)" aria-label="Remove photo"><i class="ti ti-x" aria-hidden="true"></i></button></div>`:
+    `<div class="upload-zone" id="m-upload-zone"><i class="ti ti-cloud-upload" aria-hidden="true"></i><div class="upload-zone-title">Click to upload or drag a photo here</div><div class="upload-zone-sub">PNG, JPG up to 5MB</div><input type="file" id="m-photo" accept="image/*" onchange="handlePhotoUpload(this,true)"></div>`;
+  document.getElementById('m-video-upload-zone-wrap').innerHTML=p.video?
+    `<div class="upload-preview"><video src="${p.video}" style="width:100%;height:220px;object-fit:cover" muted controls></video><button class="upload-preview-remove" onclick="removeVideo(true)" aria-label="Remove video"><i class="ti ti-x" aria-hidden="true"></i></button></div>`:
+    `<div class="upload-zone" id="m-video-upload-zone"><i class="ti ti-video" aria-hidden="true"></i><div class="upload-zone-title">Click to upload or drag a video here</div><div class="upload-zone-sub">MP4, WebM up to 20MB</div><input type="file" id="m-video" accept="video/*" onchange="handleVideoUpload(this,true)"></div>`;
+  document.getElementById('modal-overlay').classList.remove('hidden');
+}
+function closeModal(){document.getElementById('modal-overlay').classList.add('hidden');editingId=null;}
+function saveEdit(){
+  const p=posts.find(x=>x.id===editingId);if(!p)return;
+  p.title=document.getElementById('m-title').value;
+  p.excerpt=document.getElementById('m-excerpt').value;
+  p.body=document.getElementById('m-body').value;
+  p.status=document.getElementById('m-status').value;
+  p.breaking=document.getElementById('m-breaking').checked;
+  p.category=document.getElementById('m-category').value;
+  p.photo=pendingPhotoEdit;
+  p.video=pendingVideoEdit;
+  p.mediaType=pendingVideoEdit?'video':'photo';
+  p.orientation=pendingPhotoEditOrientation;
+  saveDB();closeModal();renderPostsTable();updateStats();renderPublic();showToast('Post updated.','success');
+}
+
+function renderLikeState(){
+  const p=posts.find(x=>x.id===currentArticleId);if(!p)return;
+  const vid=getVisitorId();
+  const likedByMe=(likesStore[p.id]||[]).includes(vid);
+  const count=(likesStore[p.id]||[]).length;
+  document.getElementById('like-btn').classList.toggle('liked',likedByMe);
+  document.getElementById('like-btn').innerHTML=`<i class="ti ti-heart" aria-hidden="true"></i> <span id="like-count">${count}</span> ${likedByMe?'Liked':'Like'}`;
+}
+function likePostById(id,forceLike){
+  const vid=getVisitorId();
+  if(!likesStore[id])likesStore[id]=[];
+  const idx=likesStore[id].indexOf(vid);
+  if(forceLike){
+    if(idx===-1)likesStore[id].push(vid);
+  }else{
+    if(idx>-1)likesStore[id].splice(idx,1);else likesStore[id].push(vid);
+  }
+  saveLikes();
+  if(id===currentArticleId)renderLikeState();
+}
+function toggleLike(){
+  if(!currentArticleId)return;
+  likePostById(currentArticleId,false);
+}
+
+// Double-tap-to-like on a post's image — first tap waits briefly to see if a
+// second tap follows; if it does, we like the post and show the heart burst
+// instead of opening the article. A lone tap opens the article as normal.
+function cardImgTap(e,id){
+  e.stopPropagation();
+  const el=e.currentTarget;
+  const now=Date.now();
+  const last=Number(el.dataset.lastTap||0);
+  if(now-last<350){
+    clearTimeout(el._openTimer);
+    el.dataset.lastTap='0';
+    likePostById(id,true);
+    spawnHeartBurst(el);
+  }else{
+    el.dataset.lastTap=String(now);
+    el._openTimer=setTimeout(()=>{openArticle(id);},350);
+  }
+}
+// On the open article itself there's no navigation to disambiguate from —
+// any double-tap on the hero image just likes it.
+function articleImgTap(e){
+  const el=e.currentTarget;
+  const now=Date.now();
+  const last=Number(el.dataset.lastTap||0);
+  if(now-last<350&&currentArticleId){
+    likePostById(currentArticleId,true);
+    spawnHeartBurst(el);
+  }
+  el.dataset.lastTap=String(now);
+}
+function spawnHeartBurst(container){
+  for(let i=0;i<2;i++){
+    const h=document.createElement('span');
+    h.className='heart-burst';
+    h.textContent='❤️';
+    h.style.left=(42+i*16)+'%';
+    h.style.animationDelay=(i*0.09)+'s';
+    container.appendChild(h);
+    h.addEventListener('animationend',()=>h.remove());
+  }
+}
+
+function updateFollowBtn(){
+  const btn=document.getElementById('follow-btn');if(!btn)return;
+  btn.classList.toggle('following',isFollowing);
+  btn.innerHTML=isFollowing?'<i class="ti ti-bell-ringing" aria-hidden="true"></i> Following':'<i class="ti ti-bell-plus" aria-hidden="true"></i> Follow';
+}
+function toggleFollow(){
+  if(isFollowing){
+    isFollowing=false;
+    localStorage.setItem(FOLLOW_KEY,'0');
+    updateFollowBtn();
+    showToast("You've unfollowed Buza Media.",'success');
+    return;
+  }
+  if(!('Notification' in window)){
+    showToast('This browser does not support notifications.','error');
+    return;
+  }
+  Notification.requestPermission().then(perm=>{
+    if(perm==='granted'){
+      isFollowing=true;
+      localStorage.setItem(FOLLOW_KEY,'1');
+      updateFollowBtn();
+      try{new Notification('Buza Media',{body:"You're following now — we'll notify you here about new posts while this tab is open."});}catch(e){}
+      showToast('You are now following Buza Media!','success');
+    }else{
+      showToast('Notifications are blocked — allow them in your browser/site settings to follow.','error');
+    }
+  });
+}
+
+function toggleShareMenu(){document.getElementById('share-menu').classList.toggle('hidden');}
+function shareTo(network){
+  const p=posts.find(x=>x.id===currentArticleId);
+  const text=encodeURIComponent(p?p.title:'Buza Media');
+  const url=encodeURIComponent(window.location.href);
+  let target='';
+  if(network==='facebook')target=`https://www.facebook.com/sharer/sharer.php?u=${url}`;
+  if(network==='twitter')target=`https://twitter.com/intent/tweet?text=${text}&url=${url}`;
+  if(network==='whatsapp')target=`https://wa.me/?text=${text}%20${url}`;
+  window.open(target,'_blank','noopener,width=600,height=500');
+  document.getElementById('share-menu').classList.add('hidden');
+  return false;
+}
+function copyLink(){
+  navigator.clipboard.writeText(window.location.href).then(()=>showToast('Link copied to clipboard.','success')).catch(()=>showToast('Could not copy link.','error'));
+  document.getElementById('share-menu').classList.add('hidden');
+}
+
+function wrapText(ctx,text,x,y,maxWidth,lineHeight,maxLines){
+  const words=text.split(' ');
+  let line='',lines=[];
+  for(let n=0;n<words.length;n++){
+    const testLine=line+words[n]+' ';
+    if(ctx.measureText(testLine).width>maxWidth&&n>0){lines.push(line.trim());line=words[n]+' ';}
+    else{line=testLine;}
+  }
+  lines.push(line.trim());
+  if(maxLines&&lines.length>maxLines){
+    lines=lines.slice(0,maxLines);
+    let last=lines[maxLines-1];
+    while(ctx.measureText(last+'…').width>maxWidth&&last.length>0){last=last.slice(0,-1);}
+    lines[maxLines-1]=last+'…';
+  }
+  lines.forEach((l,i)=>ctx.fillText(l,x,y+i*lineHeight));
+  return lines.length;
+}
+
+function globalRoundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+function buildVideoBannerCanvas(p,vw,vh){
+  const c=document.createElement('canvas');
+  c.width=vw;c.height=vh;
+  const cx=c.getContext('2d');
+  const bannerH=Math.max(130,Math.round(vh*0.3));
+  const grad=cx.createLinearGradient(0,vh-bannerH,0,vh);
+  grad.addColorStop(0,'rgba(0,0,0,0)');grad.addColorStop(1,'rgba(0,0,0,.68)');
+  cx.fillStyle=grad;cx.fillRect(0,vh-bannerH,vw,bannerH);
+
+  const pad=Math.max(18,Math.round(vw*0.03));
+  const catFont=Math.max(14,Math.round(vh*0.032));
+  cx.font=`700 ${catFont}px Arial`;
+  const catText=(p.category||'').toUpperCase();
+  const catW=cx.measureText(catText).width;
+  const catY=vh-bannerH+pad;
+  cx.fillStyle='#2065fe';
+  globalRoundRect(cx,pad,catY,catW+pad,catFont+16,8);
+  cx.fill();
+  cx.fillStyle='#ffffff';
+  cx.fillText(catText,pad+pad/2,catY+catFont+6);
+
+  if(p.breaking){
+    const bFont=Math.max(12,Math.round(vh*0.026));
+    cx.font=`700 ${bFont}px Arial`;
+    const bw=cx.measureText('BREAKING').width;
+    const bx=vw-bw-pad*2.4-pad;
+    cx.fillStyle='#e63946';
+    globalRoundRect(cx,bx,catY,bw+pad*1.4,bFont+14,8);
+    cx.fill();
+    cx.fillStyle='#ffffff';
+    cx.fillText('BREAKING',bx+pad*0.7,catY+bFont+5);
+  }
+
+  const titleFont=Math.max(16,Math.round(vh*0.05));
+  cx.fillStyle='#ffffff';
+  cx.font=`700 ${titleFont}px Arial`;
+  wrapText(cx,p.title||'',pad,vh-pad*2.4,vw-pad*2,titleFont+8,2);
+
+  const brandFont=Math.max(12,Math.round(vh*0.03));
+  cx.font=`700 ${brandFont}px Arial`;
+  cx.fillStyle='#ffffff';
+  cx.fillText('BUZA MEDIA',pad,vh-pad*0.6);
+
+  return c;
+}
+
+async function downloadVideo(){
+  const p=posts.find(x=>x.id===currentArticleId);if(!p||!p.video)return;
+  if(typeof MediaRecorder==='undefined'||!HTMLCanvasElement.prototype.captureStream){
+    showToast('Your browser can\'t add the banner to video — downloading the plain file.','error');
+    const link=document.createElement('a');
+    link.download=`buza-media-${(p.title||'video').toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,50)}.mp4`;
+    link.href=p.video;
+    document.body.appendChild(link);link.click();document.body.removeChild(link);
+    return;
+  }
+  showToast('Preparing your video, please wait…','success');
+  try{
+    const video=document.createElement('video');
+    video.crossOrigin='anonymous';
+    video.src=p.video;video.muted=false;video.playsInline=true;
+    await new Promise((resolve,reject)=>{
+      video.onloadedmetadata=resolve;
+      video.onerror=()=>reject(new Error('Could not load video.'));
+    });
+
+    const vw=video.videoWidth||1280,vh=video.videoHeight||720;
+    const canvas=document.createElement('canvas');
+    canvas.width=vw;canvas.height=vh;
+    const ctx=canvas.getContext('2d');
+    const bannerCanvas=buildVideoBannerCanvas(p,vw,vh);
+
+    const canvasStream=canvas.captureStream(30);
+    try{
+      const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+      const source=audioCtx.createMediaElementSource(video);
+      const dest=audioCtx.createMediaStreamDestination();
+      source.connect(dest);
+      dest.stream.getAudioTracks().forEach(t=>canvasStream.addTrack(t));
+    }catch(audioErr){/* proceed silently without audio if it can't be captured */}
+
+    const mimeCandidates=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
+    const mimeType=mimeCandidates.find(m=>MediaRecorder.isTypeSupported(m))||'video/webm';
+    const recorder=new MediaRecorder(canvasStream,{mimeType});
+    const chunks=[];
+    recorder.ondataavailable=(e)=>{if(e.data.size>0)chunks.push(e.data);};
+    const stopped=new Promise((resolve)=>{recorder.onstop=resolve;});
+
+    let raf;
+    function drawFrame(){
+      ctx.drawImage(video,0,0,vw,vh);
+      ctx.drawImage(bannerCanvas,0,0);
+      if(!video.paused&&!video.ended)raf=requestAnimationFrame(drawFrame);
+    }
+
+    recorder.start();
+    await video.play();
+    drawFrame();
+    video.onended=()=>{cancelAnimationFrame(raf);recorder.stop();};
+
+    await stopped;
+    const blob=new Blob(chunks,{type:'video/webm'});
+    const link=document.createElement('a');
+    link.download=`buza-media-${(p.title||'video').toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,50)}.webm`;
+    link.href=URL.createObjectURL(blob);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('Video with banner downloaded!','success');
+  }catch(err){
+    console.error(err);
+    showToast('Could not add the banner to this video.','error');
+  }
+}
+
+function downloadPostCard(){
+  const p=posts.find(x=>x.id===currentArticleId);if(!p)return;
+  const W=1080,H=1350;
+  const portrait=p.orientation==='portrait';
+  const leftW=480;
+  const canvas=document.createElement('canvas');
+  canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext('2d');
+
+  function finishAndDownload(){
+    ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);
+    const imgAreaH=620;
+    if(p.photo){
+      const img=new Image();
+      // Sheet-hosted photos live on another domain. Requesting them anonymously (and
+      // relying on the host sending CORS headers, as image hosts like GitHub, Imgur,
+      // and Google Drive direct-links do) keeps the canvas "un-tainted" so it can still
+      // be exported as a downloadable PNG.
+      img.crossOrigin='anonymous';
+      img.onload=()=>{
+        if(portrait){
+          const scale=Math.max(leftW/img.width,H/img.height);
+          const sw=leftW/scale,sh=H/scale;
+          const sx=(img.width-sw)/2,sy=(img.height-sh)/2;
+          ctx.drawImage(img,sx,sy,sw,sh,0,0,leftW,H);
+          drawPortraitBanner();
+        }else{
+          const scale=Math.max(W/img.width,imgAreaH/img.height);
+          const sw=W/scale,sh=imgAreaH/scale;
+          const sx=(img.width-sw)/2,sy=(img.height-sh)/2;
+          ctx.drawImage(img,sx,sy,sw,sh,0,0,W,imgAreaH);
+          drawOverlayAndText();
+        }
+      };
+      img.onerror=()=>{drawPlaceholderImg();portrait?drawPortraitBanner():drawOverlayAndText();};
+      img.src=p.photo;
+    }else{drawPlaceholderImg();portrait?drawPortraitBanner():drawOverlayAndText();}
+
+    function drawPlaceholderImg(){
+      if(portrait){
+        const grad=ctx.createLinearGradient(0,0,leftW,H);
+        grad.addColorStop(0,'#1a1a2e');grad.addColorStop(.5,'#16213e');grad.addColorStop(1,'#0f3460');
+        ctx.fillStyle=grad;ctx.fillRect(0,0,leftW,H);
+      }else{
+        const grad=ctx.createLinearGradient(0,0,W,imgAreaH);
+        grad.addColorStop(0,'#1a1a2e');grad.addColorStop(.5,'#16213e');grad.addColorStop(1,'#0f3460');
+        ctx.fillStyle=grad;ctx.fillRect(0,0,W,imgAreaH);
+      }
+    }
+
+    function drawPortraitBanner(){
+      const padX=leftW+40;
+      const contentW=W-leftW-80;
+
+      ctx.font='700 26px Arial';
+      const catW=ctx.measureText(p.category.toUpperCase()).width;
+      ctx.fillStyle='#2065fe';
+      roundRect(ctx,padX,60,catW+40,42,8);
+      ctx.fill();
+      ctx.fillStyle='#ffffff';
+      ctx.fillText(p.category.toUpperCase(),padX+20,89);
+
+      let breakingH=0;
+      if(p.breaking){
+        ctx.font='700 22px Arial';
+        const bw=ctx.measureText('BREAKING').width;
+        ctx.fillStyle='#e63946';
+        roundRect(ctx,padX,114,bw+36,38,8);
+        ctx.fill();
+        ctx.fillStyle='#ffffff';
+        ctx.fillText('BREAKING',padX+18,140);
+        breakingH=64;
+      }
+
+      ctx.fillStyle='#1a1a1e';
+      ctx.font='700 44px Arial';
+      const titleY=170+breakingH;
+      const titleLines=wrapText(ctx,p.title,padX,titleY,contentW,52,6);
+
+      const excerptY=titleY+titleLines*52+34;
+      ctx.fillStyle='#6c757d';
+      ctx.font='400 26px Arial';
+      if(p.excerpt){wrapText(ctx,p.excerpt,padX,excerptY,contentW,36,4);}
+
+      const metaY=H-140;
+      ctx.strokeStyle='#e0e0e0';
+      ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(padX,metaY-30);ctx.lineTo(W-40,metaY-30);ctx.stroke();
+
+      ctx.fillStyle='#1a1a1e';
+      ctx.font='600 24px Arial';
+      ctx.fillText('By '+(p.author||'Staff'),padX,metaY+6);
+
+      ctx.fillStyle='#6c757d';
+      ctx.font='400 22px Arial';
+      ctx.fillText(fmtDateShort(p.date),padX,metaY+38);
+
+      ctx.fillStyle='#1a1a2e';
+      ctx.font='700 24px Arial';
+      ctx.fillText('BUZA MEDIA',padX,H-40);
+      ctx.fillStyle='#2065fe';
+      ctx.fillRect(padX+150,H-56,4,20);
+
+      ctx.fillStyle='#2065fe';
+      ctx.font='600 20px Arial';
+      const tag='buzamedia.com';
+      const tagW=ctx.measureText(tag).width;
+      ctx.fillText(tag,W-40-tagW,H-40);
+
+      triggerDownload();
+    }
+
+    function drawOverlayAndText(){
+      const grad2=ctx.createLinearGradient(0,imgAreaH-220,0,imgAreaH);
+      grad2.addColorStop(0,'rgba(0,0,0,0)');grad2.addColorStop(1,'rgba(0,0,0,.55)');
+      ctx.fillStyle=grad2;ctx.fillRect(0,imgAreaH-220,W,220);
+
+      ctx.font='700 28px Arial';
+      const catW=ctx.measureText(p.category.toUpperCase()).width;
+      ctx.fillStyle='#2065fe';
+      roundRect(ctx,48,imgAreaH-78,catW+44,46,8);
+      ctx.fill();
+      ctx.fillStyle='#ffffff';
+      ctx.fillText(p.category.toUpperCase(),70,imgAreaH-46);
+
+      if(p.breaking){
+        ctx.font='700 24px Arial';
+        const bw=ctx.measureText('BREAKING').width;
+        ctx.fillStyle='#e63946';
+        roundRect(ctx,W-bw-90,imgAreaH-78,bw+42,46,8);
+        ctx.fill();
+        ctx.fillStyle='#ffffff';
+        ctx.fillText('BREAKING',W-bw-69,imgAreaH-46);
+      }
+
+      ctx.fillStyle='#1a1a2e';
+      ctx.font='700 26px Arial';
+      ctx.fillText('BUZA MEDIA',48,70);
+      ctx.fillStyle='#2065fe';
+      ctx.fillRect(220,52,4,22);
+
+      ctx.fillStyle='#1a1a1e';
+      ctx.font='700 52px Arial';
+      const titleLines=wrapText(ctx,p.title,48,imgAreaH+90,W-96,62,4);
+
+      const excerptY=imgAreaH+90+titleLines*62+30;
+      ctx.fillStyle='#6c757d';
+      ctx.font='400 30px Arial';
+      if(p.excerpt){wrapText(ctx,p.excerpt,48,excerptY,W-96,42,3);}
+
+      const metaY=H-90;
+      ctx.strokeStyle='#e0e0e0';
+      ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(48,metaY-40);ctx.lineTo(W-48,metaY-40);ctx.stroke();
+
+      ctx.fillStyle='#1a1a1e';
+      ctx.font='600 28px Arial';
+      ctx.fillText('By '+(p.author||'Staff'),48,metaY);
+
+      ctx.fillStyle='#6c757d';
+      ctx.font='400 26px Arial';
+      ctx.fillText(fmtDateShort(p.date),48,metaY+38);
+
+      ctx.fillStyle='#2065fe';
+      ctx.font='600 26px Arial';
+      const tag='buzamedia.com';
+      const tagW=ctx.measureText(tag).width;
+      ctx.fillText(tag,W-48-tagW,metaY+18);
+
+      triggerDownload();
+    }
+  }
+
+  function roundRect(ctx,x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+
+  function triggerDownload(){
+    try{
+      canvas.toBlob((blob)=>{
+        if(!blob){showToast('This image\'s host blocks downloads (no CORS support). Try an image hosted on GitHub, Imgur, or a Google Drive direct link.','error');return;}
+        const link=document.createElement('a');
+        link.download=`buza-media-${(p.title||'post').toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,50)}.png`;
+        link.href=URL.createObjectURL(blob);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast('Post card downloaded!','success');
+      },'image/png');
+    }catch(err){
+      console.error('Buza Media: banner download blocked by CORS.',err);
+      showToast('This image\'s host blocks downloads (no CORS support). Try an image hosted on GitHub, Imgur, or a Google Drive direct link.','error');
+    }
+  }
+
+  finishAndDownload();
+}
+
+function showToast(msg,type='success'){
+  const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type+' show';
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+document.getElementById('modal-overlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
+document.addEventListener('click',function(e){
+  const wrap=document.querySelector('.share-wrap');
+  if(wrap&&!wrap.contains(e.target))document.getElementById('share-menu').classList.add('hidden');
+});
+document.getElementById('pub-date').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+// Re-check mobile vs desktop pagination if the window is resized or rotated.
+let resizeTimer=null;
+window.addEventListener('resize',function(){
+  clearTimeout(resizeTimer);
+  resizeTimer=setTimeout(function(){
+    if(!document.getElementById('view-public').classList.contains('hidden'))renderPublic();
+  },200);
+});
+
+loadDB();loadSocial();loadLikes();loadViews();loadFollow();loadSheetConfig();primeKnownPostIds();renderPublic();updateStats();renderSocialFooter();
+document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.dataset.lang===displayLang));
+// If a Google Sheet is already connected from a previous visit, pull the latest rows now.
+if(sheetConfig.sheetId){syncFromSheet(false);}
+
+// Auto-refresh from the connected Google Sheet every 60 seconds, silently.
+// syncFromSheet(false) never shows toasts or steals focus/scroll — it just
+// quietly updates the in-memory posts and re-renders the public list.
+// Skipped while an admin edit modal is open, or while inside the admin
+// dashboard, so nobody's in-progress edits get overwritten mid-typing.
+setInterval(function(){
+  if(!sheetConfig.sheetId)return;
+  const modalOpen=!document.getElementById('modal-overlay').classList.contains('hidden');
+  const inAdmin=!document.getElementById('view-admin').classList.contains('hidden');
+  if(modalOpen||inAdmin)return;
+  syncFromSheet(false);
+},60000);
+</script>
+</body>
+</html>
