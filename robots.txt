@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://255denisjackson.github.io/255djackson_buza_media.com/sitemap.xml
+Sitemap: https://255denisjackson.github.io/255djackson_buza_media.com/news-sitemap.xml

@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="sw"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>Buza Media</title>
+<script>
+// An article link like /a/1a2b3c4d/ whose page has not been built yet opens inside the main site instead.
+(function(){
+  var m=location.pathname.match(/\/a\/([A-Za-z0-9_-]+)\/?$/);
+  var base=location.pathname.replace(/\/a\/[^\/]*\/?$/,'/');
+  if(!m){var parts=location.pathname.split('/');base='/'+(parts[1]?parts[1]+'/':'');}
+  location.replace(base+(m?'?a='+m[1]:''));
+})();
+</script></head>
+<body style="font-family:system-ui;padding:2rem"><p>Inafungua Buza Media… <a href="./">Bonyeza hapa</a></p></body></html>
