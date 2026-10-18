@@ -879,7 +879,7 @@ const SUPABASE_URL='https://gxfwjicztemfpxfjbdqq.supabase.co';
 const SUPABASE_KEY='sb_publishable_zz-T8b1gItOWTM2R43t-jQ_--qts2s8'; // publishable (public) key — safe in the browser; real secrets live only in the database
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 let categoryIdByName={};
-const ARTICLE_SELECT='id,short_code,title,subtitle,body,author,tags,status,is_breaking,is_featured,orientation,image_url,image_width,image_height,video_url,view_count,like_count,published_at,created_at,source_name,source_url,categories(name)';
+const ARTICLE_SELECT='id,short_code,title,subtitle,body,author,tags,status,is_breaking,is_featured,orientation,language,image_url,image_width,image_height,video_url,view_count,like_count,published_at,created_at,source_name,source_url,categories(name)';
 const stripTags=v=>String(v||'').replace(/<[^>]*>/g,'').trim();
 
 function getVisitorId(){
@@ -944,6 +944,25 @@ function checkForNewPostsAndNotify(){
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
 function fmtDate(iso){return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});}
 function fmtDateShort(iso){return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+
+// ---- text for the downloaded banner follows the language picked with the EN / SW switch ----
+const CARD_TEXT={
+  sw:{by:'Na',breaking:'HABARI MOTO',cats:{Sports:'Michezo',Entertainment:'Burudani',Politics:'Siasa',Tech:'Teknolojia',Business:'Biashara','World News':'Habari za Dunia',General:'Habari za Jumla'}},
+  en:{by:'By',breaking:'BREAKING',cats:{}}
+};
+function cardLangOf(p){return displayLang==='original'?(p.language==='en'?'en':'sw'):displayLang;}
+async function cardTextFor(p){
+  const lang=cardLangOf(p);
+  let title=p.title||'',excerpt=p.excerpt||'';
+  if(displayLang!=='original'){
+    const c=translationCache[displayLang+'::post::'+p.id];
+    if(c){title=c.title||title;excerpt=c.excerpt||excerpt;}
+    else{[title,excerpt]=await Promise.all([translateText(title,displayLang),translateText(excerpt,displayLang)]);}
+  }
+  const L=CARD_TEXT[lang]||CARD_TEXT.sw;
+  return {lang,title,excerpt,by:L.by,breaking:L.breaking,category:L.cats[p.category]||p.category,locale:lang==='sw'?'sw-TZ':'en-US'};
+}
+function fmtDateCard(iso,locale){return new Date(iso).toLocaleDateString(locale,{month:'short',day:'numeric',year:'numeric'});}
 function icon(cat){return CAT_ICONS[cat]||'ti-news';}
 
 /* ==========================================================================
@@ -972,6 +991,7 @@ function mapArticle(r){
     photo:r.image_url||null,imageW:r.image_width||null,imageH:r.image_height||null,
     video,mediaType:video?'video':'photo',
     orientation:r.orientation==='portrait'?'portrait':'landscape',
+    language:r.language==='en'?'en':'sw',
     date:r.published_at||r.created_at,
     views:Number(r.view_count)||0,likes:Number(r.like_count)||0,
     sourceName:r.source_name||'',sourceUrl:r.source_url||''
@@ -1942,6 +1962,30 @@ function wrapLines(cx,text,maxW,maxLines){
   return lines;
 }
 
+
+// Bold BUZA MEDIA wordmark: gradient letters, crisp dark outline and a blue glow. No box or background behind it.
+function drawBrandWord(ctx,text,x,y,size,align){
+  ctx.save();
+  ctx.font=`900 italic ${size}px Arial, Helvetica, sans-serif`;
+  if('letterSpacing' in ctx)ctx.letterSpacing=Math.round(size*0.08)+'px';
+  const w=ctx.measureText(text).width;
+  const x0=align==='right'?x-w:x;
+  const g=ctx.createLinearGradient(x0,y-size,x0+w,y);
+  g.addColorStop(0,'#ffffff');g.addColorStop(0.55,'#d4e3ff');g.addColorStop(1,'#6b9bff');
+  ctx.lineJoin='round';
+  ctx.lineWidth=Math.max(3,size*0.14);
+  ctx.strokeStyle='rgba(6,10,32,.85)';
+  ctx.shadowColor='rgba(0,0,0,.6)';ctx.shadowBlur=size*0.25;ctx.shadowOffsetY=2;
+  ctx.strokeText(text,x0,y);
+  ctx.shadowColor='rgba(32,101,254,.95)';ctx.shadowBlur=size*0.55;ctx.shadowOffsetY=0;
+  ctx.fillStyle=g;
+  ctx.fillText(text,x0,y);
+  ctx.shadowBlur=0;
+  ctx.fillText(text,x0,y);
+  ctx.restore();
+  return w;
+}
+
 // The text layer drawn over every video frame: black filter first, then the words on top.
 function buildVideoBannerCanvas(p,vw,vh){
   const c=document.createElement('canvas');c.width=vw;c.height=vh;
@@ -1970,10 +2014,9 @@ function buildVideoBannerCanvas(p,vw,vh){
     return w;
   };
   let x=pad;
-  if(p.breaking)x+=pill('BREAKING','#e63946',x,pad)+tagFont*0.5;
+  if(p.breaking)x+=pill(p._breakingLabel||'BREAKING','#e63946',x,pad)+tagFont*0.5;
   pill((p.category||'NEWS').toUpperCase(),'#2065fe',x,pad);
-  const brandW=cx.measureText('BUZA MEDIA').width+tagFont*1.5;
-  pill('BUZA MEDIA','rgba(0,0,0,.78)',vw-pad-brandW,pad);
+  drawBrandWord(cx,'BUZA MEDIA',vw-pad,pad+tagFont*1.45,Math.round(tagFont*1.45),'right');
   // credit line under the BUZA MEDIA label
   const pwFont=Math.round(u*0.026);
   cx.font=`400 ${pwFont}px ${FONT}`;
@@ -2045,7 +2088,8 @@ async function downloadVideo(){
     const vw=video.videoWidth||1280,vh=video.videoHeight||720;
     const canvas=document.createElement('canvas');canvas.width=vw;canvas.height=vh;
     const ctx=canvas.getContext('2d');
-    const textLayer=buildVideoBannerCanvas(p,vw,vh);
+    const T=await cardTextFor(p);
+    const textLayer=buildVideoBannerCanvas({...p,title:T.title,category:T.category,_breakingLabel:T.breaking},vw,vh);
 
     const stream=canvas.captureStream(30);
     try{
@@ -2084,8 +2128,10 @@ async function downloadVideo(){
   }
 }
 
-function downloadPostCard(){
+async function downloadPostCard(){
   const p=posts.find(x=>x.id===currentArticleId);if(!p)return;
+  if(displayLang!=='original'&&!translationCache[displayLang+'::post::'+p.id])showToast(displayLang==='sw'?'Inaandaa bango kwa Kiswahili…':'Preparing the banner in English…','success');
+  const T=await cardTextFor(p);
   const W=1080,H=1350;
   const portrait=p.orientation==='portrait';
   const leftW=480;
@@ -2139,34 +2185,34 @@ function downloadPostCard(){
       const contentW=W-leftW-80;
 
       ctx.font='700 26px Arial';
-      const catW=ctx.measureText(p.category.toUpperCase()).width;
+      const catW=ctx.measureText(T.category.toUpperCase()).width;
       ctx.fillStyle='#2065fe';
       roundRect(ctx,padX,60,catW+40,42,8);
       ctx.fill();
       ctx.fillStyle='#ffffff';
-      ctx.fillText(p.category.toUpperCase(),padX+20,89);
+      ctx.fillText(T.category.toUpperCase(),padX+20,89);
 
       let breakingH=0;
       if(p.breaking){
         ctx.font='700 22px Arial';
-        const bw=ctx.measureText('BREAKING').width;
+        const bw=ctx.measureText(T.breaking).width;
         ctx.fillStyle='#e63946';
         roundRect(ctx,padX,114,bw+36,38,8);
         ctx.fill();
         ctx.fillStyle='#ffffff';
-        ctx.fillText('BREAKING',padX+18,140);
+        ctx.fillText(T.breaking,padX+18,140);
         breakingH=64;
       }
 
       ctx.fillStyle='#1a1a1e';
       ctx.font='700 40px Arial';
       const titleY=170+breakingH;
-      const titleLines=wrapText(ctx,(p.title||'').toUpperCase(),padX,titleY,contentW,48,7);
+      const titleLines=wrapText(ctx,(T.title||'').toUpperCase(),padX,titleY,contentW,48,7);
 
       const excerptY=titleY+titleLines*48+34;
       ctx.fillStyle='#6c757d';
       ctx.font='400 26px Arial';
-      if(p.excerpt){wrapText(ctx,p.excerpt,padX,excerptY,contentW,36,4);}
+      if(T.excerpt){wrapText(ctx,T.excerpt,padX,excerptY,contentW,36,4);}
 
       // bottom rows: author + buzamedia.com on one level, date + credit on the next
       const row1=H-40,row2=H-14;
@@ -2176,19 +2222,14 @@ function downloadPostCard(){
 
       ctx.fillStyle='#1a1a1e';
       ctx.font='600 24px Arial';
-      ctx.fillText('By '+(p.author||'Staff'),padX,row1);
+      ctx.fillText(T.by+' '+(p.author||'Staff'),padX,row1);
 
       ctx.fillStyle='#6c757d';
       ctx.font='400 20px Arial';
-      ctx.fillText(fmtDateShort(p.date),padX,row2);
+      ctx.fillText(fmtDateCard(p.date,T.locale),padX,row2);
 
       // bold BUZA MEDIA on the picture area (white with a soft shadow so it reads on any photo)
-      ctx.save();
-      ctx.shadowColor='rgba(0,0,0,.75)';ctx.shadowBlur=10;ctx.shadowOffsetY=2;
-      ctx.fillStyle='#ffffff';
-      ctx.font='800 38px Arial';
-      ctx.fillText('BUZA MEDIA',36,80);
-      ctx.restore();
+      drawBrandWord(ctx,'BUZA MEDIA',36,84,42);
 
       ctx.fillStyle='#2065fe';
       ctx.font='600 20px Arial';
@@ -2211,39 +2252,34 @@ function downloadPostCard(){
       ctx.fillStyle=grad2;ctx.fillRect(0,imgAreaH-220,W,220);
 
       ctx.font='700 28px Arial';
-      const catW=ctx.measureText(p.category.toUpperCase()).width;
+      const catW=ctx.measureText(T.category.toUpperCase()).width;
       ctx.fillStyle='#2065fe';
       roundRect(ctx,48,imgAreaH-78,catW+44,46,8);
       ctx.fill();
       ctx.fillStyle='#ffffff';
-      ctx.fillText(p.category.toUpperCase(),70,imgAreaH-46);
+      ctx.fillText(T.category.toUpperCase(),70,imgAreaH-46);
 
       if(p.breaking){
         ctx.font='700 24px Arial';
-        const bw=ctx.measureText('BREAKING').width;
+        const bw=ctx.measureText(T.breaking).width;
         ctx.fillStyle='#e63946';
         roundRect(ctx,W-bw-90,imgAreaH-78,bw+42,46,8);
         ctx.fill();
         ctx.fillStyle='#ffffff';
-        ctx.fillText('BREAKING',W-bw-69,imgAreaH-46);
+        ctx.fillText(T.breaking,W-bw-69,imgAreaH-46);
       }
 
       // bold BUZA MEDIA on the picture area (white with a soft shadow so it reads on any photo)
-      ctx.save();
-      ctx.shadowColor='rgba(0,0,0,.75)';ctx.shadowBlur=12;ctx.shadowOffsetY=2;
-      ctx.fillStyle='#ffffff';
-      ctx.font='800 44px Arial';
-      ctx.fillText('BUZA MEDIA',48,86);
-      ctx.restore();
+      drawBrandWord(ctx,'BUZA MEDIA',48,90,50);
 
       ctx.fillStyle='#1a1a1e';
       ctx.font='700 46px Arial';
-      const titleLines=wrapText(ctx,(p.title||'').toUpperCase(),48,imgAreaH+90,W-96,56,4);
+      const titleLines=wrapText(ctx,(T.title||'').toUpperCase(),48,imgAreaH+90,W-96,56,4);
 
       const excerptY=imgAreaH+90+titleLines*56+30;
       ctx.fillStyle='#6c757d';
       ctx.font='400 30px Arial';
-      if(p.excerpt){wrapText(ctx,p.excerpt,48,excerptY,W-96,42,3);}
+      if(T.excerpt){wrapText(ctx,T.excerpt,48,excerptY,W-96,42,3);}
 
       // bottom rows: author + buzamedia.com on one level, date + credit on the next
       const row1=H-62,row2=H-26;
@@ -2253,11 +2289,11 @@ function downloadPostCard(){
 
       ctx.fillStyle='#1a1a1e';
       ctx.font='600 28px Arial';
-      ctx.fillText('By '+(p.author||'Staff'),48,row1);
+      ctx.fillText(T.by+' '+(p.author||'Staff'),48,row1);
 
       ctx.fillStyle='#6c757d';
       ctx.font='400 24px Arial';
-      ctx.fillText(fmtDateShort(p.date),48,row2);
+      ctx.fillText(fmtDateCard(p.date,T.locale),48,row2);
 
       ctx.fillStyle='#2065fe';
       ctx.font='600 26px Arial';
