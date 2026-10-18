@@ -2181,11 +2181,13 @@ function downloadPostCard(){
       ctx.font='400 22px Arial';
       ctx.fillText(fmtDateShort(p.date),padX,metaY+38);
 
-      ctx.fillStyle='#1a1a2e';
-      ctx.font='700 24px Arial';
-      ctx.fillText('BUZA MEDIA',padX,H-40);
-      ctx.fillStyle='#2065fe';
-      ctx.fillRect(padX+150,H-56,4,20);
+      // bold BUZA MEDIA on the picture area (white with a soft shadow so it reads on any photo)
+      ctx.save();
+      ctx.shadowColor='rgba(0,0,0,.75)';ctx.shadowBlur=10;ctx.shadowOffsetY=2;
+      ctx.fillStyle='#ffffff';
+      ctx.font='800 38px Arial';
+      ctx.fillText('BUZA MEDIA',36,80);
+      ctx.restore();
 
       ctx.fillStyle='#2065fe';
       ctx.font='600 20px Arial';
@@ -2193,9 +2195,11 @@ function downloadPostCard(){
       const tagW=ctx.measureText(tag).width;
       ctx.fillText(tag,W-40-tagW,H-40);
 
+      // credit directly under buzamedia.com
       ctx.fillStyle='#6c757d';
       ctx.font='400 18px Arial';
-      ctx.fillText('Powered by Denis Jackson',padX,H-12);
+      const pwText='Powered by Denis Jackson';
+      ctx.fillText(pwText,W-40-ctx.measureText(pwText).width,H-14);
 
       triggerDownload();
     }
@@ -2223,11 +2227,13 @@ function downloadPostCard(){
         ctx.fillText('BREAKING',W-bw-69,imgAreaH-46);
       }
 
-      ctx.fillStyle='#1a1a2e';
-      ctx.font='700 26px Arial';
-      ctx.fillText('BUZA MEDIA',48,70);
-      ctx.fillStyle='#2065fe';
-      ctx.fillRect(220,52,4,22);
+      // bold BUZA MEDIA on the picture area (white with a soft shadow so it reads on any photo)
+      ctx.save();
+      ctx.shadowColor='rgba(0,0,0,.75)';ctx.shadowBlur=12;ctx.shadowOffsetY=2;
+      ctx.fillStyle='#ffffff';
+      ctx.font='800 44px Arial';
+      ctx.fillText('BUZA MEDIA',48,86);
+      ctx.restore();
 
       ctx.fillStyle='#1a1a1e';
       ctx.font='700 52px Arial';
