@@ -1974,6 +1974,12 @@ function buildVideoBannerCanvas(p,vw,vh){
   pill((p.category||'NEWS').toUpperCase(),'#2065fe',x,pad);
   const brandW=cx.measureText('BUZA MEDIA').width+tagFont*1.5;
   pill('BUZA MEDIA','rgba(0,0,0,.78)',vw-pad-brandW,pad);
+  // credit line under the BUZA MEDIA label
+  const pwFont=Math.round(u*0.026);
+  cx.font=`400 ${pwFont}px ${FONT}`;
+  cx.fillStyle='rgba(255,255,255,.85)';
+  const pwText='Powered by Denis Jackson';
+  cx.fillText(pwText,vw-pad-cx.measureText(pwText).width,pad+tagFont*1.9+pwFont*1.4);
 
   // footer: blue line + brand
   const footFont=Math.round(u*0.04);
@@ -2187,6 +2193,10 @@ function downloadPostCard(){
       const tagW=ctx.measureText(tag).width;
       ctx.fillText(tag,W-40-tagW,H-40);
 
+      ctx.fillStyle='#6c757d';
+      ctx.font='400 18px Arial';
+      ctx.fillText('Powered by Denis Jackson',padX,H-12);
+
       triggerDownload();
     }
 
@@ -2246,6 +2256,11 @@ function downloadPostCard(){
       const tag='buzamedia.com';
       const tagW=ctx.measureText(tag).width;
       ctx.fillText(tag,W-48-tagW,metaY+18);
+
+      ctx.fillStyle='#6c757d';
+      ctx.font='400 22px Arial';
+      const pwText='Powered by Denis Jackson';
+      ctx.fillText(pwText,W-48-ctx.measureText(pwText).width,metaY+50);
 
       triggerDownload();
     }
