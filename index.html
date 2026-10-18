@@ -1994,9 +1994,9 @@ function buildVideoBannerCanvas(p,vw,vh){
   cx.fillStyle='#2065fe';cx.fillRect(pad,lineY,vw-pad*2,Math.max(3,Math.round(u*0.005)));
 
   // headline: white, bold, up to 3 lines, with a soft shadow, sitting just above the blue line
-  const titleFont=Math.round(u*0.07),lh=Math.round(titleFont*1.22);
+  const titleFont=Math.round(u*0.062),lh=Math.round(titleFont*1.22);
   cx.font=`700 ${titleFont}px ${FONT}`;
-  const lines=wrapLines(cx,p.title||'',vw-pad*2,3);
+  const lines=wrapLines(cx,(p.title||'').toUpperCase(),vw-pad*2,3);
   const firstY=lineY-footFont*0.9-(lines.length-1)*lh;
   cx.shadowColor='rgba(0,0,0,.95)';cx.shadowBlur=Math.round(u*0.014);cx.shadowOffsetY=Math.round(u*0.004);
   cx.fillStyle='#ffffff';
@@ -2159,27 +2159,28 @@ function downloadPostCard(){
       }
 
       ctx.fillStyle='#1a1a1e';
-      ctx.font='700 44px Arial';
+      ctx.font='700 40px Arial';
       const titleY=170+breakingH;
-      const titleLines=wrapText(ctx,p.title,padX,titleY,contentW,52,6);
+      const titleLines=wrapText(ctx,(p.title||'').toUpperCase(),padX,titleY,contentW,48,7);
 
-      const excerptY=titleY+titleLines*52+34;
+      const excerptY=titleY+titleLines*48+34;
       ctx.fillStyle='#6c757d';
       ctx.font='400 26px Arial';
       if(p.excerpt){wrapText(ctx,p.excerpt,padX,excerptY,contentW,36,4);}
 
-      const metaY=H-140;
+      // bottom rows: author + buzamedia.com on one level, date + credit on the next
+      const row1=H-40,row2=H-14;
       ctx.strokeStyle='#e0e0e0';
       ctx.lineWidth=2;
-      ctx.beginPath();ctx.moveTo(padX,metaY-30);ctx.lineTo(W-40,metaY-30);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(padX,row1-46);ctx.lineTo(W-40,row1-46);ctx.stroke();
 
       ctx.fillStyle='#1a1a1e';
       ctx.font='600 24px Arial';
-      ctx.fillText('By '+(p.author||'Staff'),padX,metaY+6);
+      ctx.fillText('By '+(p.author||'Staff'),padX,row1);
 
       ctx.fillStyle='#6c757d';
-      ctx.font='400 22px Arial';
-      ctx.fillText(fmtDateShort(p.date),padX,metaY+38);
+      ctx.font='400 20px Arial';
+      ctx.fillText(fmtDateShort(p.date),padX,row2);
 
       // bold BUZA MEDIA on the picture area (white with a soft shadow so it reads on any photo)
       ctx.save();
@@ -2193,13 +2194,13 @@ function downloadPostCard(){
       ctx.font='600 20px Arial';
       const tag='buzamedia.com';
       const tagW=ctx.measureText(tag).width;
-      ctx.fillText(tag,W-40-tagW,H-40);
+      ctx.fillText(tag,W-40-tagW,row1);
 
       // credit directly under buzamedia.com
       ctx.fillStyle='#6c757d';
       ctx.font='400 18px Arial';
       const pwText='Powered by Denis Jackson';
-      ctx.fillText(pwText,W-40-ctx.measureText(pwText).width,H-14);
+      ctx.fillText(pwText,W-40-ctx.measureText(pwText).width,row2);
 
       triggerDownload();
     }
@@ -2236,37 +2237,38 @@ function downloadPostCard(){
       ctx.restore();
 
       ctx.fillStyle='#1a1a1e';
-      ctx.font='700 52px Arial';
-      const titleLines=wrapText(ctx,p.title,48,imgAreaH+90,W-96,62,4);
+      ctx.font='700 46px Arial';
+      const titleLines=wrapText(ctx,(p.title||'').toUpperCase(),48,imgAreaH+90,W-96,56,4);
 
-      const excerptY=imgAreaH+90+titleLines*62+30;
+      const excerptY=imgAreaH+90+titleLines*56+30;
       ctx.fillStyle='#6c757d';
       ctx.font='400 30px Arial';
       if(p.excerpt){wrapText(ctx,p.excerpt,48,excerptY,W-96,42,3);}
 
-      const metaY=H-90;
+      // bottom rows: author + buzamedia.com on one level, date + credit on the next
+      const row1=H-62,row2=H-26;
       ctx.strokeStyle='#e0e0e0';
       ctx.lineWidth=2;
-      ctx.beginPath();ctx.moveTo(48,metaY-40);ctx.lineTo(W-48,metaY-40);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(48,row1-50);ctx.lineTo(W-48,row1-50);ctx.stroke();
 
       ctx.fillStyle='#1a1a1e';
       ctx.font='600 28px Arial';
-      ctx.fillText('By '+(p.author||'Staff'),48,metaY);
+      ctx.fillText('By '+(p.author||'Staff'),48,row1);
 
       ctx.fillStyle='#6c757d';
-      ctx.font='400 26px Arial';
-      ctx.fillText(fmtDateShort(p.date),48,metaY+38);
+      ctx.font='400 24px Arial';
+      ctx.fillText(fmtDateShort(p.date),48,row2);
 
       ctx.fillStyle='#2065fe';
       ctx.font='600 26px Arial';
       const tag='buzamedia.com';
       const tagW=ctx.measureText(tag).width;
-      ctx.fillText(tag,W-48-tagW,metaY+18);
+      ctx.fillText(tag,W-48-tagW,row1);
 
       ctx.fillStyle='#6c757d';
       ctx.font='400 22px Arial';
       const pwText='Powered by Denis Jackson';
-      ctx.fillText(pwText,W-48-ctx.measureText(pwText).width,metaY+50);
+      ctx.fillText(pwText,W-48-ctx.measureText(pwText).width,row2);
 
       triggerDownload();
     }
