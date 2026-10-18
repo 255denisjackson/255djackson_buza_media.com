@@ -2017,9 +2017,9 @@ function wrapLines(cx,text,maxW,maxLines){
 
 
 // Bold BUZA MEDIA wordmark: gradient letters, crisp dark outline and a blue glow. No box or background behind it.
-function drawBrandWord(ctx,text,x,y,size,align){
+function drawBrandWord(ctx,text,x,y,size,align,italic){
   ctx.save();
-  ctx.font=`900 italic ${size}px Arial, Helvetica, sans-serif`;
+  ctx.font=`900 ${italic===false?'':'italic '}${size}px Arial, Helvetica, sans-serif`;
   if('letterSpacing' in ctx)ctx.letterSpacing=Math.round(size*0.08)+'px';
   const w=ctx.measureText(text).width;
   const x0=align==='right'?x-w:x;
@@ -2323,7 +2323,9 @@ async function downloadPostCard(){
       }
 
       // bold BUZA MEDIA on the picture area (white with a soft shadow so it reads on any photo)
-      drawBrandWord(ctx,'BUZA MEDIA',48,90,50);
+      const bw0=drawBrandWord(ctx,'BUZA MEDIA',48,84,36,'left',false);
+      ctx.fillStyle='#2065fe';
+      ctx.fillRect(48+bw0+10,84-26,4,30);
 
       ctx.fillStyle='#1a1a1e';
       ctx.font='700 46px Arial';
