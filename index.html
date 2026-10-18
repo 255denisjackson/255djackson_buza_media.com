@@ -853,9 +853,25 @@ async function translateText(text,target){
 // Returns the {title, excerpt, body} to actually display for a post, given
 // the current displayLang — original text immediately, or a cached
 // translation once it's ready (falls back to original while it's pending).
-function getDisplayText(post){
+// Text that needs no translation service: the article's own language, or the English version stored in the database.
+function directText(post,lang){
   const orig={title:post.title||'',excerpt:post.excerpt||'',body:post.body||''};
-  if(displayLang==='original')return orig;
+  if(lang==='original'||post.language===lang)return orig;
+  if(lang==='en'&&post.titleEn)return {title:post.titleEn,excerpt:post.excerptEn||post.excerpt||'',body:post.bodyEn||post.body||''};
+  return null;
+}
+// The full English text is only downloaded for the story that is open (keeps the list light).
+async function ensureBodyEn(p){
+  if(!p||p.bodyEn!==undefined||!p.titleEn)return;
+  try{
+    const {data}=await sb.from('articles').select('body_en').eq('id',p.id).maybeSingle();
+    p.bodyEn=(data&&data.body_en)||'';
+  }catch(e){p.bodyEn='';}
+}
+function getDisplayText(post){
+  const d=directText(post,displayLang);
+  if(d)return d;
+  const orig={title:post.title||'',excerpt:post.excerpt||'',body:post.body||''};
   const c=translationCache[displayLang+'::post::'+post.id];
   if(!c)return orig;
   return {title:c.title,excerpt:c.excerpt,body:c.body==null?orig.body:c.body};
@@ -934,6 +950,7 @@ function kickOffTranslations(list,full){
   if(displayLang==='original'||!list.length)return;
   const lang=displayLang;
   const todo=list.filter(p=>{
+    if(directText(p,lang))return false;
     const key=lang+'::post::'+p.id;
     const have=translationCache[key];
     if(have&&(!full||have.body!=null))return false;
@@ -967,7 +984,10 @@ function setDisplayLang(lang){
   if(currentArticleId&&!document.getElementById('view-article').classList.contains('hidden')){
     renderArticleText(currentArticleId);
     const cp=posts.find(x=>x.id===currentArticleId);
-    if(cp)kickOffTranslations([cp],true);
+    if(cp){
+      kickOffTranslations([cp],true);
+      if(lang==='en')ensureBodyEn(cp).then(()=>{if(currentArticleId===cp.id)renderArticleText(cp.id);});
+    }
   }
 }
 
@@ -981,7 +1001,7 @@ const SUPABASE_URL='https://gxfwjicztemfpxfjbdqq.supabase.co';
 const SUPABASE_KEY='sb_publishable_zz-T8b1gItOWTM2R43t-jQ_--qts2s8'; // publishable (public) key — safe in the browser; real secrets live only in the database
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 let categoryIdByName={};
-const ARTICLE_SELECT='id,short_code,title,subtitle,body,author,tags,status,is_breaking,is_featured,orientation,language,image_url,image_width,image_height,video_url,view_count,like_count,published_at,created_at,source_name,source_url,categories(name)';
+const ARTICLE_SELECT='id,short_code,title,subtitle,body,author,tags,status,is_breaking,is_featured,orientation,language,title_en,subtitle_en,image_url,image_width,image_height,video_url,view_count,like_count,published_at,created_at,source_name,source_url,categories(name)';
 const stripTags=v=>String(v||'').replace(/<[^>]*>/g,'').trim();
 
 function getVisitorId(){
@@ -1056,7 +1076,9 @@ function cardLangOf(p){return displayLang==='original'?(p.language==='en'?'en':'
 async function cardTextFor(p){
   const lang=cardLangOf(p);
   let title=p.title||'',excerpt=p.excerpt||'';
-  if(displayLang!=='original'){
+  const d=directText(p,displayLang);
+  if(d){title=d.title;excerpt=d.excerpt;}
+  else if(displayLang!=='original'){
     const c=translationCache[displayLang+'::post::'+p.id];
     if(c){title=c.title||title;excerpt=c.excerpt||excerpt;}
     else{[title,excerpt]=await Promise.all([translateText(title,displayLang),translateText(excerpt,displayLang)]);}
@@ -1080,6 +1102,7 @@ function getYouTubeId(url){
 function siteBaseUrl(){return window.location.href.split('?')[0].split('#')[0].replace(/index\.html$/,'');}
 function articleLink(p){return p.code?siteBaseUrl()+'a/'+encodeURIComponent(p.code)+'/':siteBaseUrl()+'?a='+encodeURIComponent(p.id);} // static page = picture preview on WhatsApp/Facebook
 function makeExcerpt(text,len){const plain=stripTags(text);return plain.length>len?plain.substring(0,len).trim()+'…':plain;}
+function looksEnglish(t){const m=String(t||'').toLowerCase().match(/\b(the|and|of|to|in|is|for|with|on|that|from|as|are|was|his|her|after|over|will)\b/g)||[];return m.length>=3;}
 function mapArticle(r){
   const video=r.video_url||null;
   return {
@@ -1093,7 +1116,8 @@ function mapArticle(r){
     photo:r.image_url||null,imageW:r.image_width||null,imageH:r.image_height||null,
     video,mediaType:video?'video':'photo',
     orientation:r.orientation==='portrait'?'portrait':'landscape',
-    language:r.language==='en'?'en':'sw',
+    language:(r.language==='en'||looksEnglish(stripTags(r.title)+' '+stripTags(r.subtitle)))?'en':'sw',
+    titleEn:stripTags(r.title_en)||'',excerptEn:stripTags(r.subtitle_en)||'',bodyEn:undefined,
     date:r.published_at||r.created_at,
     views:Number(r.view_count)||0,likes:Number(r.like_count)||0,
     sourceName:r.source_name||'',sourceUrl:r.source_url||''
@@ -1429,6 +1453,7 @@ function openArticle(id,asEntry){
   renderLikeState();
   window.scrollTo(0,0);
   kickOffTranslations([p],true);
+  if(displayLang==='en')ensureBodyEn(p).then(()=>{if(currentArticleId===id)renderArticleText(id);});
 }
 
 // Fills in just the title + body text for the open article, using whatever
@@ -2233,7 +2258,7 @@ async function downloadVideo(){
 
 async function downloadPostCard(){
   const p=posts.find(x=>x.id===currentArticleId);if(!p)return;
-  if(displayLang!=='original'&&!translationCache[displayLang+'::post::'+p.id])showToast(displayLang==='sw'?'Inaandaa bango kwa Kiswahili…':'Preparing the banner in English…','success');
+  if(displayLang!=='original'&&!directText(p,displayLang)&&!translationCache[displayLang+'::post::'+p.id])showToast(displayLang==='sw'?'Inaandaa bango kwa Kiswahili…':'Preparing the banner in English…','success');
   const T=await cardTextFor(p);
   const W=1080,H=1350;
   const portrait=p.orientation==='portrait';
