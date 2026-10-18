@@ -790,7 +790,7 @@ let pendingPhotoOrientation='landscape',pendingPhotoEditOrientation='landscape';
    ========================================================================== */
 const TRANSLATE_ENDPOINT='https://translate.googleapis.com/translate_a/single';
 const LANG_KEY='buzamedia_display_lang';
-const TRANS_CACHE_KEY='buzamedia_translation_cache_v1';
+const TRANS_CACHE_KEY='buzamedia_translation_cache_v2';
 let displayLang=localStorage.getItem(LANG_KEY)||'sw'; // 'original' | 'en' | 'sw' — Swahili by default
 let translationCache={};
 try{translationCache=JSON.parse(localStorage.getItem(TRANS_CACHE_KEY)||'{}');}catch(e){translationCache={};}
@@ -800,65 +800,114 @@ function saveTranslationCache(){
   try{localStorage.setItem(TRANS_CACHE_KEY,JSON.stringify(translationCache));}catch(e){/* storage full or unavailable — cache just won't persist across reloads */}
 }
 
-async function translateText(text,target){
+// one request to the free Google endpoint; long text is sent in pieces (see translateTextOrNull)
+async function translateChunk(text,target){
+  const url=`${TRANSLATE_ENDPOINT}?client=gtx&sl=auto&tl=${target}&dt=t&q=${encodeURIComponent(text)}`;
+  for(let attempt=0;attempt<2;attempt++){
+    try{
+      const res=await fetch(url);
+      if(!res.ok)throw new Error('translate http '+res.status);
+      const data=await res.json();
+      const out=(data[0]||[]).map(c=>c[0]).join('');
+      if(out)return out;
+    }catch(e){
+      if(attempt===1)console.error('Buza Media: translation request failed.',e);
+    }
+    await new Promise(r=>setTimeout(r,400));
+  }
+  return null;
+}
+
+// Translates text of any length (paragraph by paragraph, long ones sentence by sentence).
+// Returns null when the translation failed, so a failure is never saved as if it were a translation.
+async function translateTextOrNull(text,target){
   const clean=(text||'').toString();
   if(!clean.trim())return clean;
   const key=target+'::'+clean;
   if(translationCache[key]!==undefined)return translationCache[key];
-  try{
-    const url=`${TRANSLATE_ENDPOINT}?client=gtx&sl=auto&tl=${target}&dt=t&q=${encodeURIComponent(clean)}`;
-    const res=await fetch(url);
-    if(!res.ok)throw new Error('translate http '+res.status);
-    const data=await res.json();
-    const translated=(data[0]||[]).map(chunk=>chunk[0]).join('');
-    translationCache[key]=translated;
-    return translated;
-  }catch(e){
-    console.error('Buza Media: translation request failed, showing original text instead.',e);
-    return clean;
+  const outParas=[];
+  for(const para of clean.split(/\n{2,}/)){
+    if(!para.trim()){outParas.push('');continue;}
+    const chunks=[];let cur='';
+    for(const sent of para.split(/(?<=[.!?])\s+/)){
+      if(cur&&(cur+' '+sent).length>800){chunks.push(cur);cur=sent;}
+      else cur=cur?cur+' '+sent:sent;
+    }
+    if(cur)chunks.push(cur);
+    const outs=[];
+    for(const c of chunks){
+      const o=await translateChunk(c,target);
+      if(o===null)return null;
+      outs.push(o.trim());
+    }
+    outParas.push(outs.join(' '));
   }
+  const translated=outParas.join('\n\n');
+  if(clean.length<=300)translationCache[key]=translated;
+  return translated;
+}
+async function translateText(text,target){
+  const r=await translateTextOrNull(text,target);
+  return r===null?(text||'').toString():r;
 }
 
 // Returns the {title, excerpt, body} to actually display for a post, given
 // the current displayLang — original text immediately, or a cached
 // translation once it's ready (falls back to original while it's pending).
 function getDisplayText(post){
-  if(displayLang==='original')return {title:post.title||'',excerpt:post.excerpt||'',body:post.body||''};
-  const key=displayLang+'::post::'+post.id;
-  return translationCache[key]||{title:post.title||'',excerpt:post.excerpt||'',body:post.body||''};
+  const orig={title:post.title||'',excerpt:post.excerpt||'',body:post.body||''};
+  if(displayLang==='original')return orig;
+  const c=translationCache[displayLang+'::post::'+post.id];
+  if(!c)return orig;
+  return {title:c.title,excerpt:c.excerpt,body:c.body==null?orig.body:c.body};
 }
 
-async function translatePostIfNeeded(post,lang){
+const translationFailedAt={};
+// Lists only need the title and the short summary; the full text is translated when the story is opened (full=true).
+async function translatePostIfNeeded(post,lang,full){
   const key=lang+'::post::'+post.id;
-  if(translationCache[key])return;
-  const [title,excerpt,body]=await Promise.all([
-    translateText(post.title||'',lang),
-    translateText(post.excerpt||'',lang),
-    translateText(post.body||'',lang)
-  ]);
-  translationCache[key]={title,excerpt,body};
+  const have=translationCache[key];
+  if(have&&(!full||have.body!=null))return true;
+  let title=have?have.title:null,excerpt=have?have.excerpt:null,body=have?have.body:null;
+  if(title==null)title=await translateTextOrNull(post.title||'',lang);
+  if(excerpt==null)excerpt=await translateTextOrNull(post.excerpt||'',lang);
+  if(full&&body==null)body=await translateTextOrNull(post.body||'',lang);
+  if(title===null||excerpt===null){translationFailedAt[key]=Date.now();return false;}
+  translationCache[key]={title,excerpt,body:body==null?null:body};
   saveTranslationCache();
+  if(full&&body===null){translationFailedAt[key]=Date.now();return false;}
+  return true;
 }
 
 // Kicks off translation for whichever posts are currently on screen, then
 // quietly re-renders once they're ready. Safe to call often — anything
-// already cached or already in-flight is skipped.
-function kickOffTranslations(list){
+// already cached, in flight, or that failed in the last minute is skipped.
+function kickOffTranslations(list,full){
   if(displayLang==='original'||!list.length)return;
+  const lang=displayLang;
   const todo=list.filter(p=>{
-    const key=displayLang+'::post::'+p.id;
-    return !translationCache[key]&&!translatingKeys.has(key);
+    const key=lang+'::post::'+p.id;
+    const have=translationCache[key];
+    if(have&&(!full||have.body!=null))return false;
+    if(translatingKeys.has(key))return false;
+    if(translationFailedAt[key]&&Date.now()-translationFailedAt[key]<60000)return false;
+    return true;
   });
   if(!todo.length)return;
   const statusEl=document.getElementById('lang-status');
   if(statusEl)statusEl.classList.remove('hidden');
-  todo.forEach(p=>translatingKeys.add(displayLang+'::post::'+p.id));
-  Promise.all(todo.map(p=>translatePostIfNeeded(p,displayLang).finally(()=>translatingKeys.delete(displayLang+'::post::'+p.id))))
-    .then(()=>{
-      if(statusEl)statusEl.classList.add('hidden');
-      renderPublic();
-      if(currentArticleId&&!document.getElementById('view-article').classList.contains('hidden'))renderArticleText(currentArticleId);
-    });
+  todo.forEach(p=>translatingKeys.add(lang+'::post::'+p.id));
+  (async()=>{
+    for(let i=0;i<todo.length;i+=6){
+      await Promise.all(todo.slice(i,i+6).map(p=>translatePostIfNeeded(p,lang,full).catch(()=>false).finally(()=>translatingKeys.delete(lang+'::post::'+p.id))));
+      if(lang===displayLang)renderPublic();
+    }
+  })().then(()=>{
+    if(statusEl&&!translatingKeys.size)statusEl.classList.add('hidden');
+    if(lang!==displayLang)return;
+    renderPublic();
+    if(currentArticleId&&!document.getElementById('view-article').classList.contains('hidden'))renderArticleText(currentArticleId);
+  });
 }
 
 function setDisplayLang(lang){
@@ -866,7 +915,11 @@ function setDisplayLang(lang){
   try{localStorage.setItem(LANG_KEY,lang);}catch(e){}
   document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang));
   renderPublic();
-  if(currentArticleId&&!document.getElementById('view-article').classList.contains('hidden'))renderArticleText(currentArticleId);
+  if(currentArticleId&&!document.getElementById('view-article').classList.contains('hidden')){
+    renderArticleText(currentArticleId);
+    const cp=posts.find(x=>x.id===currentArticleId);
+    if(cp)kickOffTranslations([cp],true);
+  }
 }
 
 let socialLinks={fb:'',tw:'',ig:'',yt:'',tt:'',wa:''};
@@ -1325,7 +1378,7 @@ function openArticle(id,asEntry){
   document.getElementById('share-menu').classList.add('hidden');
   renderLikeState();
   window.scrollTo(0,0);
-  kickOffTranslations([p]);
+  kickOffTranslations([p],true);
 }
 
 // Fills in just the title + body text for the open article, using whatever
