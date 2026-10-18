@@ -825,24 +825,23 @@ async function translateTextOrNull(text,target){
   if(!clean.trim())return clean;
   const key=target+'::'+clean;
   if(translationCache[key]!==undefined)return translationCache[key];
-  const outParas=[];
+  // split into paragraphs, long paragraphs into sentence groups, then translate all pieces at the same time
+  const layout=[],flat=[];
   for(const para of clean.split(/\n{2,}/)){
-    if(!para.trim()){outParas.push('');continue;}
-    const chunks=[];let cur='';
-    for(const sent of para.split(/(?<=[.!?])\s+/)){
-      if(cur&&(cur+' '+sent).length>800){chunks.push(cur);cur=sent;}
-      else cur=cur?cur+' '+sent:sent;
+    const idx=[];
+    if(para.trim()){
+      let cur='';
+      for(const sent of para.split(/(?<=[.!?])\s+/)){
+        if(cur&&(cur+' '+sent).length>800){idx.push(flat.push(cur)-1);cur=sent;}
+        else cur=cur?cur+' '+sent:sent;
+      }
+      if(cur)idx.push(flat.push(cur)-1);
     }
-    if(cur)chunks.push(cur);
-    const outs=[];
-    for(const c of chunks){
-      const o=await translateChunk(c,target);
-      if(o===null)return null;
-      outs.push(o.trim());
-    }
-    outParas.push(outs.join(' '));
+    layout.push(idx);
   }
-  const translated=outParas.join('\n\n');
+  const outs=await Promise.all(flat.map(c=>translateChunk(c,target)));
+  if(outs.some(o=>o===null))return null;
+  const translated=layout.map(idx=>idx.map(i=>outs[i].trim()).join(' ')).join('\n\n');
   if(clean.length<=300)translationCache[key]=translated;
   return translated;
 }
@@ -864,19 +863,68 @@ function getDisplayText(post){
 
 const translationFailedAt={};
 // Lists only need the title and the short summary; the full text is translated when the story is opened (full=true).
+async function translateTitleAndExcerpt(post,lang){
+  const t=(post.title||'').replace(/\s+/g,' ').trim(),e=(post.excerpt||'').replace(/\s+/g,' ').trim();
+  if(t&&e&&t.length+e.length<900){
+    const out=await translateChunk(t+'\n'+e,lang);
+    if(out!==null){
+      const parts=out.split('\n').map(x=>x.trim()).filter(Boolean);
+      if(parts.length===2)return {title:parts[0],excerpt:parts[1]};
+    }
+  }
+  const [title,excerpt]=await Promise.all([translateTextOrNull(t,lang),translateTextOrNull(e,lang)]);
+  return {title,excerpt};
+}
 async function translatePostIfNeeded(post,lang,full){
   const key=lang+'::post::'+post.id;
   const have=translationCache[key];
   if(have&&(!full||have.body!=null))return true;
   let title=have?have.title:null,excerpt=have?have.excerpt:null,body=have?have.body:null;
-  if(title==null)title=await translateTextOrNull(post.title||'',lang);
-  if(excerpt==null)excerpt=await translateTextOrNull(post.excerpt||'',lang);
-  if(full&&body==null)body=await translateTextOrNull(post.body||'',lang);
+  const jobs=[];
+  if(title==null||excerpt==null)jobs.push(translateTitleAndExcerpt(post,lang).then(r=>{title=r.title;excerpt=r.excerpt;}));
+  if(full&&body==null)jobs.push(translateTextOrNull(post.body||'',lang).then(r=>{body=r;}));
+  await Promise.all(jobs);
   if(title===null||excerpt===null){translationFailedAt[key]=Date.now();return false;}
   translationCache[key]={title,excerpt,body:body==null?null:body};
   saveTranslationCache();
   if(full&&body===null){translationFailedAt[key]=Date.now();return false;}
   return true;
+}
+
+// change one card's words in place (no re-drawing of the whole list)
+function updateCardText(p){
+  const el=document.querySelector(`[data-pid="${p.id}"]`);
+  if(!el)return;
+  const t=getDisplayText(p);
+  const ti=el.querySelector('.card-title'),ex=el.querySelector('.card-excerpt');
+  if(ti)ti.textContent=t.title;
+  if(ex)ex.textContent=t.excerpt||'';
+}
+
+// translate only the cards that are on (or near) the screen, as they appear
+let lazyObserver=null,lazyPending=new Set(),lazyTimer=null;
+function setupLazyTranslate(){
+  if(lazyObserver){lazyObserver.disconnect();lazyObserver=null;}
+  if(displayLang==='original')return;
+  const cards=[...document.querySelectorAll('#latest-grid .small-card[data-pid]')];
+  if(!('IntersectionObserver' in window)){
+    kickOffTranslations(cards.slice(0,40).map(c=>posts.find(x=>x.id===c.dataset.pid)).filter(Boolean));
+    return;
+  }
+  lazyObserver=new IntersectionObserver(entries=>{
+    entries.forEach(en=>{
+      if(!en.isIntersecting)return;
+      lazyPending.add(en.target.dataset.pid);
+      lazyObserver.unobserve(en.target);
+    });
+    clearTimeout(lazyTimer);
+    lazyTimer=setTimeout(()=>{
+      const list=[...lazyPending].map(id=>posts.find(x=>x.id===id)).filter(Boolean);
+      lazyPending.clear();
+      kickOffTranslations(list);
+    },120);
+  },{rootMargin:'500px 0px'});
+  cards.forEach(c=>lazyObserver.observe(c));
 }
 
 // Kicks off translation for whichever posts are currently on screen, then
@@ -898,15 +946,16 @@ function kickOffTranslations(list,full){
   if(statusEl)statusEl.classList.remove('hidden');
   todo.forEach(p=>translatingKeys.add(lang+'::post::'+p.id));
   (async()=>{
-    for(let i=0;i<todo.length;i+=6){
-      await Promise.all(todo.slice(i,i+6).map(p=>translatePostIfNeeded(p,lang,full).catch(()=>false).finally(()=>translatingKeys.delete(lang+'::post::'+p.id))));
-      if(lang===displayLang)renderPublic();
+    for(let i=0;i<todo.length;i+=8){
+      await Promise.all(todo.slice(i,i+8).map(p=>translatePostIfNeeded(p,lang,full)
+        .then(ok=>{if(ok&&lang===displayLang)updateCardText(p);})
+        .catch(()=>false)
+        .finally(()=>translatingKeys.delete(lang+'::post::'+p.id))));
     }
   })().then(()=>{
     if(statusEl&&!translatingKeys.size)statusEl.classList.add('hidden');
     if(lang!==displayLang)return;
-    renderPublic();
-    if(currentArticleId&&!document.getElementById('view-article').classList.contains('hidden'))renderArticleText(currentArticleId);
+    if(full&&currentArticleId&&!document.getElementById('view-article').classList.contains('hidden'))renderArticleText(currentArticleId);
   });
 }
 
@@ -1262,7 +1311,7 @@ function renderPublic(freshOrder){
   applyTopStoryGradient(featured?featured.photo:null);
   if(!featured){fa.innerHTML=`<div style="max-width:1100px;margin:0 auto 1.5rem"><div class="empty-state"><i class="ti ti-news" aria-hidden="true"></i><p>No published articles yet.</p></div></div>`;lg.innerHTML='';return;}
   const featuredText=getDisplayText(featured);
-  fa.innerHTML=`<div class="hero-grid"><div class="hero-card featured ${featured.orientation==='portrait'?'portrait':''}" onclick="openArticle('${featured.id}')">
+  fa.innerHTML=`<div class="hero-grid"><div class="hero-card featured ${featured.orientation==='portrait'?'portrait':''}" data-pid="${featured.id}" onclick="openArticle('${featured.id}')">
     <div class="card-img" onclick="cardImgTap(event,'${featured.id}')">${cardImgHtml(featured)}
       <span class="card-img-label">${featured.category}</span>
       ${featured.breaking?'<span class="breaking-badge" style="position:absolute;top:10px;right:10px">Breaking</span>':''}
@@ -1276,7 +1325,7 @@ function renderPublic(freshOrder){
   </div></div>`;
   lg.innerHTML=rest.map(p=>{
     const t=getDisplayText(p);
-    return `<div class="small-card ${p.orientation==='portrait'?'portrait':''}" onclick="openArticle('${p.id}')">
+    return `<div class="small-card ${p.orientation==='portrait'?'portrait':''}" data-pid="${p.id}" onclick="openArticle('${p.id}')">
     <div class="card-img" onclick="cardImgTap(event,'${p.id}')">${cardImgHtml(p)}
       <span class="card-img-label">${p.category}</span>
       ${p.breaking?'<span class="breaking-badge" style="position:absolute;top:6px;right:6px;font-size:.58rem">Breaking</span>':''}
@@ -1289,7 +1338,8 @@ function renderPublic(freshOrder){
     </div>
   </div>`;
   }).join('');
-  kickOffTranslations([featured,...rest]);
+  kickOffTranslations([featured]);
+  setupLazyTranslate();
 }
 
 // Extracts an average color from the top story's photo and paints it as a
