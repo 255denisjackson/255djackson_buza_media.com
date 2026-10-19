@@ -2419,9 +2419,9 @@ async function downloadPostCard(){
       // story text: the summary first, then as much of the article as fits above the footer
       const textLimit=H-40-46-26;
       let ty=titleY+titleLines*48+36;
-      const LH=34;
+      const LH=31;
       ctx.fillStyle='#4a4f57';
-      ctx.font='400 25px Arial';
+      ctx.font='400 22px Arial';
       const seenP=new Set();
       const paras=[T.excerpt||''].concat(String(T.body||'').split(/\n{2,}/))
         .map(x=>x.replace(/\s+/g,' ').trim())
