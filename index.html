@@ -1003,7 +1003,7 @@ const SUPABASE_KEY='sb_publishable_zz-T8b1gItOWTM2R43t-jQ_--qts2s8'; // publisha
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 let categoryIdByName={};
 const ARTICLE_SELECT='id,short_code,title,subtitle,body,author,tags,status,is_breaking,is_featured,orientation,language,title_en,subtitle_en,image_url,image_width,image_height,video_url,view_count,like_count,published_at,created_at,source_name,source_url,categories(name)';
-const stripTags=v=>String(v||'').replace(/<[^>]*>/g,'').trim();
+const stripTags=v=>String(v||'').replace(/<[^>]*>/g,'').normalize('NFKC').trim();
 
 function getVisitorId(){
   let v=localStorage.getItem(VISITOR_KEY);
@@ -1084,8 +1084,13 @@ async function cardTextFor(p){
     if(c){title=c.title||title;excerpt=c.excerpt||excerpt;}
     else{[title,excerpt]=await Promise.all([translateText(title,displayLang),translateText(excerpt,displayLang)]);}
   }
+  let body='';
+  try{
+    if(displayLang==='en'&&p.titleEn){await ensureBodyEn(p);body=p.bodyEn||'';}
+    else if(displayLang==='original'||lang===p.language)body=p.body||'';
+  }catch(e){body='';}
   const L=CARD_TEXT[lang]||CARD_TEXT.sw;
-  return {lang,title,excerpt,by:L.by,breaking:L.breaking,category:L.cats[p.category]||p.category,locale:lang==='sw'?'sw-TZ':'en-US'};
+  return {lang,title,excerpt,body,by:L.by,breaking:L.breaking,category:L.cats[p.category]||p.category,locale:lang==='sw'?'sw-TZ':'en-US'};
 }
 function fmtDateCard(iso,locale){return new Date(iso).toLocaleDateString(locale,{month:'short',day:'numeric',year:'numeric'});}
 function icon(cat){return CAT_ICONS[cat]||'ti-news';}
@@ -2411,10 +2416,27 @@ async function downloadPostCard(){
       const titleY=170+breakingH;
       const titleLines=wrapText(ctx,(T.title||'').toUpperCase(),padX,titleY,contentW,48,7);
 
-      const excerptY=titleY+titleLines*48+34;
-      ctx.fillStyle='#6c757d';
-      ctx.font='400 26px Arial';
-      if(T.excerpt){wrapText(ctx,T.excerpt,padX,excerptY,contentW,36,4);}
+      // story text: the summary first, then as much of the article as fits above the footer
+      const textLimit=H-40-46-26;
+      let ty=titleY+titleLines*48+36;
+      const LH=34;
+      ctx.fillStyle='#4a4f57';
+      ctx.font='400 25px Arial';
+      const seenP=new Set();
+      const paras=[T.excerpt||''].concat(String(T.body||'').split(/\n{2,}/))
+        .map(x=>x.replace(/\s+/g,' ').trim())
+        .filter(x=>x&&!/^(Chanzo|Source|Picha)\s*:/i.test(x));
+      const ex=(T.excerpt||'').replace(/\s+/g,' ').trim();
+      for(let i=0;i<paras.length;i++){
+        const para=paras[i];
+        if(i>0&&(seenP.has(para)||(ex&&para.indexOf(ex.slice(0,60))===0)))continue;
+        seenP.add(para);
+        const room=Math.floor((textLimit-ty)/LH)+1;
+        if(room<=0)break;
+        const used=wrapText(ctx,para,padX,ty,contentW,LH,room);
+        ty+=used*LH+14;
+        if(used>=room)break;
+      }
 
       // bottom rows: author + buzamedia.com on one level, date + credit on the next
       const row1=H-40,row2=H-14;
