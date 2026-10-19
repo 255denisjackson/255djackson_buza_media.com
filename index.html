@@ -228,6 +228,8 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
 .upload-preview img{width:100%;height:220px;object-fit:cover;display:block}
 .upload-preview-remove{position:absolute;top:8px;right:8px;background:rgba(26,26,46,.75);color:#fff;border:none;width:30px;height:30px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:.12s}
 .upload-preview-remove:hover{background:var(--accent)}
+.upload-preview-crop{position:absolute;top:8px;right:46px;background:rgba(26,26,46,.75);color:#fff;border:none;border-radius:16px;height:30px;padding:0 12px;cursor:pointer;font-size:.78rem;display:flex;align-items:center;gap:5px}
+.upload-preview-crop:hover{background:var(--accent)}
 .upload-preview-name{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.6));color:#fff;font-size:.75rem;padding:18px 10px 8px}
 
 .btn{padding:9px 19px;border-radius:9px;border:none;cursor:pointer;font-size:.86rem;font-weight:600;transition:.15s;display:inline-flex;align-items:center;gap:.4rem}
@@ -413,7 +415,6 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
       <button class="cat-tab" onclick="filterCategory(this,'Tech')">Tech</button>
       <button class="cat-tab" onclick="filterCategory(this,'Business')">Business</button>
       <button class="cat-tab" onclick="filterCategory(this,'Sports')">Sports</button>
-      <button class="cat-tab" onclick="filterCategory(this,'World News')">World News</button>
       <button class="cat-tab" onclick="filterCategory(this,'Entertainment')">Entertainment</button>
     </div>
   </div>
@@ -593,7 +594,7 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
               <select id="p-category">
                 <option value="General">General</option><option value="Politics">Politics</option><option value="Tech">Tech</option>
                 <option value="Business">Business</option><option value="Sports">Sports</option>
-                <option value="World News">World News</option><option value="Entertainment">Entertainment</option>
+                <option value="Entertainment">Entertainment</option>
               </select>
             </div>
           </div>
@@ -739,7 +740,7 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
       <select id="m-category">
         <option value="General">General</option><option value="Politics">Politics</option><option value="Tech">Tech</option>
         <option value="Business">Business</option><option value="Sports">Sports</option>
-        <option value="World News">World News</option><option value="Entertainment">Entertainment</option>
+        <option value="Entertainment">Entertainment</option>
       </select>
     </div>
     <div class="form-group"><label>Excerpt</label><input type="text" id="m-excerpt"></div>
@@ -1103,10 +1104,11 @@ function siteBaseUrl(){return window.location.href.split('?')[0].split('#')[0].r
 function articleLink(p){return p.code?siteBaseUrl()+'a/'+encodeURIComponent(p.code)+'/':siteBaseUrl()+'?a='+encodeURIComponent(p.id);} // static page = picture preview on WhatsApp/Facebook
 function makeExcerpt(text,len){const plain=stripTags(text);return plain.length>len?plain.substring(0,len).trim()+'…':plain;}
 function looksEnglish(t){const m=String(t||'').toLowerCase().match(/\b(the|and|of|to|in|is|for|with|on|that|from|as|are|was|his|her|after|over|will)\b/g)||[];return m.length>=3;}
+function cleanTitle(t){return String(t||'').replace(/\s*[-–—|:]\s*videos?\s*[.!]?\s*$/i,'').trim();}
 function mapArticle(r){
   const video=r.video_url||null;
   return {
-    id:r.id,code:r.short_code||'',title:stripTags(r.title)||'Untitled article',
+    id:r.id,code:r.short_code||'',title:cleanTitle(stripTags(r.title))||'Untitled article',
     category:(r.categories&&r.categories.name)||'General',
     author:stripTags(r.author)||'Buza Media',
     excerpt:stripTags(r.subtitle)||makeExcerpt(r.body,140),
@@ -1117,7 +1119,7 @@ function mapArticle(r){
     video,mediaType:video?'video':'photo',
     orientation:r.orientation==='portrait'?'portrait':'landscape',
     language:(r.language==='en'||looksEnglish(stripTags(r.title)+' '+stripTags(r.subtitle)))?'en':'sw',
-    titleEn:stripTags(r.title_en)||'',excerptEn:stripTags(r.subtitle_en)||'',bodyEn:undefined,
+    titleEn:cleanTitle(stripTags(r.title_en))||'',excerptEn:stripTags(r.subtitle_en)||'',bodyEn:undefined,
     date:r.published_at||r.created_at,
     views:Number(r.view_count)||0,likes:Number(r.like_count)||0,
     sourceName:r.source_name||'',sourceUrl:r.source_url||''
@@ -1587,22 +1589,94 @@ function handlePhotoUpload(input,isEdit){
   if(file.size>15*1024*1024){showToast('Image must be under 15MB.','error');return;}
   const reader=new FileReader();
   reader.onload=function(e){
-    const dataUrl=e.target.result;
-    const probe=new Image();
-    probe.onload=function(){
-      const orientation=probe.naturalHeight>probe.naturalWidth?'portrait':'landscape';
-      if(isEdit)pendingPhotoEditOrientation=orientation;else pendingPhotoOrientation=orientation;
-    };
-    probe.src=dataUrl;
-    if(isEdit){
-      pendingPhotoEdit=dataUrl;
-      document.getElementById('m-upload-zone-wrap').innerHTML=`<div class="upload-preview"><img src="${dataUrl}" alt=""><button class="upload-preview-remove" onclick="removePhoto(true)" aria-label="Remove photo"><i class="ti ti-x" aria-hidden="true"></i></button><div class="upload-preview-name">${file.name}</div></div>`;
-    }else{
-      pendingPhoto=dataUrl;
-      document.getElementById('upload-zone-wrap').innerHTML=`<div class="upload-preview"><img src="${dataUrl}" alt=""><button class="upload-preview-remove" onclick="removePhoto(false)" aria-label="Remove photo"><i class="ti ti-x" aria-hidden="true"></i></button><div class="upload-preview-name">${file.name}</div></div>`;
-    }
+    openCropper(e.target.result,function(res){
+      input.value='';
+      if(res)setPhoto(res,file.name,isEdit);
+    });
   };
   reader.readAsDataURL(file);
+}
+function setPhoto(dataUrl,name,isEdit){
+  const probe=new Image();
+  probe.onload=function(){
+    const orientation=probe.naturalHeight>probe.naturalWidth?'portrait':'landscape';
+    if(isEdit)pendingPhotoEditOrientation=orientation;else pendingPhotoOrientation=orientation;
+  };
+  probe.src=dataUrl;
+  const btns=(ed)=>`<button class="upload-preview-remove" onclick="removePhoto(${ed})" aria-label="Remove photo"><i class="ti ti-x" aria-hidden="true"></i></button><button class="upload-preview-crop" onclick="recropPhoto(${ed})" type="button"><i class="ti ti-crop" aria-hidden="true"></i> Crop</button>`;
+  if(isEdit){
+    pendingPhotoEdit=dataUrl;
+    document.getElementById('m-upload-zone-wrap').innerHTML=`<div class="upload-preview"><img src="${dataUrl}" alt="">${btns(true)}<div class="upload-preview-name">${escapeHtml(name||'photo')}</div></div>`;
+  }else{
+    pendingPhoto=dataUrl;
+    document.getElementById('upload-zone-wrap').innerHTML=`<div class="upload-preview"><img src="${dataUrl}" alt="">${btns(false)}<div class="upload-preview-name">${escapeHtml(name||'photo')}</div></div>`;
+  }
+}
+function recropPhoto(isEdit){
+  const src=isEdit?pendingPhotoEdit:pendingPhoto;if(!src)return;
+  openCropper(src,function(res){if(res)setPhoto(res,'cropped photo',isEdit);});
+}
+// Crop tool: drag the box to move it, drag a corner to resize, pick a shape or keep it free.
+function openCropper(src,done){
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;z-index:10000;background:rgba(10,12,24,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px;gap:10px;font-family:inherit';
+  const bs='border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.08);color:#fff;border-radius:8px;padding:7px 12px;font-size:.8rem;cursor:pointer';
+  ov.innerHTML=`<div style="color:#fff;font-weight:700">Select the area you want shown</div>
+  <div id="cr-ratios" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center"></div>
+  <div id="cr-stage" style="position:relative;touch-action:none;user-select:none;line-height:0"><img id="cr-img" alt="" style="max-width:min(94vw,900px);max-height:62vh;display:block"><div id="cr-box" style="position:absolute;border:2px solid #fff;box-shadow:0 0 0 9999px rgba(0,0,0,.6);cursor:move;touch-action:none"></div></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"><button id="cr-cancel" style="${bs}">Cancel</button><button id="cr-full" style="${bs}">Use whole photo</button><button id="cr-ok" style="${bs};background:#2065fe;border-color:#2065fe;font-weight:700">Crop &amp; use</button></div>`;
+  document.body.appendChild(ov);
+  const img=ov.querySelector('#cr-img'),box=ov.querySelector('#cr-box'),stage=ov.querySelector('#cr-stage');
+  const close=(r)=>{ov.remove();done(r);};
+  let sw=0,sh=0,ratio=0,B={x:0,y:0,w:0,h:0};
+  const draw=()=>{box.style.left=B.x+'px';box.style.top=B.y+'px';box.style.width=B.w+'px';box.style.height=B.h+'px';};
+  const fit=()=>{ // biggest centred box of the chosen shape
+    let w=sw*.9,h=sh*.9;
+    if(ratio){if(w/h>ratio)w=h*ratio;else h=w/ratio;}
+    B={x:(sw-w)/2,y:(sh-h)/2,w,h};draw();
+  };
+  [['Free',0],['16:9',16/9],['4:3',4/3],['1:1',1],['4:5',4/5],['9:16',9/16]].forEach(([l,r])=>{
+    const b=document.createElement('button');b.type='button';b.textContent=l;b.style.cssText=bs;
+    b.onclick=()=>{ratio=r;fit();};ov.querySelector('#cr-ratios').appendChild(b);
+  });
+  ['nw','ne','sw','se'].forEach(k=>{
+    const h=document.createElement('div');h.dataset.h=k;
+    h.style.cssText='position:absolute;width:22px;height:22px;background:#fff;border-radius:50%;box-shadow:0 0 0 2px #2065fe;touch-action:none;'+(k[0]==='n'?'top:-11px;':'bottom:-11px;')+(k[1]==='w'?'left:-11px;':'right:-11px;')+'cursor:'+(k==='nw'||k==='se'?'nwse':'nesw')+'-resize';
+    box.appendChild(h);
+  });
+  let drag=null;
+  const pt=(e)=>{const r=stage.getBoundingClientRect();return {x:Math.min(sw,Math.max(0,e.clientX-r.left)),y:Math.min(sh,Math.max(0,e.clientY-r.top))};};
+  box.addEventListener('pointerdown',e=>{
+    e.preventDefault();box.setPointerCapture(e.pointerId);
+    const k=e.target.dataset.h||'move',p=pt(e);
+    if(k==='move')drag={k,ox:p.x-B.x,oy:p.y-B.y};
+    else drag={k,ax:k[1]==='w'?B.x+B.w:B.x,ay:k[0]==='n'?B.y+B.h:B.y};
+  });
+  box.addEventListener('pointermove',e=>{
+    if(!drag)return;const p=pt(e);
+    if(drag.k==='move'){B.x=Math.min(sw-B.w,Math.max(0,p.x-drag.ox));B.y=Math.min(sh-B.h,Math.max(0,p.y-drag.oy));draw();return;}
+    const sx=p.x>=drag.ax?1:-1,sy=p.y>=drag.ay?1:-1;
+    const maxW=sx>0?sw-drag.ax:drag.ax,maxH=sy>0?sh-drag.ay:drag.ay;
+    let w=Math.max(24,Math.abs(p.x-drag.ax)),h=ratio?w/ratio:Math.max(24,Math.abs(p.y-drag.ay));
+    if(ratio){w=Math.min(w,maxW,maxH*ratio);h=w/ratio;}else{w=Math.min(w,maxW);h=Math.min(h,maxH);}
+    B={x:sx>0?drag.ax:drag.ax-w,y:sy>0?drag.ay:drag.ay-h,w,h};draw();
+  });
+  const end=()=>{drag=null;};
+  box.addEventListener('pointerup',end);box.addEventListener('pointercancel',end);
+  ov.querySelector('#cr-cancel').onclick=()=>close(null);
+  ov.querySelector('#cr-full').onclick=()=>close(src);
+  ov.querySelector('#cr-ok').onclick=()=>{
+    try{
+      const k=img.naturalWidth/sw,c=document.createElement('canvas');
+      c.width=Math.max(1,Math.round(B.w*k));c.height=Math.max(1,Math.round(B.h*k));
+      c.getContext('2d').drawImage(img,B.x*k,B.y*k,B.w*k,B.h*k,0,0,c.width,c.height);
+      close(c.toDataURL('image/jpeg',.92));
+    }catch(e){showToast('Could not crop this photo. Try uploading it from your device.','error');close(null);}
+  };
+  img.onload=()=>{sw=img.clientWidth;sh=img.clientHeight;fit();};
+  img.onerror=()=>{showToast('Could not open this photo for cropping.','error');close(null);};
+  if(!/^data:/.test(src))img.crossOrigin='anonymous';
+  img.src=src;
 }
 function removePhoto(isEdit){
   if(isEdit){pendingPhotoEdit=null;pendingPhotoEditOrientation='landscape';document.getElementById('m-upload-zone-wrap').innerHTML=`<div class="upload-zone" id="m-upload-zone"><i class="ti ti-cloud-upload" aria-hidden="true"></i><div class="upload-zone-title">Click to upload or drag a photo here</div><div class="upload-zone-sub">PNG, JPG up to 5MB</div><input type="file" id="m-photo" accept="image/*" onchange="handlePhotoUpload(this,true)"></div>`;}
@@ -1852,7 +1926,7 @@ function openEdit(id){
   document.getElementById('m-breaking').checked=!!p.breaking;
   document.getElementById('m-category').value=p.category;
   document.getElementById('m-upload-zone-wrap').innerHTML=p.photo?
-    `<div class="upload-preview"><img src="${p.photo}" alt=""><button class="upload-preview-remove" onclick="removePhoto(true)" aria-label="Remove photo"><i class="ti ti-x" aria-hidden="true"></i></button></div>`:
+    `<div class="upload-preview"><img src="${p.photo}" alt=""><button class="upload-preview-remove" onclick="removePhoto(true)" aria-label="Remove photo"><i class="ti ti-x" aria-hidden="true"></i></button><button class="upload-preview-crop" onclick="recropPhoto(true)" type="button"><i class="ti ti-crop" aria-hidden="true"></i> Crop</button></div>`:
     `<div class="upload-zone" id="m-upload-zone"><i class="ti ti-cloud-upload" aria-hidden="true"></i><div class="upload-zone-title">Click to upload or drag a photo here</div><div class="upload-zone-sub">PNG, JPG up to 5MB</div><input type="file" id="m-photo" accept="image/*" onchange="handlePhotoUpload(this,true)"></div>`;
   document.getElementById('m-video-upload-zone-wrap').innerHTML=p.video?
     `<div class="upload-preview"><video src="${p.video}" style="width:100%;height:220px;object-fit:cover" muted controls></video><button class="upload-preview-remove" onclick="removeVideo(true)" aria-label="Remove video"><i class="ti ti-x" aria-hidden="true"></i></button></div>`:
