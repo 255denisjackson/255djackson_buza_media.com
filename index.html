@@ -1106,7 +1106,8 @@ function getYouTubeId(url){
   return m?m[1]:null;
 }
 function siteBaseUrl(){return window.location.href.split('?')[0].split('#')[0].replace(/index\.html$/,'');}
-function articleLink(p){return p.code?siteBaseUrl()+'a/'+encodeURIComponent(p.code)+'/':siteBaseUrl()+'?a='+encodeURIComponent(p.id);} // static page = picture preview on WhatsApp/Facebook
+const SHARE_BASE='https://255denisjackson.github.io/255djackson_buza_media.com/';
+function articleLink(p){return p.code?SHARE_BASE+'a/'+encodeURIComponent(p.code)+'/':siteBaseUrl()+'?a='+encodeURIComponent(p.id);} // static page = picture preview on WhatsApp/Facebook
 function makeExcerpt(text,len){const plain=stripTags(text);return plain.length>len?plain.substring(0,len).trim()+'…':plain;}
 function looksEnglish(t){const m=String(t||'').toLowerCase().match(/\b(the|and|of|to|in|is|for|with|on|that|from|as|are|was|his|her|after|over|will)\b/g)||[];return m.length>=3;}
 function cleanTitle(t){return String(t||'').replace(/\s*[-–—|:]\s*videos?\s*[.!]?\s*$/i,'').trim();}
@@ -2171,23 +2172,15 @@ function wrapLines(cx,text,maxW,maxLines){
 
 
 // Bold BUZA MEDIA wordmark: gradient letters, crisp dark outline and a blue glow. No box or background behind it.
-function drawBrandWord(ctx,text,x,y,size,align,italic){
+function drawBrandWord(ctx,text,x,y,size,align){
+  // plain bold white word with a soft shadow so it reads on any photo (no gradient, no italic)
   ctx.save();
-  ctx.font=`900 ${italic===false?'':'italic '}${size}px Arial, Helvetica, sans-serif`;
-  if('letterSpacing' in ctx)ctx.letterSpacing=Math.round(size*0.08)+'px';
+  ctx.font=`900 ${size}px Arial, Helvetica, sans-serif`;
+  if('letterSpacing' in ctx)ctx.letterSpacing=Math.round(size*0.06)+'px';
   const w=ctx.measureText(text).width;
   const x0=align==='right'?x-w:x;
-  const g=ctx.createLinearGradient(x0,y-size,x0+w,y);
-  g.addColorStop(0,'#ffffff');g.addColorStop(0.55,'#d4e3ff');g.addColorStop(1,'#6b9bff');
-  ctx.lineJoin='round';
-  ctx.lineWidth=Math.max(3,size*0.14);
-  ctx.strokeStyle='rgba(6,10,32,.85)';
-  ctx.shadowColor='rgba(0,0,0,.6)';ctx.shadowBlur=size*0.25;ctx.shadowOffsetY=2;
-  ctx.strokeText(text,x0,y);
-  ctx.shadowColor='rgba(32,101,254,.95)';ctx.shadowBlur=size*0.55;ctx.shadowOffsetY=0;
-  ctx.fillStyle=g;
-  ctx.fillText(text,x0,y);
-  ctx.shadowBlur=0;
+  ctx.shadowColor='rgba(0,0,0,.65)';ctx.shadowBlur=size*0.3;ctx.shadowOffsetY=2;
+  ctx.fillStyle='#ffffff';
   ctx.fillText(text,x0,y);
   ctx.restore();
   return w;
@@ -2223,7 +2216,7 @@ function buildVideoBannerCanvas(p,vw,vh){
   let x=pad;
   if(p.breaking)x+=pill(p._breakingLabel||'BREAKING','#e63946',x,pad)+tagFont*0.5;
   pill((p.category||'NEWS').toUpperCase(),'#2065fe',x,pad);
-  drawBrandWord(cx,'BUZA MEDIA',vw-pad,pad+tagFont*1.45,Math.round(tagFont*1.45),'right');
+  drawBrandWord(cx,'BUZA MEDIA',vw-pad,pad+tagFont*1.1,Math.round(tagFont*1.1),'right');
   // credit line under the BUZA MEDIA label
   const pwFont=Math.round(u*0.026);
   cx.font=`400 ${pwFont}px ${FONT}`;
@@ -2453,7 +2446,7 @@ async function downloadPostCard(){
       ctx.fillText(fmtDateCard(p.date,T.locale),padX,row2);
 
       // bold BUZA MEDIA on the picture area (white with a soft shadow so it reads on any photo)
-      drawBrandWord(ctx,'BUZA MEDIA',36,84,42);
+      drawBrandWord(ctx,'BUZA MEDIA',36,80,32);
 
       ctx.fillStyle='#2065fe';
       ctx.font='600 20px Arial';
@@ -2494,7 +2487,7 @@ async function downloadPostCard(){
       }
 
       // bold BUZA MEDIA on the picture area (white with a soft shadow so it reads on any photo)
-      const bw0=drawBrandWord(ctx,'BUZA MEDIA',48,84,36,'left',false);
+      const bw0=drawBrandWord(ctx,'BUZA MEDIA',48,80,28,'left');
       ctx.fillStyle='#2065fe';
       ctx.fillRect(48+bw0+10,84-26,4,30);
 
