@@ -1240,9 +1240,11 @@ const VIDEO_MAX_MB=50; // matches the article-videos bucket limit
 const VIDEO_EXT={'video/mp4':'mp4','video/webm':'webm','video/quicktime':'mov'};
 function uploadFileWithProgress(file,bucket,folder,onProgress){
   const xhr=new XMLHttpRequest();
-  let stallTimer=null;
+  let stallTimer=null,aborted=false;
   const promise=new Promise(async(resolve,reject)=>{
     try{
+      file=await file; // may still be being prepared (moved to "fast start" layout)
+      if(aborted)throw new Error('Upload cancelled');
       const ext=VIDEO_EXT[file.type]||'bin';
       const path=`${folder}/${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
       let token=SUPABASE_KEY;
@@ -1273,14 +1275,68 @@ function uploadFileWithProgress(file,bucket,folder,onProgress){
       xhr.send(file);
     }catch(e){clearTimeout(stallTimer);reject(e);}
   });
-  return {promise,abort:()=>{clearTimeout(stallTimer);try{xhr.abort();}catch(e){}}};
+  return {promise,abort:()=>{aborted=true;clearTimeout(stallTimer);try{xhr.abort();}catch(e){}}};
 }
+
+/* "Fast start": phone videos usually keep their index (moov) at the END of the file, so the player must download
+   nearly everything before it can show the first frame. We move the index to the front before uploading — the
+   same thing TikTok-style players rely on — so playback starts after the first few hundred KB. */
+async function faststartMp4(file){
+  try{
+    const buf=await file.arrayBuffer(),dv=new DataView(buf),u8=new Uint8Array(buf);
+    const tag=o=>String.fromCharCode(u8[o],u8[o+1],u8[o+2],u8[o+3]);
+    const boxes=[];let o=0;
+    while(o+8<=buf.byteLength){
+      let size=dv.getUint32(o),hdr=8;
+      if(size===1){size=Number(dv.getBigUint64(o+8));hdr=16;}else if(size===0)size=buf.byteLength-o;
+      if(size<hdr||o+size>buf.byteLength)return file;
+      boxes.push({t:tag(o+4),o,size});o+=size;
+    }
+    const mi=boxes.findIndex(b=>b.t==='moov'),di=boxes.findIndex(b=>b.t==='mdat');
+    if(mi<0||di<0||mi<di)return file; // already fast-start (or unknown layout)
+    const moov=boxes[mi];
+    const m=u8.slice(moov.o,moov.o+moov.size),mv=new DataView(m.buffer);
+    const shift=moov.size;
+    const walk=(start,end)=>{
+      let p=start;
+      while(p+8<=end){
+        let sz=mv.getUint32(p),h=8;
+        if(sz===1){sz=Number(mv.getBigUint64(p+8));h=16;}
+        if(sz<h||p+sz>end)return;
+        const t=String.fromCharCode(m[p+4],m[p+5],m[p+6],m[p+7]);
+        if(t==='stco'){const n=mv.getUint32(p+h+4);for(let i=0;i<n;i++){const q=p+h+8+i*4;mv.setUint32(q,mv.getUint32(q)+shift);}}
+        else if(t==='co64'){const n=mv.getUint32(p+h+4);for(let i=0;i<n;i++){const q=p+h+8+i*8;mv.setBigUint64(q,mv.getBigUint64(q)+BigInt(shift));}}
+        else if(['trak','mdia','minf','stbl','edts','udta'].includes(t))walk(p+h,p+sz);
+        p+=sz;
+      }
+    };
+    walk(8,m.length);
+    const parts=[];
+    boxes.forEach((b,i)=>{if(i===mi)return;parts.push(buf.slice(b.o,b.o+b.size));if(b.t==='ftyp')parts.push(m);});
+    if(!boxes.some(b=>b.t==='ftyp'))parts.unshift(m);
+    return new Blob(parts,{type:file.type});
+  }catch(e){console.error('Buza Media: fast-start skipped.',e);return file;}
+}
+/* warm the first part of a video while the reader is deciding (hover / touch), so it opens instantly */
+const warmedVideos=new Set();
+function warmVideo(url){
+  if(!url||warmedVideos.has(url)||!String(url).startsWith(SUPABASE_URL)||warmedVideos.size>12)return;
+  warmedVideos.add(url);
+  const v=document.createElement('video');v.preload='auto';v.muted=true;v.src=url;v.load();
+  setTimeout(()=>{v.removeAttribute('src');v.load();},20000);
+}
+function warmFromEvent(e){
+  const c=e.target.closest&&e.target.closest('[data-pid]');if(!c)return;
+  const p=posts.find(x=>String(x.id)===c.dataset.pid);
+  if(p&&p.mediaType==='video'&&p.video)warmVideo(p.video);
+}
+['pointerdown','touchstart','mouseover'].forEach(ev=>document.addEventListener(ev,warmFromEvent,{passive:true}));
 const videoJobs={new:null,edit:null};
 const videoPreviewUrls={new:null,edit:null};
 function startVideoUpload(file,key){
   const old=videoJobs[key];if(old&&old.abort)old.abort();
   const job={file,pct:0,url:null,error:null,onSave:null};
-  const up=uploadFileWithProgress(file,'article-videos','videos',pct=>{job.pct=pct;paintVideoProgress(key,job);if(job.onSave)job.onSave(pct);});
+  const up=uploadFileWithProgress(file.type==='video/webm'?file:faststartMp4(file),'article-videos','videos',pct=>{job.pct=pct;paintVideoProgress(key,job);if(job.onSave)job.onSave(pct);});
   job.abort=up.abort;
   job.promise=up.promise
     .then(url=>{job.url=url;job.pct=100;paintVideoProgress(key,job);return url;})
