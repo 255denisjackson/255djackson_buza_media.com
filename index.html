@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Buza Media — Habari za Tanzania: Michezo, Burudani na Habari za Leo</title>
-<meta name="description" content="Buza Media: habari za uhakika kutoka Tanzania. Soma habari za Simba, Yanga, Azam, Miss Grand Tanzania, Bongo Flava na matukio ya kila siku, kila saa.">
+<meta name="description" content="Buza Media: habari kutoka Tanzania. Soma habari za Simba, Yanga, Azam, Miss Grand Tanzania, Bongo Flava na matukio ya kila siku, kila saa.">
 <meta name="robots" content="index,follow,max-image-preview:large">
 <link rel="canonical" href="https://255denisjackson.github.io/255djackson_buza_media.com/">
 <link rel="icon" href="favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
@@ -12,10 +12,10 @@
 <meta name="theme-color" content="#1a1a2e">
 <link rel="alternate" type="application/rss+xml" title="Buza Media" href="feed.xml">
 <meta property="og:type" content="website"><meta property="og:site_name" content="Buza Media"><meta property="og:locale" content="sw_TZ">
-<meta property="og:title" content="Buza Media — Habari za Tanzania"><meta property="og:description" content="Habari za uhakika: michezo, burudani na matukio ya kila siku, kila saa.">
+<meta property="og:title" content="Buza Media — Habari za Tanzania"><meta property="og:description" content="Michezo, burudani na matukio ya kila siku, kila saa.">
 <meta property="og:url" content="https://255denisjackson.github.io/255djackson_buza_media.com/"><meta property="og:image" content="https://255denisjackson.github.io/255djackson_buza_media.com/og-default.png">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Buza Media — Habari za Tanzania">
-<meta name="twitter:description" content="Habari za uhakika: michezo, burudani na matukio ya kila siku, kila saa."><meta name="twitter:image" content="https://255denisjackson.github.io/255djackson_buza_media.com/og-default.png">
+<meta name="twitter:description" content="Michezo, burudani na matukio ya kila siku, kila saa."><meta name="twitter:image" content="https://255denisjackson.github.io/255djackson_buza_media.com/og-default.png">
 <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "NewsMediaOrganization", "@id": "https://255denisjackson.github.io/255djackson_buza_media.com/#org", "name": "Buza Media", "alternateName": ["BuzaMedia", "Buza Media Tanzania"], "url": "https://255denisjackson.github.io/255djackson_buza_media.com/", "logo": {"@type": "ImageObject", "url": "https://255denisjackson.github.io/255djackson_buza_media.com/icon-512.png", "width": 512, "height": 512}, "image": "https://255denisjackson.github.io/255djackson_buza_media.com/og-default.png", "description": "Buza Media ni chombo cha habari cha Tanzania: habari za michezo, burudani na matukio ya kila siku kwa Kiswahili.", "areaServed": "TZ", "knowsLanguage": "sw", "sameAs": ["https://facebook.com/buzamedia", "https://x.com/buzamedia", "https://www.tiktok.com/@buza_media", "https://www.youtube.com/@BUZA_MEDIA"]}, {"@type": "WebSite", "@id": "https://255denisjackson.github.io/255djackson_buza_media.com/#site", "url": "https://255denisjackson.github.io/255djackson_buza_media.com/", "name": "Buza Media", "alternateName": "BuzaMedia", "inLanguage": "sw", "publisher": {"@id": "https://255denisjackson.github.io/255djackson_buza_media.com/#org"}}]}</script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
 <style>
@@ -286,6 +286,26 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
 .toast.success{background:#065f46}
 .toast.error{background:#991b1b}
 
+/* upload progress: bar inside the video preview + full-screen loader while saving */
+.vup-bar{position:absolute;left:0;right:0;bottom:0;height:6px;background:rgba(255,255,255,.28)}
+.vup-fill{height:100%;width:0;background:#2065fe;transition:width .2s linear}
+.vup-badge{position:absolute;left:8px;top:8px;background:rgba(26,26,46,.82);color:#fff;border-radius:16px;padding:5px 12px;font-size:.78rem;font-weight:600;display:flex;align-items:center;gap:6px}
+.vup-badge i{font-size:14px}
+.vup-badge.done{background:#065f46}
+.vup-badge.fail{background:#991b1b}
+.vup-badge button{background:#fff;color:#991b1b;border:none;border-radius:10px;padding:2px 9px;font-size:.72rem;font-weight:700;cursor:pointer}
+.vup-spin{width:13px;height:13px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+.save-loader{position:fixed;inset:0;background:rgba(10,12,24,.62);z-index:1200;display:flex;align-items:center;justify-content:center;padding:1rem}
+.save-loader.hidden{display:none}
+.save-loader-card{background:#fff;border-radius:14px;padding:1.4rem 1.5rem;width:100%;max-width:340px;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.35)}
+.save-loader-title{font-size:.95rem;font-weight:700;color:#1a1a2e;margin-bottom:.9rem}
+.save-loader-bar{height:10px;border-radius:6px;background:#e6e9f2;overflow:hidden}
+.save-loader-fill{height:100%;width:0;background:#2065fe;border-radius:6px;transition:width .2s linear}
+.save-loader-fill.indet{width:40%!important;animation:slIndet 1.1s ease-in-out infinite}
+@keyframes slIndet{0%{margin-left:-40%}100%{margin-left:100%}}
+.save-loader-pct{font-size:1.6rem;font-weight:800;color:#2065fe;margin-top:.7rem;min-height:2rem}
+.save-loader-hint{font-size:.74rem;color:#6b7280;margin-top:.3rem}
+
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:flex-end;justify-content:center}
 .modal{background:#fff;border-radius:14px 14px 0 0;padding:1.75rem 1.5rem 2rem;width:100%;max-height:88vh;overflow-y:auto}
 .modal h3{font-size:1rem;font-weight:700;margin-bottom:1rem;color:var(--primary)}
@@ -395,7 +415,7 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
 </style>
 </head>
 <body>
-<noscript><h1>Buza Media — Habari za Tanzania</h1><p>Habari za uhakika za michezo, burudani na matukio ya kila siku kwa Kiswahili. Washa JavaScript kusoma habari zote, au fungua <a href="feed.xml">feed.xml</a>.</p></noscript>
+<noscript><h1>Buza Media — Habari za Tanzania</h1><p>Habari za michezo, burudani na matukio ya kila siku kwa Kiswahili. Washa JavaScript kusoma habari zote, au fungua <a href="feed.xml">feed.xml</a>.</p></noscript>
 
 <nav>
   <div class="nav-top">
@@ -578,8 +598,8 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
               <div class="upload-zone" id="video-upload-zone">
                 <i class="ti ti-video" aria-hidden="true"></i>
                 <div class="upload-zone-title">Click to upload or drag a video here</div>
-                <div class="upload-zone-sub">MP4, WebM up to 20MB · the cover photo above is used as its poster</div>
-                <input type="file" id="p-video" accept="video/*" onchange="handleVideoUpload(this)">
+                <div class="upload-zone-sub">MP4, WebM up to 50MB · the cover photo above is used as its poster</div>
+                <input type="file" id="p-video" accept="video/mp4,video/webm,video/quicktime" onchange="handleVideoUpload(this)">
               </div>
             </div>
             <input type="text" id="p-video-url" placeholder="Or paste a YouTube / video URL instead of uploading…" style="margin-top:.6rem">
@@ -730,8 +750,8 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
         <div class="upload-zone" id="m-video-upload-zone">
           <i class="ti ti-video" aria-hidden="true"></i>
           <div class="upload-zone-title">Click to upload or drag a video here</div>
-          <div class="upload-zone-sub">MP4, WebM up to 20MB</div>
-          <input type="file" id="m-video" accept="video/*" onchange="handleVideoUpload(this,true)">
+          <div class="upload-zone-sub">MP4, WebM up to 50MB</div>
+          <input type="file" id="m-video" accept="video/mp4,video/webm,video/quicktime" onchange="handleVideoUpload(this,true)">
         </div>
       </div>
     </div>
@@ -759,6 +779,14 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
   </div>
 </div>
 
+<div class="save-loader hidden" id="save-loader" role="status" aria-live="polite">
+  <div class="save-loader-card">
+    <div class="save-loader-title" id="sl-title">Saving…</div>
+    <div class="save-loader-bar"><div class="save-loader-fill indet" id="sl-fill"></div></div>
+    <div class="save-loader-pct" id="sl-pct"></div>
+    <div class="save-loader-hint">Please keep this page open</div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1187,6 +1215,106 @@ async function uploadDataUrl(dataUrl,bucket,folder){
   if(error)throw error;
   return sb.storage.from(bucket).getPublicUrl(path).data.publicUrl;
 }
+
+/* ---- video upload with live progress ----
+   The file is sent straight from the device (no slow base64 step) and starts uploading the moment it is attached,
+   so by the time you press Publish it is usually already done. */
+const VIDEO_MAX_MB=50; // matches the article-videos bucket limit
+const VIDEO_EXT={'video/mp4':'mp4','video/webm':'webm','video/quicktime':'mov'};
+function uploadFileWithProgress(file,bucket,folder,onProgress){
+  const xhr=new XMLHttpRequest();
+  let stallTimer=null;
+  const promise=new Promise(async(resolve,reject)=>{
+    try{
+      const ext=VIDEO_EXT[file.type]||'bin';
+      const path=`${folder}/${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+      let token=SUPABASE_KEY;
+      try{const {data}=await sb.auth.getSession();if(data&&data.session)token=data.session.access_token;}catch(e){}
+      xhr.open('POST',`${SUPABASE_URL}/storage/v1/object/${bucket}/${path}`);
+      xhr.setRequestHeader('apikey',SUPABASE_KEY);
+      xhr.setRequestHeader('Authorization','Bearer '+token);
+      xhr.setRequestHeader('x-upsert','false');
+      xhr.setRequestHeader('cache-control','max-age=31536000');
+      xhr.setRequestHeader('Content-Type',file.type||'application/octet-stream');
+      // if no bytes move for 45s the connection is dead: fail clearly instead of hanging forever
+      const arm=()=>{clearTimeout(stallTimer);stallTimer=setTimeout(()=>{reject(new Error('Upload stalled. Check your internet and try again.'));try{xhr.abort();}catch(e){}},45000);};
+      xhr.upload.onprogress=e=>{arm();if(e.lengthComputable&&onProgress)onProgress(Math.min(99,Math.round(e.loaded/e.total*100)));};
+      xhr.onload=()=>{
+        clearTimeout(stallTimer);
+        if(xhr.status>=200&&xhr.status<300){
+          if(onProgress)onProgress(100);
+          resolve(sb.storage.from(bucket).getPublicUrl(path).data.publicUrl);
+        }else{
+          let msg='Upload failed ('+xhr.status+')';
+          try{const j=JSON.parse(xhr.responseText);msg=j.message||j.error||msg;}catch(e){}
+          reject(new Error(msg));
+        }
+      };
+      xhr.onerror=()=>{clearTimeout(stallTimer);reject(new Error('Network error while uploading. Try again.'));};
+      xhr.onabort=()=>{clearTimeout(stallTimer);reject(new Error('Upload cancelled'));};
+      arm();
+      xhr.send(file);
+    }catch(e){clearTimeout(stallTimer);reject(e);}
+  });
+  return {promise,abort:()=>{clearTimeout(stallTimer);try{xhr.abort();}catch(e){}}};
+}
+const videoJobs={new:null,edit:null};
+const videoPreviewUrls={new:null,edit:null};
+function startVideoUpload(file,key){
+  const old=videoJobs[key];if(old&&old.abort)old.abort();
+  const job={file,pct:0,url:null,error:null,onSave:null};
+  const up=uploadFileWithProgress(file,'article-videos','videos',pct=>{job.pct=pct;paintVideoProgress(key,job);if(job.onSave)job.onSave(pct);});
+  job.abort=up.abort;
+  job.promise=up.promise
+    .then(url=>{job.url=url;job.pct=100;paintVideoProgress(key,job);return url;})
+    .catch(err=>{job.error=err;paintVideoProgress(key,job);throw err;});
+  job.promise.catch(()=>{}); // errors are shown on the preview and again when saving
+  videoJobs[key]=job;
+  return job;
+}
+function paintVideoProgress(key,job){
+  if(videoJobs[key]!==job)return;
+  const fill=document.getElementById('vup-fill-'+key),badge=document.getElementById('vup-badge-'+key);
+  if(!fill||!badge)return;
+  if(job.error){
+    fill.style.width='0';
+    badge.className='vup-badge fail';
+    badge.innerHTML=`<i class="ti ti-alert-triangle" aria-hidden="true"></i> Upload failed <button type="button" onclick="retryVideoUpload('${key}')">Retry</button>`;
+  }else if(job.url){
+    fill.style.width='100%';
+    badge.className='vup-badge done';
+    badge.innerHTML='<i class="ti ti-circle-check" aria-hidden="true"></i> Uploaded';
+    setTimeout(()=>{const b=document.getElementById('vup-bar-'+key);if(b&&videoJobs[key]===job)b.style.display='none';},800);
+  }else{
+    fill.style.width=job.pct+'%';
+    badge.className='vup-badge';
+    badge.innerHTML=`<span class="vup-spin"></span> Uploading ${job.pct}%`;
+  }
+}
+function retryVideoUpload(key){
+  const job=videoJobs[key];if(!job)return;
+  const bar=document.getElementById('vup-bar-'+key);if(bar)bar.style.display='';
+  startVideoUpload(job.file,key);
+  paintVideoProgress(key,videoJobs[key]);
+}
+// used when saving: wait for the upload to finish (showing its percentage), retrying once if it had failed
+async function finishVideoJob(key,onPct){
+  let job=videoJobs[key];if(!job)return null;
+  if(job.error){job=startVideoUpload(job.file,key);}
+  if(job.url)return job.url;
+  job.onSave=onPct||null;
+  if(onPct)onPct(job.pct);
+  try{return await job.promise;}finally{job.onSave=null;}
+}
+function showSaveLoader(title,pct){
+  const wrap=document.getElementById('save-loader');if(!wrap)return;
+  wrap.classList.remove('hidden');
+  document.getElementById('sl-title').textContent=title;
+  const fill=document.getElementById('sl-fill'),txt=document.getElementById('sl-pct');
+  if(typeof pct==='number'){fill.classList.remove('indet');fill.style.width=pct+'%';txt.textContent=pct+'%';}
+  else{fill.classList.add('indet');fill.style.width='';txt.textContent='';}
+}
+function hideSaveLoader(){const w=document.getElementById('save-loader');if(w)w.classList.add('hidden');}
 async function resolvePhoto(src){
   if(!src)return null;
   if(String(src).startsWith('data:'))return uploadDataUrl(src,'article-images','photos');
@@ -1694,23 +1822,24 @@ function removePhoto(isEdit){
 function handleVideoUpload(input,isEdit){
   const file=input.files[0];if(!file)return;
   if(!file.type.startsWith('video/')){showToast('Please choose a video file.','error');return;}
-  if(file.size>20*1024*1024){showToast('Video must be under 20MB.','error');return;}
-  const reader=new FileReader();
-  reader.onload=function(e){
-    const dataUrl=e.target.result;
-    if(isEdit){
-      pendingVideoEdit=dataUrl;
-      document.getElementById('m-video-upload-zone-wrap').innerHTML=`<div class="upload-preview"><video src="${dataUrl}" style="width:100%;height:220px;object-fit:cover" muted></video><button class="upload-preview-remove" onclick="removeVideo(true)" aria-label="Remove video"><i class="ti ti-x" aria-hidden="true"></i></button><div class="upload-preview-name">${file.name}</div></div>`;
-    }else{
-      pendingVideo=dataUrl;
-      document.getElementById('video-upload-zone-wrap').innerHTML=`<div class="upload-preview"><video src="${dataUrl}" style="width:100%;height:220px;object-fit:cover" muted></video><button class="upload-preview-remove" onclick="removeVideo(false)" aria-label="Remove video"><i class="ti ti-x" aria-hidden="true"></i></button><div class="upload-preview-name">${file.name}</div></div>`;
-    }
-  };
-  reader.readAsDataURL(file);
+  if(!VIDEO_EXT[file.type]){showToast('Please use an MP4, WebM or MOV video.','error');input.value='';return;}
+  if(file.size>VIDEO_MAX_MB*1024*1024){showToast('Video must be under '+VIDEO_MAX_MB+'MB.','error');input.value='';return;}
+  const key=isEdit?'edit':'new';
+  if(videoPreviewUrls[key])URL.revokeObjectURL(videoPreviewUrls[key]);
+  const objUrl=URL.createObjectURL(file);videoPreviewUrls[key]=objUrl;
+  // show the preview right away, then upload in the background with a visible percentage
+  document.getElementById(isEdit?'m-video-upload-zone-wrap':'video-upload-zone-wrap').innerHTML=
+    `<div class="upload-preview"><video src="${objUrl}" style="width:100%;height:220px;object-fit:cover" muted></video><button class="upload-preview-remove" type="button" onclick="removeVideo(${isEdit?'true':'false'})" aria-label="Remove video"><i class="ti ti-x" aria-hidden="true"></i></button><div class="vup-badge" id="vup-badge-${key}"><span class="vup-spin"></span> Uploading 0%</div><div class="upload-preview-name" style="padding-bottom:14px">${escapeHtml(file.name)}</div><div class="vup-bar" id="vup-bar-${key}"><div class="vup-fill" id="vup-fill-${key}"></div></div></div>`;
+  if(isEdit)pendingVideoEdit=null;else pendingVideo=null;
+  startVideoUpload(file,key);
 }
 function removeVideo(isEdit){
-  if(isEdit){pendingVideoEdit=null;document.getElementById('m-video-upload-zone-wrap').innerHTML=`<div class="upload-zone" id="m-video-upload-zone"><i class="ti ti-video" aria-hidden="true"></i><div class="upload-zone-title">Click to upload or drag a video here</div><div class="upload-zone-sub">MP4, WebM up to 20MB</div><input type="file" id="m-video" accept="video/*" onchange="handleVideoUpload(this,true)"></div>`;}
-  else{pendingVideo=null;document.getElementById('video-upload-zone-wrap').innerHTML=`<div class="upload-zone" id="video-upload-zone"><i class="ti ti-video" aria-hidden="true"></i><div class="upload-zone-title">Click to upload or drag a video here</div><div class="upload-zone-sub">MP4, WebM up to 20MB · the cover photo above is used as its poster</div><input type="file" id="p-video" accept="video/*" onchange="handleVideoUpload(this)"></div>`;}
+  const key=isEdit?'edit':'new';
+  const job=videoJobs[key];if(job&&job.abort)job.abort();
+  videoJobs[key]=null;
+  if(videoPreviewUrls[key]){URL.revokeObjectURL(videoPreviewUrls[key]);videoPreviewUrls[key]=null;}
+  if(isEdit){pendingVideoEdit=null;document.getElementById('m-video-upload-zone-wrap').innerHTML=`<div class="upload-zone" id="m-video-upload-zone"><i class="ti ti-video" aria-hidden="true"></i><div class="upload-zone-title">Click to upload or drag a video here</div><div class="upload-zone-sub">MP4, WebM up to ${VIDEO_MAX_MB}MB</div><input type="file" id="m-video" accept="video/mp4,video/webm,video/quicktime" onchange="handleVideoUpload(this,true)"></div>`;}
+  else{pendingVideo=null;document.getElementById('video-upload-zone-wrap').innerHTML=`<div class="upload-zone" id="video-upload-zone"><i class="ti ti-video" aria-hidden="true"></i><div class="upload-zone-title">Click to upload or drag a video here</div><div class="upload-zone-sub">MP4, WebM up to ${VIDEO_MAX_MB}MB · the cover photo above is used as its poster</div><input type="file" id="p-video" accept="video/mp4,video/webm,video/quicktime" onchange="handleVideoUpload(this)"></div>`;}
 }
 
 async function savePost(st=null){
@@ -1719,15 +1848,21 @@ async function savePost(st=null){
   if(!isLoggedIn){showToast('Please sign in as admin first.','error');return;}
   const status=st||document.getElementById('p-status').value;
   const photo=(document.getElementById('p-photo-url').value||'').trim()||pendingPhoto;
-  const video=(document.getElementById('p-video-url').value||'').trim()||pendingVideo;
+  const videoLink=(document.getElementById('p-video-url').value||'').trim();
   const btns=document.querySelectorAll('#panel-compose .actions-bar .btn');
   btns.forEach(b=>{b.disabled=true;});
-  showToast(String(photo||'').startsWith('data:')?'Uploading photo in full quality…':'Saving…','success');
+  showSaveLoader(String(photo||'').startsWith('data:')?'Uploading photo…':'Saving…');
   try{
     let imageW=null,imageH=null,orientation=pendingPhotoOrientation;
     if(photo){const sz=await imageSize(photo);imageW=sz.w;imageH=sz.h;if(sz.w&&sz.h)orientation=sz.h>sz.w?'portrait':'landscape';}
     const photoFinal=await resolvePhoto(photo);
-    const videoFinal=await uploadDataUrl(video,'article-videos','videos');
+    let videoFinal=videoLink||null;
+    if(!videoFinal&&videoJobs.new){
+      // the video has been uploading since it was attached; wait here (with its percentage) until it is complete
+      showSaveLoader('Uploading video…',videoJobs.new.pct);
+      videoFinal=await finishVideoJob('new',pct=>showSaveLoader(pct>=100?'Video uploaded ✓':'Uploading video…',pct));
+    }
+    showSaveLoader('Saving post…');
     const newPost={title:t,category:document.getElementById('p-category').value,author:document.getElementById('p-author').value.trim()||'Staff',excerpt:document.getElementById('p-excerpt').value.trim(),body:document.getElementById('p-body').value.trim(),tags:document.getElementById('p-tags').value.split(',').map(x=>x.trim()).filter(Boolean),status,breaking:document.getElementById('p-breaking').checked,trending:false,photo:photoFinal,video:videoFinal,orientation,imageW,imageH,date:new Date().toISOString()};
     const {data,error}=await sb.from('articles').insert(articleToRow(newPost)).select(ARTICLE_SELECT).single();
     if(error)throw error;
@@ -1739,7 +1874,7 @@ async function savePost(st=null){
   }catch(err){
     console.error('Buza Media: save failed.',err);
     showToast('Could not save: '+(err.message||err),'error');
-  }finally{btns.forEach(b=>{b.disabled=false;});}
+  }finally{hideSaveLoader();btns.forEach(b=>{b.disabled=false;});}
 }
 function saveDraft(){savePost('draft');}
 function clearForm(){
@@ -1926,7 +2061,7 @@ async function deletePost(id){
 }
 
 function openEdit(id){
-  const p=posts.find(x=>x.id===id);if(!p)return;editingId=id;pendingPhotoEdit=p.photo;pendingVideoEdit=p.video||null;pendingPhotoEditOrientation=p.orientation||'landscape';
+  const p=posts.find(x=>x.id===id);if(!p)return;editingId=id;if(videoJobs.edit){videoJobs.edit.abort();videoJobs.edit=null;}pendingPhotoEdit=p.photo;pendingVideoEdit=p.video||null;pendingPhotoEditOrientation=p.orientation||'landscape';
   document.getElementById('m-title').value=p.title;
   document.getElementById('m-excerpt').value=p.excerpt||'';
   document.getElementById('m-body').value=p.body||'';
@@ -1938,10 +2073,13 @@ function openEdit(id){
     `<div class="upload-zone" id="m-upload-zone"><i class="ti ti-cloud-upload" aria-hidden="true"></i><div class="upload-zone-title">Click to upload or drag a photo here</div><div class="upload-zone-sub">PNG, JPG up to 5MB</div><input type="file" id="m-photo" accept="image/*" onchange="handlePhotoUpload(this,true)"></div>`;
   document.getElementById('m-video-upload-zone-wrap').innerHTML=p.video?
     `<div class="upload-preview"><video src="${p.video}" style="width:100%;height:220px;object-fit:cover" muted controls></video><button class="upload-preview-remove" onclick="removeVideo(true)" aria-label="Remove video"><i class="ti ti-x" aria-hidden="true"></i></button></div>`:
-    `<div class="upload-zone" id="m-video-upload-zone"><i class="ti ti-video" aria-hidden="true"></i><div class="upload-zone-title">Click to upload or drag a video here</div><div class="upload-zone-sub">MP4, WebM up to 20MB</div><input type="file" id="m-video" accept="video/*" onchange="handleVideoUpload(this,true)"></div>`;
+    `<div class="upload-zone" id="m-video-upload-zone"><i class="ti ti-video" aria-hidden="true"></i><div class="upload-zone-title">Click to upload or drag a video here</div><div class="upload-zone-sub">MP4, WebM up to 50MB</div><input type="file" id="m-video" accept="video/mp4,video/webm,video/quicktime" onchange="handleVideoUpload(this,true)"></div>`;
   document.getElementById('modal-overlay').classList.remove('hidden');
 }
-function closeModal(){document.getElementById('modal-overlay').classList.add('hidden');editingId=null;}
+function closeModal(){
+  document.getElementById('modal-overlay').classList.add('hidden');editingId=null;
+  if(videoJobs.edit){videoJobs.edit.abort();videoJobs.edit=null;} // closed without saving: stop any video still uploading
+}
 async function saveEdit(){
   const p=posts.find(x=>x.id===editingId);if(!p)return;
   const d=Object.assign({},p,{
@@ -1953,7 +2091,7 @@ async function saveEdit(){
     category:document.getElementById('m-category').value,
     orientation:pendingPhotoEditOrientation
   });
-  showToast('Saving…','success');
+  showSaveLoader('Saving…');
   try{
     if(pendingPhotoEdit&&pendingPhotoEdit!==p.photo){
       const sz=await imageSize(pendingPhotoEdit);d.imageW=sz.w;d.imageH=sz.h;
@@ -1961,7 +2099,13 @@ async function saveEdit(){
     }
     if(!pendingPhotoEdit){d.imageW=null;d.imageH=null;}
     d.photo=await resolvePhoto(pendingPhotoEdit);
-    d.video=await uploadDataUrl(pendingVideoEdit,'article-videos','videos');
+    if(videoJobs.edit){
+      showSaveLoader('Uploading video…',videoJobs.edit.pct);
+      d.video=await finishVideoJob('edit',pct=>showSaveLoader(pct>=100?'Video uploaded ✓':'Uploading video…',pct));
+      showSaveLoader('Saving…');
+    }else{
+      d.video=pendingVideoEdit||null;
+    }
     if(d.status==='published'&&p.status!=='published')d.date=new Date().toISOString();
     const {data,error}=await sb.from('articles').update(articleToRow(d)).eq('id',p.id).select(ARTICLE_SELECT);
     if(error)throw error;
@@ -1971,7 +2115,7 @@ async function saveEdit(){
   }catch(err){
     console.error('Buza Media: edit failed.',err);
     showToast('Could not save changes: '+(err.message||err),'error');
-  }
+  }finally{hideSaveLoader();}
 }
 
 function renderLikeState(){
@@ -2231,10 +2375,6 @@ function buildVideoBannerCanvas(p,vw,vh){
   const footY=vh-pad;
   cx.font=`700 ${footFont}px ${FONT}`;
   cx.fillStyle='#5a8cff';cx.fillText('BUZA MEDIA',pad,footY);
-  cx.font=`400 ${Math.round(footFont*0.8)}px ${FONT}`;
-  cx.fillStyle='rgba(255,255,255,.8)';
-  const tagline='Habari za uhakika';
-  cx.fillText(tagline,vw-pad-cx.measureText(tagline).width,footY);
   const lineY=footY-footFont*1.5;
   cx.fillStyle='#2065fe';cx.fillRect(pad,lineY,vw-pad*2,Math.max(3,Math.round(u*0.005)));
 

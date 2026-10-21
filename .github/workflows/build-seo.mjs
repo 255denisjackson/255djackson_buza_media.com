@@ -113,6 +113,6 @@ writeFileSync('news-sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urls
 
 // ---------- feed.xml ----------
 const feedItems = articles.slice(0, 50).map((a) => `<item><title>${esc(a.title)}</title><link>${a.url}</link><guid isPermaLink="true">${a.url}</guid><pubDate>${new Date(a.pub).toUTCString()}</pubDate><category>${esc(a.cat)}</category><description>${esc(a.desc)}</description>${a.hasImage ? `<enclosure url="${esc(a.image)}" type="image/jpeg" length="0"/>` : ''}</item>`);
-writeFileSync('feed.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0"><channel><title>${NAME}</title><link>${SITE}</link><description>Habari za uhakika kutoka Tanzania</description><language>sw</language>\n${feedItems.join('\n')}\n</channel></rss>\n`);
+writeFileSync('feed.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0"><channel><title>${NAME}</title><link>${SITE}</link><description>Habari kutoka Tanzania</description><language>sw</language>\n${feedItems.join('\n')}\n</channel></rss>\n`);
 
 console.log(`pages: ${articles.length}, indexable: ${articles.filter((a) => a.indexable).length}, in news sitemap: ${recent.length}`);

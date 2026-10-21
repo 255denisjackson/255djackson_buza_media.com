@@ -1,7 +1,7 @@
 {
   "name": "Buza Media",
   "short_name": "Buza Media",
-  "description": "Habari za uhakika kutoka Tanzania: michezo, burudani na habari za kila siku.",
+  "description": "Habari kutoka Tanzania: michezo, burudani na habari za kila siku.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
