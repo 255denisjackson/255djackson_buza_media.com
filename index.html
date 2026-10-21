@@ -1111,20 +1111,22 @@ function articleLink(p){return p.code?SHARE_BASE+'a/'+encodeURIComponent(p.code)
 function makeExcerpt(text,len){const plain=stripTags(text);return plain.length>len?plain.substring(0,len).trim()+'…':plain;}
 function looksEnglish(t){const m=String(t||'').toLowerCase().match(/\b(the|and|of|to|in|is|for|with|on|that|from|as|are|was|his|her|after|over|will)\b/g)||[];return m.length>=3;}
 function cleanTitle(t){return String(t||'').replace(/\s*[-–—|:]\s*videos?\s*[.!]?\s*$/i,'').trim();}
+function swGloss(t){return String(t||'').replace(/\bhat[- ]?trick\b/gi,m=>m[0]==='H'?'Mabao matatu':'mabao matatu');}
 function mapArticle(r){
   const video=r.video_url||null;
+  const sw=r.language!=='en';const G=sw?swGloss:(x=>x);
   return {
-    id:r.id,code:r.short_code||'',title:cleanTitle(stripTags(r.title))||'Untitled article',
+    id:r.id,code:r.short_code||'',title:G(cleanTitle(stripTags(r.title)))||'Untitled article',
     category:(r.categories&&r.categories.name)||'General',
     author:stripTags(r.author)||'Buza Media',
-    excerpt:stripTags(r.subtitle)||makeExcerpt(r.body,140),
-    body:r.body||'',tags:r.tags||[],
+    excerpt:G(stripTags(r.subtitle)||makeExcerpt(r.body,140)),
+    body:G(r.body||''),tags:r.tags||[],
     status:r.status==='published'?'published':'draft',
     breaking:!!r.is_breaking,trending:!!r.is_featured,
     photo:r.image_url||null,imageW:r.image_width||null,imageH:r.image_height||null,
     video,mediaType:video?'video':'photo',
     orientation:r.orientation==='portrait'?'portrait':'landscape',
-    language:(r.language==='en'||looksEnglish(stripTags(r.title)+' '+stripTags(r.subtitle)))?'en':'sw',
+    language:r.language==='en'?'en':(r.language==='sw'?'sw':(looksEnglish(stripTags(r.title)+' '+stripTags(r.subtitle))?'en':'sw')),
     titleEn:cleanTitle(stripTags(r.title_en))||'',excerptEn:stripTags(r.subtitle_en)||'',bodyEn:undefined,
     date:r.published_at||r.created_at,
     views:Number(r.view_count)||0,likes:Number(r.like_count)||0,
