@@ -1594,7 +1594,7 @@ function openArticle(id,asEntry){
   if(p.mediaType==='video'&&p.video&&ytId){
     document.getElementById('art-img').innerHTML=`<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${ytId}" title="${(p.title||'').replace(/"/g,'&quot;')}" frameborder="0" style="border:none" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
   }else if(p.mediaType==='video'&&p.video){
-    renderVideoPlayer(document.getElementById('art-img'),p.video,p.photo);
+    renderVideoPlayer(document.getElementById('art-img'),p.video,p.photo,true);
   }else{
     document.getElementById('art-img').innerHTML=p.photo?`<img src="${p.photo}" alt="">`:'<i class="ti ti-news" aria-hidden="true"></i>';
   }
@@ -2201,7 +2201,7 @@ function cardImgTap(e,id){
 // any double-tap on the hero image just likes it.
 /* custom player: play/pause, seek bar, time, fullscreen. Starts buffering immediately so playback begins sooner. */
 function fmtVT(t){t=Math.max(0,Math.floor(t||0));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0');}
-function renderVideoPlayer(host,src,poster){
+function renderVideoPlayer(host,src,poster,autoplay){
   host.classList.add('has-video');
   host.innerHTML=`<div class="vp"><video src="${src}" ${poster?`poster="${poster}"`:''} preload="auto" playsinline webkit-playsinline disablepictureinpicture disableremoteplayback controlslist="nodownload noplaybackrate nofullscreen noremoteplayback"></video><div class="vp-spin"></div><button type="button" class="vp-big" aria-label="Play"><i class="ti ti-player-play-filled" aria-hidden="true"></i></button><div class="vp-bar"><button type="button" class="vp-btn vp-pp" aria-label="Play or pause"><i class="ti ti-player-play-filled" aria-hidden="true"></i></button><span class="vp-cur">0:00</span><input type="range" class="vp-seek" min="0" max="1000" value="0" aria-label="Seek"><span class="vp-dur">0:00</span><button type="button" class="vp-btn vp-fs" aria-label="Fullscreen"><i class="ti ti-maximize" aria-hidden="true"></i></button></div></div>`;
   const box=host.querySelector('.vp'),v=box.querySelector('video'),seek=box.querySelector('.vp-seek');
@@ -2234,7 +2234,20 @@ function renderVideoPlayer(host,src,poster){
     else if(v.webkitEnterFullscreen)v.webkitEnterFullscreen(); // iPhone
   });
   box.querySelector('.vp-bar').addEventListener('click',e=>e.stopPropagation());
+  if(autoplay){const pr=v.play();if(pr&&pr.catch)pr.catch(()=>{}); /* if the browser blocks it, the play button stays visible */}
 }
+// stop (and unload) the video whenever the article is closed or the tab/app goes to the background
+function stopArticleVideo(){
+  const host=document.getElementById('art-img');if(!host)return;
+  const v=host.querySelector('video');
+  if(v){v.pause();v.removeAttribute('src');v.load();}
+  host.querySelectorAll('iframe').forEach(f=>{f.src='about:blank';});
+}
+(function(){
+  const va=document.getElementById('view-article');if(!va)return;
+  new MutationObserver(()=>{if(va.classList.contains('hidden'))stopArticleVideo();}).observe(va,{attributes:true,attributeFilter:['class']});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){const v=document.querySelector('#art-img video');if(v)v.pause();}});
+})();
 
 function articleImgTap(e){
   const el=e.currentTarget;
