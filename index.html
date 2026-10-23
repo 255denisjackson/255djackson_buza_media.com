@@ -910,8 +910,8 @@ function directText(post,lang){
 async function ensureBodyEn(p){
   if(!p||p.bodyEn!==undefined||!p.titleEn)return;
   try{
-    const {data}=await sb.from('articles').select('body_en').eq('id',p.id).maybeSingle();
-    p.bodyEn=(data&&data.body_en)||'';
+    const d=await api('/api/articles/'+encodeURIComponent(p.id)+'/body_en');
+    p.bodyEn=(d&&d.body_en)||'';
   }catch(e){p.bodyEn='';}
 }
 function getDisplayText(post){
@@ -1045,7 +1045,18 @@ let knownPostIds=null;
 
 const SUPABASE_URL='https://gxfwjicztemfpxfjbdqq.supabase.co';
 const SUPABASE_KEY='sb_publishable_zz-T8b1gItOWTM2R43t-jQ_--qts2s8'; // publishable (public) key — safe in the browser; real secrets live only in the database
-const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY); // still used only for edge functions + file storage
+/* ---- Cloudflare Worker API (D1 database). Set API_BASE to your deployed Worker URL. ---- */
+const API_BASE=window.BUZA_API_BASE||'https://buzamedia-api.REPLACE-ME.workers.dev';
+let adminToken='';try{adminToken=localStorage.getItem('buza_admin_token')||'';}catch(e){}
+async function api(path,opts){
+  opts=opts||{};
+  const r=await fetch(API_BASE+path,{method:opts.method||'GET',headers:Object.assign({'Content-Type':'application/json'},adminToken?{Authorization:'Bearer '+adminToken}:{}),body:opts.body!==undefined?JSON.stringify(opts.body):undefined});
+  let j=null;try{j=await r.json();}catch(e){}
+  if(!r.ok){const e=new Error((j&&j.error)||('Request failed ('+r.status+')'));e.status=r.status;throw e;}
+  return j;
+}
+function setAdminToken(t){adminToken=t||'';try{t?localStorage.setItem('buza_admin_token',t):localStorage.removeItem('buza_admin_token');}catch(e){}}
 let categoryIdByName={};
 const ARTICLE_SELECT='id,short_code,title,subtitle,body,author,tags,status,is_breaking,is_featured,orientation,language,title_en,subtitle_en,image_url,image_width,image_height,video_url,view_count,like_count,published_at,created_at,source_name,source_url,categories(name)';
 const stripTags=v=>String(v||'').replace(/<[^>]*>/g,'').normalize('NFKC').trim();
@@ -1066,7 +1077,7 @@ function recordView(id){
   viewedThisSession.add(id);
   const p=posts.find(x=>x.id===id);if(p)p.views++;
   refreshCardStats(id);
-  sb.rpc('record_view',{p_article_id:id}).then(({error})=>{if(error)console.error('Buza Media: view not recorded.',error);});
+  api('/api/view/'+encodeURIComponent(id),{method:'POST'}).catch(error=>{console.error('Buza Media: view not recorded.',error);});
 }
 function loadFollow(){isFollowing=localStorage.getItem(FOLLOW_KEY)==='1'&&(!('Notification' in window)||Notification.permission==='granted');updateFollowBtn();}
 
@@ -1191,8 +1202,8 @@ function articleToRow(p){
   return row;
 }
 async function loadCategories(){
-  const {data,error}=await sb.from('categories').select('id,name');
-  if(error){console.error('Buza Media: categories failed to load.',error);return;}
+  let data;
+  try{data=await api('/api/categories');}catch(error){console.error('Buza Media: categories failed to load.',error);return;}
   (data||[]).forEach(c=>{categoryIdByName[c.name]=c.id;});
 }
 function refreshOpenPanels(){
@@ -1203,9 +1214,7 @@ function refreshOpenPanels(){
 }
 async function loadPosts(manual){
   try{
-    const {data,error}=await sb.from('articles').select(ARTICLE_SELECT)
-      .order('published_at',{ascending:false,nullsFirst:false}).order('created_at',{ascending:false}).limit(500);
-    if(error)throw error;
+    const data=await api('/api/articles?limit=500'+(isLoggedIn?'&all=1':''));
     posts=(data||[]).map(mapArticle);
     checkForNewPostsAndNotify();
     renderPublic(!!manual);
@@ -1219,8 +1228,8 @@ async function loadPosts(manual){
   }
 }
 async function loadSocial(){
-  const {data,error}=await sb.from('site_settings').select('value').eq('key','social_links').maybeSingle();
-  if(!error&&data&&data.value)socialLinks=Object.assign({fb:'',tw:'',ig:'',yt:'',tt:'',wa:''},data.value);
+  let data=null;try{data=await api('/api/settings/social_links');}catch(e){}
+  if(data&&data.value)socialLinks=Object.assign({fb:'',tw:'',ig:'',yt:'',tt:'',wa:''},data.value);
   renderSocialFooter();
 }
 async function uploadDataUrl(dataUrl,bucket,folder){
@@ -1465,13 +1474,12 @@ function imageSize(src){
   return new Promise(res=>{const i=new Image();i.onload=()=>res({w:i.naturalWidth,h:i.naturalHeight});i.onerror=()=>res({w:null,h:null});i.src=src;});
 }
 async function checkAdmin(userId){
-  const {data}=await sb.from('admins').select('user_id').eq('user_id',userId).maybeSingle();
-  return !!data;
+  try{const d=await api('/api/me');return !!(d&&d.admin);}catch(e){return false;}
 }
 async function restoreSession(){
   try{
-    const {data}=await sb.auth.getSession();
-    if(data&&data.session&&await checkAdmin(data.session.user.id)){isLoggedIn=true;renderNavLoggedIn();}
+    if(adminToken&&await checkAdmin()){isLoggedIn=true;renderNavLoggedIn();}
+    else if(adminToken)setAdminToken('');
   }catch(e){console.error('Buza Media: session restore failed.',e);}
 }
 async function fetchTrendingNow(){
@@ -1744,9 +1752,8 @@ async function doLogin(){
   const err=document.getElementById('login-error');
   const txt=document.getElementById('login-error-text');
   try{
-    const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
-    if(error)throw error;
-    if(!await checkAdmin(data.user.id)){await sb.auth.signOut();if(txt)txt.textContent='This account is not an admin.';throw new Error('not admin');}
+    const lr=await api('/api/login',{method:'POST',body:{email,password:pass}});
+    setAdminToken(lr.token);
     isLoggedIn=true;err.classList.add('hidden');
     renderNavLoggedIn();
     await loadPosts();
@@ -1775,7 +1782,7 @@ function renderNavLoggedOut(){ // visitors only ever see the Follow button — a
   updateFollowBtn();
 }
 async function doLogout(){
-  try{await sb.auth.signOut();}catch(e){}
+  setAdminToken('');
   isLoggedIn=false;
   renderNavLoggedOut();
   goHome();
@@ -1938,8 +1945,7 @@ async function savePost(st=null){
     }
     showSaveLoader('Saving post…');
     const newPost={title:t,category:document.getElementById('p-category').value,author:document.getElementById('p-author').value.trim()||'Staff',excerpt:document.getElementById('p-excerpt').value.trim(),body:document.getElementById('p-body').value.trim(),tags:document.getElementById('p-tags').value.split(',').map(x=>x.trim()).filter(Boolean),status,breaking:document.getElementById('p-breaking').checked,trending:false,photo:photoFinal,video:videoFinal,orientation,imageW,imageH,date:new Date().toISOString()};
-    const {data,error}=await sb.from('articles').insert(articleToRow(newPost)).select(ARTICLE_SELECT).single();
-    if(error)throw error;
+    const data=await api('/api/articles',{method:'POST',body:articleToRow(newPost)});
     posts.unshift(mapArticle(data));
     clearForm();updateStats();renderPublic(true);
     checkForNewPostsAndNotify();
@@ -2000,7 +2006,7 @@ function loadSocialFormFields(){
 async function saveSocialLinks(){
   const v=k=>document.getElementById('soc-'+k).value.trim();
   const links={fb:v('fb'),tw:v('tw'),ig:v('ig'),yt:v('yt'),tt:v('tt'),wa:v('wa')};
-  const {error}=await sb.from('site_settings').upsert({key:'social_links',value:links,is_public:true});
+  let error=null;try{await api('/api/settings/social_links',{method:'PUT',body:{value:links,is_public:true}});}catch(e){error=e;}
   if(error){showToast('Could not save links: '+error.message,'error');return;}
   socialLinks=links;renderSocialFooter();
   showToast('Social links updated.','success');
@@ -2076,7 +2082,7 @@ function renderTrending(){
 async function toggleTrending(id){
   const p=posts.find(x=>x.id===id);if(!p)return;
   const next=!p.trending;
-  const {data,error}=await sb.from('articles').update({is_featured:next}).eq('id',id).select('id');
+  let data=null,error=null;try{data=[await api('/api/articles/'+encodeURIComponent(id),{method:'PATCH',body:{is_featured:next}})];}catch(e){error=e;}
   if(error||!data||!data.length){showToast('Could not update trending'+(error?': '+error.message:' — please sign in again.'),'error');return;}
   p.trending=next;renderTrending();renderPublic();
   showToast(next?'Added to trending!':'Removed.','success');
@@ -2113,7 +2119,7 @@ async function toggleStatus(id){
   const next=p.status==='published'?'draft':'published';
   const patch={status:next};
   if(next==='published')patch.published_at=new Date().toISOString();
-  const {data,error}=await sb.from('articles').update(patch).eq('id',id).select('id');
+  let data=null,error=null;try{data=[await api('/api/articles/'+encodeURIComponent(id),{method:'PATCH',body:patch})];}catch(e){error=e;}
   if(error||!data||!data.length){showToast('Could not update status'+(error?': '+error.message:' — please sign in again.'),'error');return;}
   p.status=next;if(patch.published_at)p.date=patch.published_at;
   renderPostsTable();updateStats();renderPublic(true);showToast('Status updated.','success');
@@ -2128,7 +2134,7 @@ function escapeHtml(str){
 async function deletePost(id){
   const p=posts.find(x=>x.id===id);if(!p)return;
   if(!confirm('Delete this post permanently?'))return;
-  const {data,error}=await sb.from('articles').delete().eq('id',id).select('id');
+  let data=null,error=null;try{const d=await api('/api/articles/'+encodeURIComponent(id),{method:'DELETE'});data=d&&d.deleted?[d]:[];}catch(e){error=e;}
   if(error||!data||!data.length){showToast('Could not delete'+(error?': '+error.message:' — please sign in again.'),'error');return;}
   posts=posts.filter(x=>x.id!==id);
   renderPostsTable();updateStats();renderPublic();showToast('Post deleted.','success');
@@ -2181,9 +2187,7 @@ async function saveEdit(){
       d.video=pendingVideoEdit||null;
     }
     if(d.status==='published'&&p.status!=='published')d.date=new Date().toISOString();
-    const {data,error}=await sb.from('articles').update(articleToRow(d)).eq('id',p.id).select(ARTICLE_SELECT);
-    if(error)throw error;
-    if(!data||!data.length)throw new Error('not allowed — please sign in again');
+    const data=[await api('/api/articles/'+encodeURIComponent(p.id),{method:'PATCH',body:articleToRow(d)})];
     posts[posts.indexOf(p)]=mapArticle(data[0]);
     closeModal();renderPostsTable();updateStats();renderPublic();showToast('Post updated.','success');
   }catch(err){
@@ -2212,7 +2216,7 @@ async function likePostById(id,forceLike){
   saveLikes();if(id===currentArticleId)renderLikeState();
   refreshCardStats(id);
   try{
-    const call=async()=>{const {data,error}=await sb.rpc('toggle_like',{p_article_id:id,p_visitor_id:vid});if(error)throw error;return Array.isArray(data)?data[0]:data;};
+    const call=async()=>api('/api/like',{method:'POST',body:{article_id:id,visitor_id:vid}});
     let r=await call();
     if(r&&r.liked!==!has)r=await call(); // server already disagreed (e.g. liked on another device) — flip once more
     if(r){
@@ -2343,7 +2347,7 @@ async function toggleFollow(){
     try{
       const reg=await navigator.serviceWorker.getRegistration();
       const sub=reg&&await reg.pushManager.getSubscription();
-      if(sub){await sb.rpc('delete_push_subscription',{p_endpoint:sub.endpoint});await sub.unsubscribe();}
+      if(sub){await api('/api/push',{method:'DELETE',body:{endpoint:sub.endpoint}});await sub.unsubscribe();}
     }catch(e){console.error('Buza Media: unfollow cleanup failed.',e);}
     isFollowing=false;localStorage.setItem(FOLLOW_KEY,'0');updateFollowBtn();
     showToast("You've unfollowed Buza Media.",'success');
@@ -2358,15 +2362,14 @@ async function toggleFollow(){
   try{
     const perm=await Notification.requestPermission(); // the phone shows its own "Allow notifications?" box
     if(perm!=='granted'){showToast('Notifications are blocked — allow them in your browser/site settings to follow.','error');return;}
-    const {data:kRow}=await sb.from('site_settings').select('value').eq('key','vapid_public_key').maybeSingle();
+    const kRow=await api('/api/settings/vapid_public_key');
     if(!kRow||!kRow.value)throw new Error('notifications are not set up yet');
     const reg=await navigator.serviceWorker.register('sw.js');
     await navigator.serviceWorker.ready;
     let sub=await reg.pushManager.getSubscription();
     if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:keyToBytes(String(kRow.value))});
     const j=sub.toJSON();
-    const {error}=await sb.rpc('save_push_subscription',{p_endpoint:j.endpoint,p_p256dh:j.keys.p256dh,p_auth:j.keys.auth});
-    if(error)throw error;
+    await api('/api/push',{method:'POST',body:{endpoint:j.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth}});
     isFollowing=true;localStorage.setItem(FOLLOW_KEY,'1');updateFollowBtn();
     try{await reg.showNotification('Buza Media',{body:'Asante! Utapata habari mpya moja kwa moja kwenye simu yako.',icon:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ-VEGp5-p5kvixOHe0YYJI3i-ax0Fe1Pd36-7mycylVQ&s=10'});}catch(e){}
     showToast('You are now following Buza Media — new stories will pop up on your phone.','success');
@@ -2851,8 +2854,8 @@ async function openDeepLinkedArticle(){
   if(!p){
     try{
       const col=key.length===36?'id':'short_code';
-      const {data}=await sb.from('articles').select(ARTICLE_SELECT).eq(col,key).maybeSingle();
-      if(data){p=mapArticle(data);posts.push(p);}
+      const rows=await api('/api/articles?'+col+'='+encodeURIComponent(key));
+      if(rows&&rows[0]){p=mapArticle(rows[0]);posts.push(p);}
     }catch(e){console.error('Buza Media: deep link lookup failed.',e);}
   }
   if(p)openArticle(p.id,true);
