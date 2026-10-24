@@ -1,0 +1,12 @@
+name = "buzamedia-api"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "buzamedia-db"
+database_id = "45ee6b95-4da1-43e3-9c68-d5051e182d54"
+
+# Secrets (set with `wrangler secret put NAME`):
+#   ADMIN_EMAIL, ADMIN_PASSWORD, TOKEN_SECRET
+# Optional var: ALLOWED_ORIGIN (default: https://255denisjackson.github.io)

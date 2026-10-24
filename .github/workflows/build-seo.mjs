@@ -1,14 +1,13 @@
-// Builds, from the Supabase database:
+// Builds, from the Cloudflare D1 database (via the Worker API):
 //   a/<code>/index.html   one crawlable page per article (title, photo, text, share preview, NewsArticle data)
 //   sitemap.xml           every public page
 //   news-sitemap.xml      original stories from the last 48 hours (Google News format)
 //   feed.xml              RSS feed
-// Runs every 30 minutes in GitHub Actions. Only the public (publishable) key is used.
+// Runs every 30 minutes in GitHub Actions. Only the public read endpoint is used (no key needed).
 import { mkdirSync, writeFileSync, readFileSync, existsSync, readdirSync, rmSync } from 'node:fs';
 
 const SITE = (process.env.SITE_URL || 'https://255denisjackson.github.io/255djackson_buza_media.com/').replace(/\/?$/, '/');
-const SB_URL = process.env.SUPABASE_URL || 'https://gxfwjicztemfpxfjbdqq.supabase.co';
-const SB_KEY = process.env.SUPABASE_KEY || 'sb_publishable_zz-T8b1gItOWTM2R43t-jQ_--qts2s8';
+const API_URL = (process.env.API_URL || 'https://buzamedia-api.REPLACE-ME.workers.dev').replace(/\/$/, '');
 // Stories copied in from other publishers are short teasers. By default they get a page (so shared links show
 // a picture) but are asked NOT to be indexed. Set INDEX_AGGREGATED=1 to let Google index them too.
 const INDEX_AGGREGATED = process.env.INDEX_AGGREGATED === '1';
@@ -23,10 +22,8 @@ const iso = (d) => new Date(d).toISOString();
 
 async function load() {
   if (FIXTURE) return JSON.parse(readFileSync(FIXTURE, 'utf8'));
-  const sel = 'short_code,title,subtitle,body,author,image_url,published_at,created_at,source_name,source_url,is_breaking,categories(name)';
-  const r = await fetch(`${SB_URL}/rest/v1/articles?select=${encodeURIComponent(sel)}&status=eq.published&short_code=not.is.null&order=published_at.desc&limit=1000`,
-    { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY } });
-  if (!r.ok) throw new Error('database said ' + r.status + ' ' + (await r.text()).slice(0, 200));
+  const r = await fetch(`${API_URL}/api/articles?limit=1000`);
+  if (!r.ok) throw new Error('API said ' + r.status + ' ' + (await r.text()).slice(0, 200));
   return r.json();
 }
 

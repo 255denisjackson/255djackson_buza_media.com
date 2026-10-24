@@ -1,0 +1,90 @@
+name: Deploy API (Cloudflare D1) and connect site
+
+# Runs when this branch is pushed, or by hand from the Actions tab.
+# Needs these repository secrets (Settings > Secrets and variables > Actions):
+#   CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, ADMIN_EMAIL, ADMIN_PASSWORD, TOKEN_SECRET
+on:
+  push:
+    branches: [d1-migration]
+    paths: ['worker/**', '.github/workflows/deploy-d1.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency: deploy-d1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: d1-migration, fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+
+      - name: Check secrets are set
+        run: |
+          for v in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID ADMIN_EMAIL ADMIN_PASSWORD TOKEN_SECRET; do
+            if [ -z "${!v}" ]; then echo "::error::Missing repository secret $v"; missing=1; fi
+          done
+          [ -z "$missing" ]
+        env:
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          TOKEN_SECRET: ${{ secrets.TOKEN_SECRET }}
+
+      - name: Make sure the account has a workers.dev subdomain
+        id: sub
+        run: |
+          api="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain"
+          sub=$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "$api" | jq -r '.result.subdomain // empty')
+          if [ -z "$sub" ]; then
+            for name in buzamedia buzamedia-api "buzamedia-$RANDOM"; do
+              sub=$(curl -sS -X PUT -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H "Content-Type: application/json" \
+                --data "{\"subdomain\":\"$name\"}" "$api" | jq -r '.result.subdomain // empty')
+              [ -n "$sub" ] && break
+            done
+          fi
+          [ -n "$sub" ] || { echo "::error::Could not get a workers.dev subdomain"; exit 1; }
+          echo "url=https://buzamedia-api.$sub.workers.dev" >> "$GITHUB_OUTPUT"
+
+      - name: Install and deploy the Worker
+        working-directory: worker
+        run: |
+          npm install --no-audit --no-fund
+          npx wrangler d1 execute buzamedia-db --remote --file schema.sql
+          printf '%s' "${{ secrets.ADMIN_EMAIL }}"    | npx wrangler secret put ADMIN_EMAIL
+          printf '%s' "${{ secrets.ADMIN_PASSWORD }}" | npx wrangler secret put ADMIN_PASSWORD
+          printf '%s' "${{ secrets.TOKEN_SECRET }}"   | npx wrangler secret put TOKEN_SECRET
+          npx wrangler deploy
+
+      - name: Copy articles from Supabase into D1
+        working-directory: worker
+        run: node migrate-articles.mjs --run
+
+      - name: Check the API answers and has articles
+        run: |
+          url="${{ steps.sub.outputs.url }}"
+          for i in 1 2 3 4 5 6; do
+            out=$(curl -fsS "$url/api/health" || true); echo "$out"
+            n=$(echo "$out" | jq -r '.articles // 0' 2>/dev/null || echo 0)
+            [ "$n" -gt 0 ] && break; sleep 10
+          done
+          [ "$n" -gt 0 ] || { echo "::error::API not healthy or no articles"; exit 1; }
+
+      - name: Point the site at the API and publish to main
+        run: |
+          url="${{ steps.sub.outputs.url }}"
+          sed -i "s#https://buzamedia-api\.REPLACE-ME\.workers\.dev#$url#g" index.html build-seo.mjs .github/workflows/build-seo.mjs
+          grep -q "REPLACE-ME" index.html build-seo.mjs && { echo "::error::placeholder still present"; exit 1; }
+          git config user.name "github-actions"; git config user.email "actions@github.com"
+          git add -A index.html build-seo.mjs .github/workflows/build-seo.mjs
+          git commit -m "Set API address to $url" || true
+          git push origin d1-migration
+          git checkout main && git pull -q origin main
+          git merge --no-ff d1-migration -m "Connect site to Cloudflare D1 API" 
+          git push origin main
