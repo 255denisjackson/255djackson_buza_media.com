@@ -23,3 +23,11 @@ Then replace `REPLACE-ME` with your workers.dev subdomain in `index.html` (`API_
 
 Not yet ported (still on Supabase): edge functions (fetch-trending, social-poster, send-push,
 search-news, translate-en, ...), scheduled jobs, and file storage uploads.
+
+## Copy the articles into D1 (one time, run on your computer)
+```bash
+cd worker
+node migrate-articles.mjs --run     # fetches published articles from Supabase and loads them into D1
+```
+Without `--run` it only writes SQL files to `worker/migration/`. Run this while Supabase still responds;
+if it is fully down, restore from a Supabase backup/export and load that SQL into D1 the same way.
