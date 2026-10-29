@@ -40,7 +40,10 @@ async function load() {
       lastErr = new Error(db.url + ' has no published articles');
     } catch (e) { lastErr = e; console.warn('skipping ' + db.url + ': ' + e.message); }
   }
-  throw lastErr || new Error('no database answered');
+  // Never block publishing the site itself: if no database could give us stories right now, build without
+  // the per-article share pages this time (the next scheduled run, every 30 minutes, fills them in).
+  console.warn('WARNING: no stories available for article pages — ' + (lastErr ? lastErr.message : 'no database answered'));
+  return [];
 }
 
 const rows = (await load()).filter((a) => a.short_code && a.title);
