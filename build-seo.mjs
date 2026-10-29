@@ -8,11 +8,11 @@ import { mkdirSync, writeFileSync, readFileSync, existsSync, readdirSync, rmSync
 
 const SITE = (process.env.SITE_URL || 'https://255denisjackson.github.io/255djackson_buza_media.com/').replace(/\/?$/, '/');
 // Two databases hold the same tables. Tried in this order; if SUPABASE_URL/SUPABASE_KEY are set they go first.
-// (Keep this order in step with DB_DEFAULT in index.html.)
+// (Order matches DB_DEFAULT='backup' in index.html: new database first.)
 const DBS = [
   ...(process.env.SUPABASE_URL ? [{ url: process.env.SUPABASE_URL, key: process.env.SUPABASE_KEY || '' }] : []),
-  { url: 'https://gxfwjicztemfpxfjbdqq.supabase.co', key: 'sb_publishable_zz-T8b1gItOWTM2R43t-jQ_--qts2s8' },
   { url: 'https://liingyivheqmuosuxwvd.supabase.co', key: 'sb_publishable_jtLwjUFd9GeUInx7c9CkDg_B53KYB4-' },
+  { url: 'https://gxfwjicztemfpxfjbdqq.supabase.co', key: 'sb_publishable_zz-T8b1gItOWTM2R43t-jQ_--qts2s8' },
 ];
 // Stories copied in from other publishers are short teasers. By default they get a page (so shared links show
 // a picture) but are asked NOT to be indexed. Set INDEX_AGGREGATED=1 to let Google index them too.

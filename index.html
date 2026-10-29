@@ -1063,7 +1063,7 @@ const DB_PROFILES={
   primary:{label:'Primary (original)',url:'https://gxfwjicztemfpxfjbdqq.supabase.co',key:'sb_publishable_zz-T8b1gItOWTM2R43t-jQ_--qts2s8'},
   backup:{label:'Backup (new)',url:'https://liingyivheqmuosuxwvd.supabase.co',key:'sb_publishable_jtLwjUFd9GeUInx7c9CkDg_B53KYB4-'}
 };
-const DB_DEFAULT='primary';
+const DB_DEFAULT='backup';
 const dbOther=n=>n==='primary'?'backup':'primary';
 function dbStored(store,k){try{return store.getItem(k);}catch(e){return null;}}
 function dbChosen(){
@@ -1259,9 +1259,17 @@ function refreshOpenPanels(){
 }
 async function loadPosts(manual){
   try{
-    const {data,error}=await sb.from('articles').select(ARTICLE_SELECT)
+    let {data,error}=await sb.from('articles').select(ARTICLE_SELECT)
       .order('published_at',{ascending:false,nullsFirst:false}).order('created_at',{ascending:false}).limit(500);
     if(error)throw error;
+    if(!(data&&data.length)&&!isLoggedIn&&!dbFailedOver){ // active database is empty: use the other one rather than show a blank site
+      const other=dbOther(dbActive);
+      try{
+        const alt=window.supabase.createClient(DB_PROFILES[other].url,DB_PROFILES[other].key);
+        const r=await alt.from('articles').select(ARTICLE_SELECT).order('published_at',{ascending:false,nullsFirst:false}).limit(500);
+        if(!r.error&&r.data&&r.data.length){dbFailedOver=true;try{sessionStorage.setItem('buza_db_auto',other);}catch(e){}dbUse(other);await loadCategories();data=r.data;updateDbBox();}
+      }catch(e){}
+    }
     posts=(data||[]).map(mapArticle);
     checkForNewPostsAndNotify();
     renderPublic(!!manual);
