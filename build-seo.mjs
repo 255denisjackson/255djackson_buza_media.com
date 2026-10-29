@@ -7,8 +7,13 @@
 import { mkdirSync, writeFileSync, readFileSync, existsSync, readdirSync, rmSync } from 'node:fs';
 
 const SITE = (process.env.SITE_URL || 'https://255denisjackson.github.io/255djackson_buza_media.com/').replace(/\/?$/, '/');
-const SB_URL = process.env.SUPABASE_URL || 'https://gxfwjicztemfpxfjbdqq.supabase.co';
-const SB_KEY = process.env.SUPABASE_KEY || 'sb_publishable_zz-T8b1gItOWTM2R43t-jQ_--qts2s8';
+// Two databases hold the same tables. Tried in this order; if SUPABASE_URL/SUPABASE_KEY are set they go first.
+// (Keep this order in step with DB_DEFAULT in index.html.)
+const DBS = [
+  ...(process.env.SUPABASE_URL ? [{ url: process.env.SUPABASE_URL, key: process.env.SUPABASE_KEY || '' }] : []),
+  { url: 'https://gxfwjicztemfpxfjbdqq.supabase.co', key: 'sb_publishable_zz-T8b1gItOWTM2R43t-jQ_--qts2s8' },
+  { url: 'https://liingyivheqmuosuxwvd.supabase.co', key: 'sb_publishable_jtLwjUFd9GeUInx7c9CkDg_B53KYB4-' },
+];
 // Stories copied in from other publishers are short teasers. By default they get a page (so shared links show
 // a picture) but are asked NOT to be indexed. Set INDEX_AGGREGATED=1 to let Google index them too.
 const INDEX_AGGREGATED = process.env.INDEX_AGGREGATED === '1';
@@ -24,10 +29,18 @@ const iso = (d) => new Date(d).toISOString();
 async function load() {
   if (FIXTURE) return JSON.parse(readFileSync(FIXTURE, 'utf8'));
   const sel = 'short_code,title,subtitle,body,author,image_url,published_at,created_at,source_name,source_url,is_breaking,categories(name)';
-  const r = await fetch(`${SB_URL}/rest/v1/articles?select=${encodeURIComponent(sel)}&status=eq.published&short_code=not.is.null&order=published_at.desc&limit=1000`,
-    { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY } });
-  if (!r.ok) throw new Error('database said ' + r.status + ' ' + (await r.text()).slice(0, 200));
-  return r.json();
+  let lastErr;
+  for (const db of DBS) {
+    try {
+      const r = await fetch(`${db.url}/rest/v1/articles?select=${encodeURIComponent(sel)}&status=eq.published&short_code=not.is.null&order=published_at.desc&limit=1000`,
+        { headers: { apikey: db.key, Authorization: 'Bearer ' + db.key } });
+      if (!r.ok) throw new Error('database said ' + r.status + ' ' + (await r.text()).slice(0, 200));
+      const rows = await r.json();
+      if (rows.length) { console.log('articles read from ' + db.url + ' (' + rows.length + ')'); return rows; }
+      lastErr = new Error(db.url + ' has no published articles');
+    } catch (e) { lastErr = e; console.warn('skipping ' + db.url + ': ' + e.message); }
+  }
+  throw lastErr || new Error('no database answered');
 }
 
 const rows = (await load()).filter((a) => a.short_code && a.title);
