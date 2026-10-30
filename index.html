@@ -1947,7 +1947,7 @@ function openCropper(src,done){
       const k=img.naturalWidth/sw,c=document.createElement('canvas');
       c.width=Math.max(1,Math.round(B.w*k));c.height=Math.max(1,Math.round(B.h*k));
       c.getContext('2d').drawImage(img,B.x*k,B.y*k,B.w*k,B.h*k,0,0,c.width,c.height);
-      close(c.toDataURL('image/jpeg',.92));
+      close(c.toDataURL('image/jpeg',.98));
     }catch(e){showToast('Could not crop this photo. Try uploading it from your device.','error');close(null);}
   };
   img.onload=()=>{sw=img.clientWidth;sh=img.clientHeight;fit();};
