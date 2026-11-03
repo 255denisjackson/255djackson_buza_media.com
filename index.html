@@ -2678,7 +2678,7 @@ async function downloadPostCard(){
   const ctx=canvas.getContext('2d');
 
   function finishAndDownload(){
-    ctx.fillStyle='#0b0b0f';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);
     const imgAreaH=620;
     if(p.photo){
       const img=new Image();
@@ -2742,7 +2742,7 @@ async function downloadPostCard(){
         breakingH=64;
       }
 
-      ctx.fillStyle='#ffffff';
+      ctx.fillStyle='#1a1a1e';
       ctx.font='700 40px Arial';
       const titleY=170+breakingH;
       const titleLines=wrapText(ctx,(T.title||'').toUpperCase(),padX,titleY,contentW,48,7);
@@ -2751,7 +2751,7 @@ async function downloadPostCard(){
       const textLimit=H-40-46-26;
       let ty=titleY+titleLines*48+36;
       const LH=31;
-      ctx.fillStyle='#c9ccd2';
+      ctx.fillStyle='#4a4f57';
       ctx.font='400 22px Arial';
       const seenP=new Set();
       const paras=[T.excerpt||''].concat(String(T.body||'').split(/\n{2,}/))
@@ -2771,29 +2771,29 @@ async function downloadPostCard(){
 
       // bottom rows: author + buzamedia.com on one level, date + credit on the next
       const row1=H-40,row2=H-14;
-      ctx.strokeStyle='#2a2a33';
+      ctx.strokeStyle='#e0e0e0';
       ctx.lineWidth=2;
       ctx.beginPath();ctx.moveTo(padX,row1-46);ctx.lineTo(W-40,row1-46);ctx.stroke();
 
-      ctx.fillStyle='#ffffff';
+      ctx.fillStyle='#1a1a1e';
       ctx.font='600 24px Arial';
       ctx.fillText(T.by+' '+(p.author||'Staff'),padX,row1);
 
-      ctx.fillStyle='#9aa0a8';
+      ctx.fillStyle='#6c757d';
       ctx.font='400 20px Arial';
       ctx.fillText(fmtDateCard(p.date,T.locale),padX,row2);
 
       // bold BUZA MEDIA on the picture area (white with a soft shadow so it reads on any photo)
       drawBrandWord(ctx,'BUZA MEDIA',36,80,32);
 
-      ctx.fillStyle='#5b8cff';
+      ctx.fillStyle='#2065fe';
       ctx.font='600 20px Arial';
       const tag='buzamedia.com';
       const tagW=ctx.measureText(tag).width;
       ctx.fillText(tag,W-40-tagW,row1);
 
       // credit directly under buzamedia.com
-      ctx.fillStyle='#9aa0a8';
+      ctx.fillStyle='#6c757d';
       ctx.font='400 18px Arial';
       const pwText='Powered by Denis Jackson';
       ctx.fillText(pwText,W-40-ctx.measureText(pwText).width,row2);
@@ -2829,36 +2829,36 @@ async function downloadPostCard(){
       ctx.fillStyle='#2065fe';
       ctx.fillRect(48+bw0+10,80-23,4,27);
 
-      ctx.fillStyle='#ffffff';
+      ctx.fillStyle='#1a1a1e';
       ctx.font='700 46px Arial';
       const titleLines=wrapText(ctx,(T.title||'').toUpperCase(),48,imgAreaH+90,W-96,56,4);
 
       const excerptY=imgAreaH+90+titleLines*56+30;
-      ctx.fillStyle='#9aa0a8';
+      ctx.fillStyle='#6c757d';
       ctx.font='400 30px Arial';
       if(T.excerpt){wrapText(ctx,T.excerpt,48,excerptY,W-96,42,3);}
 
       // bottom rows: author + buzamedia.com on one level, date + credit on the next
       const row1=H-62,row2=H-26;
-      ctx.strokeStyle='#2a2a33';
+      ctx.strokeStyle='#e0e0e0';
       ctx.lineWidth=2;
       ctx.beginPath();ctx.moveTo(48,row1-50);ctx.lineTo(W-48,row1-50);ctx.stroke();
 
-      ctx.fillStyle='#ffffff';
+      ctx.fillStyle='#1a1a1e';
       ctx.font='600 28px Arial';
       ctx.fillText(T.by+' '+(p.author||'Staff'),48,row1);
 
-      ctx.fillStyle='#9aa0a8';
+      ctx.fillStyle='#6c757d';
       ctx.font='400 24px Arial';
       ctx.fillText(fmtDateCard(p.date,T.locale),48,row2);
 
-      ctx.fillStyle='#5b8cff';
+      ctx.fillStyle='#2065fe';
       ctx.font='600 26px Arial';
       const tag='buzamedia.com';
       const tagW=ctx.measureText(tag).width;
       ctx.fillText(tag,W-48-tagW,row1);
 
-      ctx.fillStyle='#9aa0a8';
+      ctx.fillStyle='#6c757d';
       ctx.font='400 22px Arial';
       const pwText='Powered by Denis Jackson';
       ctx.fillText(pwText,W-48-ctx.measureText(pwText).width,row2);
