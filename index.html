@@ -18,7 +18,9 @@
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Buza Media — Habari za Tanzania">
 <meta name="twitter:description" content="Michezo, burudani na matukio ya kila siku, kila saa."><meta name="twitter:image" content="https://255denisjackson.github.io/255djackson_buza_media.com/og-default.png">
 <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "NewsMediaOrganization", "@id": "https://255denisjackson.github.io/255djackson_buza_media.com/#org", "name": "Buza Media", "alternateName": ["BuzaMedia", "Buza Media Tanzania"], "url": "https://255denisjackson.github.io/255djackson_buza_media.com/", "logo": {"@type": "ImageObject", "url": "https://255denisjackson.github.io/255djackson_buza_media.com/icon-512.png", "width": 512, "height": 512}, "image": "https://255denisjackson.github.io/255djackson_buza_media.com/og-default.png", "description": "Buza Media ni chombo cha habari cha Tanzania: habari za michezo, burudani na matukio ya kila siku kwa Kiswahili.", "areaServed": "TZ", "knowsLanguage": "sw", "sameAs": ["https://facebook.com/buzamedia", "https://x.com/buzamedia", "https://www.tiktok.com/@buza_media", "https://www.youtube.com/@BUZA_MEDIA"]}, {"@type": "WebSite", "@id": "https://255denisjackson.github.io/255djackson_buza_media.com/#site", "url": "https://255denisjackson.github.io/255djackson_buza_media.com/", "name": "Buza Media", "alternateName": "BuzaMedia", "inLanguage": "sw", "publisher": {"@id": "https://255denisjackson.github.io/255djackson_buza_media.com/#org"}}]}</script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preload" as="style" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"></noscript>
 <style>
   .brand{
     width: 38px;
@@ -474,7 +476,7 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
 <nav>
   <div class="nav-top">
     <div class="nav-brand" onclick="brandTap()">
-      <img class="brand" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ-VEGp5-p5kvixOHe0YYJI3i-ax0Fe1Pd36-7mycylVQ&s=10" alt="BUZA Media logo">
+      <img class="brand" src="logo-96.png" width="38" height="38" alt="BUZA Media logo" decoding="async">
       <div class="nav-brand-text">BUZA<span>MEDIA</span></div>
     </div>
     <div class="nav-controls" id="nav-controls">
@@ -557,7 +559,7 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
   <div class="login-card">
     <div class="login-back" onclick="goHome()"><i class="ti ti-arrow-left" aria-hidden="true"></i> Back to site</div>
     <div class="login-logo">
-      <img class="brand" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ-VEGp5-p5kvixOHe0YYJI3i-ax0Fe1Pd36-7mycylVQ&s=10" alt="BUZA Media logo">
+      <img class="brand" src="logo-96.png" width="38" height="38" alt="BUZA Media logo" decoding="async">
       <div class="login-logo-text">BUZA<span>MEDIA</span></div>
     </div>
     <p class="login-subtitle">Sign in to the admin dashboard to publish and manage stories.</p>
@@ -701,7 +703,7 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
             </div>
             <span class="field-hint">Portrait photos automatically display beside the text; landscape photos display on top, as usual.</span>
             <input type="text" id="p-photo-url" placeholder="Or paste an image URL instead of uploading…" style="margin-top:.6rem">
-            <span class="field-hint">Photos are uploaded to Supabase Storage at their original quality (up to 15MB). You can also paste an image URL.</span>
+            <span class="field-hint">Photos are resized to 2000px on the long side (still sharp) so the site loads fast, then uploaded to Supabase Storage. You can also paste an image URL.</span>
           </div>
           <div class="form-group">
             <label><i class="ti ti-video" aria-hidden="true"></i> Attach video (optional)</label>
@@ -1352,9 +1354,17 @@ function refreshOpenPanels(){
   if(!document.getElementById('panel-insights').classList.contains('hidden'))renderInsights();
 }
 async function loadPosts(manual){
+  let fullDone=false;
   try{
+    if(!posts.length&&!isLoggedIn&&!window.__quickFirstPaint){ // first visit: show the newest stories as soon as they arrive, while the full list keeps loading
+      window.__quickFirstPaint=true;
+      sb.from('articles').select(ARTICLE_SELECT)
+        .order('published_at',{ascending:false,nullsFirst:false}).order('created_at',{ascending:false}).limit(20)
+        .then(q=>{if(!fullDone&&!q.error&&q.data&&q.data.length){posts=q.data.map(mapArticle);renderPublic(false);}},()=>{});
+    }
     let {data,error}=await sb.from('articles').select(ARTICLE_SELECT)
       .order('published_at',{ascending:false,nullsFirst:false}).order('created_at',{ascending:false}).limit(500);
+    fullDone=true;
     if(error)throw error;
     if(!(data&&data.length)&&!isLoggedIn&&!dbFailedOver){ // active database is empty: use the other one rather than show a blank site
       const other=dbOther(dbActive);
@@ -1384,9 +1394,24 @@ async function loadSocial(){
   if(!error&&data&&data.value)socialLinks=Object.assign({fb:'',tw:'',ig:'',yt:'',tt:'',wa:''},data.value);
   renderSocialFooter();
 }
+// Photos are resized to 2000px (long side) before upload so pages and pictures load quickly.
+async function shrinkImageBlob(blob){
+  try{
+    if(!/^image\/(jpeg|png|webp)$/.test(blob.type))return blob;
+    const bmp=await createImageBitmap(blob);
+    const MAX=2000,long=Math.max(bmp.width,bmp.height);
+    if(long<=MAX&&blob.size<=1.2*1024*1024){if(bmp.close)bmp.close();return blob;}
+    const k=Math.min(1,MAX/long),w=Math.round(bmp.width*k),h=Math.round(bmp.height*k);
+    const c=document.createElement('canvas');c.width=w;c.height=h;
+    const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,w,h);x.drawImage(bmp,0,0,w,h);
+    if(bmp.close)bmp.close();
+    const out=await new Promise(r=>c.toBlob(r,'image/jpeg',0.88));
+    return out&&out.size<blob.size?out:blob;
+  }catch(e){return blob;}
+}
 async function uploadDataUrl(dataUrl,bucket,folder){
   if(!dataUrl||!String(dataUrl).startsWith('data:'))return dataUrl||null; // already a normal URL
-  const blob=await (await fetch(dataUrl)).blob();
+  const blob=await shrinkImageBlob(await (await fetch(dataUrl)).blob());
   const ext=({'image/jpeg':'jpg','image/png':'png','image/webp':'webp','video/mp4':'mp4','video/webm':'webm','video/quicktime':'mov'})[blob.type]||'bin';
   const path=`${folder}/${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
   const {error}=await sb.storage.from(bucket).upload(path,blob,{contentType:blob.type,cacheControl:'31536000',upsert:false});
@@ -1650,8 +1675,8 @@ async function fetchTrendingNow(){
   }
 }
 
-function cardImgHtml(p){
-  const media=p.photo?`<img src="${p.photo}" alt="">`:`<i class="ti ${icon(p.category)} card-img-icon" aria-hidden="true"></i>`;
+function cardImgHtml(p,first){
+  const media=p.photo?`<img src="${p.photo}" alt="" decoding="async" ${first?'fetchpriority="high"':'loading="lazy"'}>`:`<i class="ti ${icon(p.category)} card-img-icon" aria-hidden="true"></i>`;
   const badge=p.mediaType==='video'?'<span class="card-video-badge"><i class="ti ti-player-play-filled" aria-hidden="true"></i></span>':'';
   return media+badge;
 }
@@ -1708,7 +1733,7 @@ function renderPublic(freshOrder){
   if(!featured){fa.innerHTML=`<div style="max-width:1100px;margin:0 auto 1.5rem"><div class="empty-state"><i class="ti ti-news" aria-hidden="true"></i><p>No published articles yet.</p></div></div>`;lg.innerHTML='';return;}
   const featuredText=getDisplayText(featured);
   fa.innerHTML=`<div class="hero-grid"><div class="hero-card featured ${featured.orientation==='portrait'?'portrait':''}" data-pid="${featured.id}" onclick="openArticle('${featured.id}')">
-    <div class="card-img" onclick="cardImgTap(event,'${featured.id}')">${cardImgHtml(featured)}
+    <div class="card-img" onclick="cardImgTap(event,'${featured.id}')">${cardImgHtml(featured,true)}
       <span class="card-img-label">${featured.category}</span>
       ${featured.breaking?'<span class="breaking-badge" style="position:absolute;top:10px;right:10px">Breaking</span>':''}
     </div>
@@ -2189,7 +2214,7 @@ function renderPostsTable(){
   const f=getFiltered();
   const noData=`<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--muted)">No posts found.</td></tr>`;
   document.getElementById('posts-tbody').innerHTML=f.length===0?noData:f.map(p=>`<tr>
-    <td class="post-title-cell">${p.photo?`<img class="post-thumb" src="${p.photo}" alt="">`:`<div class="post-thumb-placeholder"><i class="ti ${icon(p.category)}" aria-hidden="true"></i></div>`}<div><div>${p.title}</div><p>${p.author||'Staff'} · ${p.category}</p></div></td>
+    <td class="post-title-cell">${p.photo?`<img class="post-thumb" src="${p.photo}" alt="" loading="lazy" decoding="async">`:`<div class="post-thumb-placeholder"><i class="ti ${icon(p.category)}" aria-hidden="true"></i></div>`}<div><div>${p.title}</div><p>${p.author||'Staff'} · ${p.category}</p></div></td>
     <td><span class="card-tag">${p.category}</span></td>
     <td><span class="badge badge-${p.status}">${p.status}</span>${p.breaking?'<span class="badge badge-breaking" style="margin-left:4px">Breaking</span>':''}</td>
     <td style="font-size:.74rem;color:var(--muted)">${fmtDateShort(p.date)}</td>
@@ -2201,7 +2226,7 @@ function renderPostsTable(){
   </tr>`).join('');
   document.getElementById('posts-cards').innerHTML=f.length===0?`<p style="text-align:center;padding:2rem;color:var(--muted)">No posts found.</p>`:f.map(p=>`
   <div class="post-card-item">
-    ${p.photo?`<img class="post-card-thumb" src="${p.photo}" alt="">`:`<div class="post-thumb-placeholder" style="width:56px;height:56px;border-radius:8px"><i class="ti ${icon(p.category)}" aria-hidden="true" style="font-size:20px"></i></div>`}
+    ${p.photo?`<img class="post-card-thumb" src="${p.photo}" alt="" loading="lazy" decoding="async">`:`<div class="post-thumb-placeholder" style="width:56px;height:56px;border-radius:8px"><i class="ti ${icon(p.category)}" aria-hidden="true" style="font-size:20px"></i></div>`}
     <div class="post-card-item-body">
       <div class="post-card-item-title">${p.title}</div>
       <div class="post-card-item-meta">
@@ -2529,7 +2554,7 @@ async function toggleFollow(){
     const {error}=await sb.rpc('save_push_subscription',{p_endpoint:j.endpoint,p_p256dh:j.keys.p256dh,p_auth:j.keys.auth});
     if(error)throw error;
     isFollowing=true;localStorage.setItem(FOLLOW_KEY,'1');updateFollowBtn();
-    try{await reg.showNotification('Buza Media',{body:'Asante! Utapata habari mpya moja kwa moja kwenye simu yako.',icon:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ-VEGp5-p5kvixOHe0YYJI3i-ax0Fe1Pd36-7mycylVQ&s=10'});}catch(e){}
+    try{await reg.showNotification('Buza Media',{body:'Asante! Utapata habari mpya moja kwa moja kwenye simu yako.',icon:'logo-96.png'});}catch(e){}
     showToast('You are now following Buza Media — new stories will pop up on your phone.','success');
   }catch(err){
     console.error('Buza Media: follow failed.',err);
@@ -3023,8 +3048,7 @@ async function openDeepLinkedArticle(){
 loadLikes();loadFollow();renderSocialFooter();
 document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.dataset.lang===displayLang));
 (async function initSite(){
-  await loadCategories();
-  await Promise.all([loadSocial(),restoreSession()]);
+  await Promise.all([loadCategories(),loadSocial(),restoreSession()]);
   await loadPosts(true);
   primeKnownPostIds();
   if(wantsAdmin()){ // private admin link: ...site/?admin
@@ -3037,7 +3061,7 @@ document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.
 setInterval(function(){
   const modalOpen=!document.getElementById('modal-overlay').classList.contains('hidden');
   const inAdmin=!document.getElementById('view-admin').classList.contains('hidden');
-  if(modalOpen||inAdmin)return;
+  if(modalOpen||inAdmin||document.hidden)return;
   loadPosts(false);
 },60000);
 </script>
