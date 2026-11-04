@@ -413,6 +413,40 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
 .nf-chip:hover{border-color:var(--accent);color:var(--accent)}
 .nf-status{font-size:.8rem;color:var(--muted);margin-top:.7rem}
 .nf-label{font-size:.76rem;font-weight:700;margin:.9rem 0 .4rem;color:var(--primary)}
+/* Combine two photos (added) */
+.cb-box{border:1.5px dashed var(--accent2);background:var(--card);border-radius:12px;padding:.9rem 1rem;margin-bottom:1.3rem}
+.cb-box>summary{cursor:pointer;font-weight:700;font-size:.9rem;display:flex;align-items:center;gap:.4rem;color:var(--primary);list-style:none}
+.cb-box>summary::-webkit-details-marker{display:none}
+.cb-box>summary .cb-chev{margin-left:auto;transition:transform .15s}
+.cb-box[open]>summary .cb-chev{transform:rotate(180deg)}
+.cb-sub{font-size:.76rem;color:var(--muted);margin:.35rem 0 .9rem}
+.cb-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:1rem}
+@media(min-width:860px){.cb-grid{grid-template-columns:minmax(0,1fr) 300px;align-items:start}}
+.cb-stage{background:#e9ecef;border:1px solid var(--border);border-radius:10px;padding:10px;display:grid;justify-items:center}
+#cb-cv{max-width:100%;max-height:60vh;width:auto;height:auto;touch-action:none;cursor:grab;display:block;background:#000}
+.cb-hint{font-size:.74rem;color:var(--muted);margin-top:.5rem;text-align:center}
+.cb-ctl{display:grid;gap:.85rem;min-width:0}
+.cb-lab{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem}
+.cb-slots{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.cb-pick{position:relative;border:1.5px dashed var(--border);border-radius:10px;padding:.6rem .4rem;text-align:center;cursor:pointer;background:#fbfbfc;min-width:0}
+.cb-pick:hover{border-color:var(--accent2)}
+.cb-pick.has{border-style:solid;border-color:var(--accent2)}
+.cb-pick strong{display:block;font-size:.8rem}
+.cb-pick span{display:block;font-size:.72rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cb-pick input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.cb-seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.cb-seg button{background:transparent;border:0;border-right:1px solid var(--border);padding:7px 3px;font-size:.76rem;font-weight:600;cursor:pointer;color:var(--text);font-family:inherit}
+.cb-seg button:last-child{border-right:0}
+.cb-seg button[aria-pressed="true"]{background:var(--primary);color:#fff}
+.cb-row{display:flex;align-items:center;gap:.6rem;font-size:.76rem;color:var(--muted)}
+.cb-row label{min-width:62px}
+.cb-row input[type=range]{flex:1;min-width:0;accent-color:var(--accent)}
+.cb-sw{display:flex;gap:.45rem;flex-wrap:wrap}
+.cb-sw button{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);cursor:pointer;padding:0}
+.cb-sw button[aria-pressed="true"]{outline:2px solid var(--accent);outline-offset:2px}
+.cb-ctl input[type=text]{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:8px 11px;font-size:.86rem;background:#fff;font-family:inherit}
+.cb-btns{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.cb-btns .full{grid-column:1/-1}
 .nf-pics{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.5rem}
 .nf-pic{position:relative;border:2px solid transparent;border-radius:10px;overflow:hidden;cursor:pointer;background:#ddd;aspect-ratio:4/3;padding:0}
 .nf-pic img{width:100%;height:100%;object-fit:cover;display:block}
@@ -595,6 +629,63 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
             <div class="nf-status" id="nf-status"></div>
             <div id="nf-results"></div>
           </div>
+          <details class="cb-box" id="cb-box" open>
+            <summary><i class="ti ti-layout-columns" aria-hidden="true"></i> Combine two photos into one <i class="ti ti-chevron-down cb-chev" aria-hidden="true"></i></summary>
+            <div class="cb-sub">Add two photos, place them left and right (or top and bottom), then use the result as the cover photo below. Drag a photo to move it inside its half.</div>
+            <div class="cb-grid">
+              <div>
+                <div class="cb-stage"><canvas id="cb-cv" aria-label="Combined photo preview"></canvas></div>
+                <div class="cb-hint">Tap an empty half to add a photo.</div>
+              </div>
+              <div class="cb-ctl">
+                <div>
+                  <div class="cb-lab">Photos</div>
+                  <div class="cb-slots">
+                    <div class="cb-pick" id="cb-s0"><strong id="cb-t0">Left</strong><span id="cb-n0">Add photo</span><input type="file" id="cb-f0" accept="image/*"></div>
+                    <div class="cb-pick" id="cb-s1"><strong id="cb-t1">Right</strong><span id="cb-n1">Add photo</span><input type="file" id="cb-f1" accept="image/*"></div>
+                  </div>
+                  <div class="cb-row" style="margin-top:.5rem"><label for="cb-z0" id="cb-zl0">Left zoom</label><input type="range" id="cb-z0" min="100" max="300" value="100"></div>
+                  <div class="cb-row"><label for="cb-z1" id="cb-zl1">Right zoom</label><input type="range" id="cb-z1" min="100" max="300" value="100"></div>
+                </div>
+                <div>
+                  <div class="cb-lab">Layout</div>
+                  <div class="cb-seg" id="cb-layout" style="margin-bottom:.5rem">
+                    <button type="button" data-v="side" aria-pressed="true">Left | Right</button>
+                    <button type="button" data-v="stack" aria-pressed="false">Top / Bottom</button>
+                  </div>
+                  <div class="cb-seg" id="cb-ratio">
+                    <button type="button" data-v="1:1" aria-pressed="false">1:1</button>
+                    <button type="button" data-v="4:5" aria-pressed="true">4:5</button>
+                    <button type="button" data-v="16:9" aria-pressed="false">16:9</button>
+                    <button type="button" data-v="9:16" aria-pressed="false">9:16</button>
+                  </div>
+                  <div class="cb-row" style="margin-top:.5rem"><label for="cb-gap">Divider</label><input type="range" id="cb-gap" min="0" max="48" value="8"></div>
+                  <div class="cb-sw" id="cb-div" style="margin-top:.4rem">
+                    <button type="button" data-v="#ffffff" style="background:#ffffff" aria-label="White divider" aria-pressed="true"></button>
+                    <button type="button" data-v="#0b0f0e" style="background:#0b0f0e" aria-label="Black divider" aria-pressed="false"></button>
+                    <button type="button" data-v="#e63946" style="background:#e63946" aria-label="Red divider" aria-pressed="false"></button>
+                    <button type="button" data-v="#2065fe" style="background:#2065fe" aria-label="Blue divider" aria-pressed="false"></button>
+                  </div>
+                </div>
+                <div>
+                  <div class="cb-lab">Headline bar (optional)</div>
+                  <input type="text" id="cb-head" maxlength="80" placeholder="e.g. Arsenal 1-0 Liverpool" aria-label="Headline bar text">
+                  <div class="cb-sw" id="cb-bar" style="margin-top:.45rem">
+                    <button type="button" data-v="#0b0f0e" style="background:#0b0f0e" aria-label="Black bar" aria-pressed="true"></button>
+                    <button type="button" data-v="#e63946" style="background:#e63946" aria-label="Red bar" aria-pressed="false"></button>
+                    <button type="button" data-v="#2065fe" style="background:#2065fe" aria-label="Blue bar" aria-pressed="false"></button>
+                    <button type="button" data-v="#ffffff" style="background:#ffffff" aria-label="White bar" aria-pressed="false"></button>
+                  </div>
+                </div>
+                <div class="cb-btns">
+                  <button type="button" class="btn btn-secondary" id="cb-swap"><i class="ti ti-arrows-exchange" aria-hidden="true"></i> Swap</button>
+                  <button type="button" class="btn btn-secondary" id="cb-reset"><i class="ti ti-refresh" aria-hidden="true"></i> Reset</button>
+                  <button type="button" class="btn btn-primary full" id="cb-use"><i class="ti ti-photo-check" aria-hidden="true"></i> Use as cover photo</button>
+                  <button type="button" class="btn btn-secondary full" id="cb-dl"><i class="ti ti-download" aria-hidden="true"></i> Download image</button>
+                </div>
+              </div>
+            </div>
+          </details>
           <div class="form-group">
             <label><i class="ti ti-photo" aria-hidden="true"></i> Cover photo</label>
             <div id="upload-zone-wrap">
@@ -2946,6 +3037,127 @@ setInterval(function(){
   if(modalOpen||inAdmin)return;
   loadPosts(false);
 },60000);
+</script>
+<script>
+/* Combine two photos (added): builds one image from two photos and hands it to the existing cover-photo flow. */
+(function(){
+  var el=function(id){return document.getElementById(id);};
+  if(!el('cb-cv'))return;
+  var S={layout:'side',ratio:'4:5',gap:8,divider:'#ffffff',bar:'#0b0f0e',head:'',
+    p:[{img:null,name:'',zoom:1,x:0,y:0},{img:null,name:'',zoom:1,x:0,y:0}]};
+  var SIZES={'1:1':[1080,1080],'4:5':[1080,1350],'16:9':[1080,608],'9:16':[1080,1920]};
+  var cv=el('cb-cv'),rects=[],drag=null;
+  var FONT=function(px){return '800 '+px+'px '+(getComputedStyle(document.body).fontFamily||'Arial')};
+
+  function layoutRects(W,H,barH){
+    var area=H-barH,g=S.gap;
+    if(S.layout==='side'){var w=(W-g)/2;return [{x:0,y:0,w:w,h:area},{x:w+g,y:0,w:w,h:area}];}
+    var h=(area-g)/2;return [{x:0,y:0,w:W,h:h},{x:0,y:h+g,w:W,h:h}];
+  }
+  function cover(ctx,p,r){
+    var iw=p.img.naturalWidth,ih=p.img.naturalHeight,s=Math.max(r.w/iw,r.h/ih)*p.zoom,dw=iw*s,dh=ih*s,ox=(dw-r.w)/2,oy=(dh-r.h)/2;
+    ctx.save();ctx.beginPath();ctx.rect(r.x,r.y,r.w,r.h);ctx.clip();
+    ctx.drawImage(p.img,r.x-ox+p.x*ox,r.y-oy+p.y*oy,dw,dh);ctx.restore();
+  }
+  function placeholder(ctx,r,n){
+    ctx.save();ctx.beginPath();ctx.rect(r.x,r.y,r.w,r.h);ctx.clip();
+    ctx.fillStyle=n===0?'#1f3a5f':'#3a2f5f';ctx.fillRect(r.x,r.y,r.w,r.h);
+    ctx.strokeStyle='rgba(255,255,255,0.07)';ctx.lineWidth=36;
+    for(var i=-r.h;i<r.w+r.h;i+=90){ctx.beginPath();ctx.moveTo(r.x+i,r.y+r.h);ctx.lineTo(r.x+i+r.h,r.y);ctx.stroke();}
+    ctx.fillStyle='rgba(255,255,255,0.92)';ctx.textAlign='center';ctx.textBaseline='middle';
+    var fs=Math.round(Math.min(r.w,r.h)*0.1);ctx.font=FONT(fs);
+    ctx.fillText('ADD PHOTO '+(n+1),r.x+r.w/2,r.y+r.h/2);ctx.restore();
+  }
+  function draw(target){
+    var c=target||cv,sz=SIZES[S.ratio],W=sz[0],H=sz[1];
+    if(c.width!==W)c.width=W;if(c.height!==H)c.height=H;
+    var ctx=c.getContext('2d'),hasBar=S.head.trim().length>0;
+    var barH=hasBar?Math.round(H*(S.ratio==='16:9'?0.17:0.1)):0,rs=layoutRects(W,H,barH);
+    if(!target)rects=rs;
+    ctx.fillStyle=S.divider;ctx.fillRect(0,0,W,H);
+    for(var i=0;i<2;i++){if(S.p[i].img)cover(ctx,S.p[i],rs[i]);else placeholder(ctx,rs[i],i);}
+    if(hasBar){
+      var y=H-barH;ctx.fillStyle=S.bar;ctx.fillRect(0,y,W,barH);
+      ctx.fillStyle=S.bar.toLowerCase()==='#ffffff'?'#0b0f0e':'#ffffff';ctx.textAlign='center';ctx.textBaseline='middle';
+      var fs=Math.round(barH*0.5),txt=S.head.trim().toUpperCase();ctx.font=FONT(fs);
+      var mw=ctx.measureText(txt).width,maxW=W*0.92;
+      if(mw>maxW){fs=Math.floor(fs*maxW/mw);ctx.font=FONT(fs);}
+      ctx.fillText(txt,W/2,y+barH/2);
+    }
+  }
+  function setPressed(group,val){var bs=el(group).querySelectorAll('button');for(var i=0;i<bs.length;i++)bs[i].setAttribute('aria-pressed',bs[i].getAttribute('data-v')===val?'true':'false');}
+  function wire(group,key){el(group).addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;S[key]=b.getAttribute('data-v');setPressed(group,S[key]);labels();draw();});}
+  wire('cb-layout','layout');wire('cb-ratio','ratio');wire('cb-div','divider');wire('cb-bar','bar');
+  function labels(){
+    var n=S.layout==='side'?['Left','Right']:['Top','Bottom'];
+    for(var i=0;i<2;i++){el('cb-t'+i).textContent=n[i];el('cb-zl'+i).textContent=n[i]+' zoom';
+      el('cb-n'+i).textContent=S.p[i].img?S.p[i].name:'Add photo';el('cb-s'+i).classList.toggle('has',!!S.p[i].img);}
+  }
+  function toast(m,t){if(typeof showToast==='function')showToast(m,t||'success');}
+  function loadFile(i,file){
+    if(!file||!/^image\//.test(file.type)){toast('Choose an image file.','error');return;}
+    if(file.size>15*1024*1024){toast('Image must be under 15MB.','error');return;}
+    var url=URL.createObjectURL(file),im=new Image();
+    im.onload=function(){var p=S.p[i];p.img=im;p.name=file.name;p.x=0;p.y=0;p.zoom=1;el('cb-z'+i).value=100;labels();draw();};
+    im.onerror=function(){toast('That file could not be read as an image.','error');};
+    im.src=url;
+  }
+  [0,1].forEach(function(i){
+    el('cb-f'+i).addEventListener('change',function(e){loadFile(i,e.target.files[0]);e.target.value='';});
+    el('cb-z'+i).addEventListener('input',function(e){S.p[i].zoom=e.target.value/100;draw();});
+  });
+  el('cb-gap').addEventListener('input',function(e){S.gap=+e.target.value;draw();});
+  el('cb-head').addEventListener('input',function(e){S.head=e.target.value;draw();});
+  el('cb-swap').addEventListener('click',function(){var t=S.p[0];S.p[0]=S.p[1];S.p[1]=t;
+    el('cb-z0').value=Math.round(S.p[0].zoom*100);el('cb-z1').value=Math.round(S.p[1].zoom*100);labels();draw();});
+  el('cb-reset').addEventListener('click',function(){for(var i=0;i<2;i++){S.p[i].x=0;S.p[i].y=0;S.p[i].zoom=1;el('cb-z'+i).value=100;}draw();});
+
+  function toCanvas(e){var b=cv.getBoundingClientRect();return {x:(e.clientX-b.left)*cv.width/b.width,y:(e.clientY-b.top)*cv.height/b.height};}
+  function hit(pt){for(var i=0;i<2;i++){var r=rects[i];if(pt.x>=r.x&&pt.x<=r.x+r.w&&pt.y>=r.y&&pt.y<=r.y+r.h)return i;}return -1;}
+  cv.addEventListener('pointerdown',function(e){
+    var pt=toCanvas(e),i=hit(pt);if(i<0)return;
+    if(!S.p[i].img){el('cb-f'+i).click();return;}
+    drag={i:i,x:pt.x,y:pt.y};cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing';
+  });
+  cv.addEventListener('pointermove',function(e){
+    if(!drag)return;var pt=toCanvas(e),p=S.p[drag.i],r=rects[drag.i];
+    var iw=p.img.naturalWidth,ih=p.img.naturalHeight,s=Math.max(r.w/iw,r.h/ih)*p.zoom,ox=(iw*s-r.w)/2,oy=(ih*s-r.h)/2;
+    if(ox>0)p.x=Math.max(-1,Math.min(1,p.x+(pt.x-drag.x)/ox));
+    if(oy>0)p.y=Math.max(-1,Math.min(1,p.y+(pt.y-drag.y)/oy));
+    drag.x=pt.x;drag.y=pt.y;draw();
+  });
+  function end(){drag=null;cv.style.cursor='grab';}
+  cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);
+  cv.addEventListener('dragover',function(e){e.preventDefault();});
+  cv.addEventListener('drop',function(e){
+    e.preventDefault();var f=e.dataTransfer&&e.dataTransfer.files;if(!f||!f.length)return;
+    if(f.length>=2){loadFile(0,f[0]);loadFile(1,f[1]);return;}
+    var i=hit(toCanvas(e));loadFile(i<0?(S.p[0].img?1:0):i,f[0]);
+  });
+
+  function ready(){if(!S.p[0].img||!S.p[1].img){toast('Add both photos first.','error');return false;}return true;}
+  el('cb-use').addEventListener('click',function(){
+    if(!ready())return;
+    var out=document.createElement('canvas');draw(out);
+    var data=out.toDataURL('image/jpeg',0.92);
+    var u=el('p-photo-url');if(u)u.value='';
+    try{nfPicked='';}catch(e){}
+    if(typeof setPhoto==='function')setPhoto(data,'combined-photo.jpg',false);
+    toast('Combined photo set as the cover photo.');
+    var t=el('upload-zone-wrap');if(t&&t.scrollIntoView)t.scrollIntoView({behavior:'smooth',block:'center'});
+  });
+  el('cb-dl').addEventListener('click',function(){
+    if(!ready())return;
+    var out=document.createElement('canvas');draw(out);
+    out.toBlob(function(b){
+      if(!b){toast('Could not build the image.','error');return;}
+      var a=document.createElement('a');a.href=URL.createObjectURL(b);
+      a.download='buza-combined-'+new Date().toISOString().slice(0,10)+'.png';
+      document.body.appendChild(a);a.click();a.remove();
+    },'image/png');
+  });
+  labels();draw();
+})();
 </script>
 </body>
 </html>
