@@ -431,6 +431,9 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
 .cb-pick{position:relative;border:1.5px dashed var(--border);border-radius:10px;padding:.6rem .4rem;text-align:center;cursor:pointer;background:#fbfbfc;min-width:0}
 .cb-pick:hover{border-color:var(--accent2)}
 .cb-pick.has{border-style:solid;border-color:var(--accent2)}
+.cb-slot{display:grid;gap:.4rem;min-width:0}
+.cb-cropbtn{width:100%;padding:6px 8px;font-size:.78rem;justify-content:center}
+.cb-cropbtn:disabled{opacity:.45;cursor:not-allowed}
 .cb-pick strong{display:block;font-size:.8rem}
 .cb-pick span{display:block;font-size:.72rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cb-pick input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
@@ -631,7 +634,7 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
           </div>
           <details class="cb-box" id="cb-box" open>
             <summary><i class="ti ti-layout-columns" aria-hidden="true"></i> Combine two photos into one <i class="ti ti-chevron-down cb-chev" aria-hidden="true"></i></summary>
-            <div class="cb-sub">Add two photos, place them left and right (or top and bottom), then use the result as the cover photo below. Drag a photo to move it inside its half.</div>
+            <div class="cb-sub">Add two photos and crop each one to the area you want. Place them left and right (or top and bottom), then use the result as the cover photo below. Drag a photo to move it inside its half.</div>
             <div class="cb-grid">
               <div>
                 <div class="cb-stage"><canvas id="cb-cv" aria-label="Combined photo preview"></canvas></div>
@@ -641,8 +644,8 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
                 <div>
                   <div class="cb-lab">Photos</div>
                   <div class="cb-slots">
-                    <div class="cb-pick" id="cb-s0"><strong id="cb-t0">Left</strong><span id="cb-n0">Add photo</span><input type="file" id="cb-f0" accept="image/*"></div>
-                    <div class="cb-pick" id="cb-s1"><strong id="cb-t1">Right</strong><span id="cb-n1">Add photo</span><input type="file" id="cb-f1" accept="image/*"></div>
+                    <div class="cb-slot"><div class="cb-pick" id="cb-s0"><strong id="cb-t0">Left</strong><span id="cb-n0">Add photo</span><input type="file" id="cb-f0" accept="image/*"></div><button type="button" class="btn btn-secondary cb-cropbtn" id="cb-c0" disabled><i class="ti ti-crop" aria-hidden="true"></i> Crop</button></div>
+                    <div class="cb-slot"><div class="cb-pick" id="cb-s1"><strong id="cb-t1">Right</strong><span id="cb-n1">Add photo</span><input type="file" id="cb-f1" accept="image/*"></div><button type="button" class="btn btn-secondary cb-cropbtn" id="cb-c1" disabled><i class="ti ti-crop" aria-hidden="true"></i> Crop</button></div>
                   </div>
                   <div class="cb-row" style="margin-top:.5rem"><label for="cb-z0" id="cb-zl0">Left zoom</label><input type="range" id="cb-z0" min="100" max="300" value="100"></div>
                   <div class="cb-row"><label for="cb-z1" id="cb-zl1">Right zoom</label><input type="range" id="cb-z1" min="100" max="300" value="100"></div>
@@ -1985,7 +1988,7 @@ function recropPhoto(isEdit){
   openCropper(src,function(res){if(res)setPhoto(res,'cropped photo',isEdit);});
 }
 // Crop tool: drag the box to move it, drag a corner to resize, pick a shape or keep it free.
-function openCropper(src,done){
+function openCropper(src,done,startRatio){
   const ov=document.createElement('div');
   ov.style.cssText='position:fixed;inset:0;z-index:10000;background:rgba(10,12,24,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px;gap:10px;font-family:inherit';
   const bs='border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.08);color:#fff;border-radius:8px;padding:7px 12px;font-size:.8rem;cursor:pointer';
@@ -1996,7 +1999,7 @@ function openCropper(src,done){
   document.body.appendChild(ov);
   const img=ov.querySelector('#cr-img'),box=ov.querySelector('#cr-box'),stage=ov.querySelector('#cr-stage');
   const close=(r)=>{ov.remove();done(r);};
-  let sw=0,sh=0,ratio=0,B={x:0,y:0,w:0,h:0};
+  let sw=0,sh=0,ratio=startRatio||0,B={x:0,y:0,w:0,h:0};
   const draw=()=>{box.style.left=B.x+'px';box.style.top=B.y+'px';box.style.width=B.w+'px';box.style.height=B.h+'px';};
   const fit=()=>{ // biggest centred box of the chosen shape
     let w=sw*.9,h=sh*.9;
@@ -3091,20 +3094,33 @@ setInterval(function(){
   function labels(){
     var n=S.layout==='side'?['Left','Right']:['Top','Bottom'];
     for(var i=0;i<2;i++){el('cb-t'+i).textContent=n[i];el('cb-zl'+i).textContent=n[i]+' zoom';
-      el('cb-n'+i).textContent=S.p[i].img?S.p[i].name:'Add photo';el('cb-s'+i).classList.toggle('has',!!S.p[i].img);}
+      el('cb-n'+i).textContent=S.p[i].img?S.p[i].name:'Add photo';el('cb-s'+i).classList.toggle('has',!!S.p[i].img);el('cb-c'+i).disabled=!S.p[i].img;}
   }
   function toast(m,t){if(typeof showToast==='function')showToast(m,t||'success');}
+  function setImg(i,src,name,orig){
+    var im=new Image();
+    im.onload=function(){var p=S.p[i];p.img=im;p.name=name;p.orig=orig;p.x=0;p.y=0;p.zoom=1;el('cb-z'+i).value=100;labels();draw();};
+    im.onerror=function(){toast('That photo could not be opened.','error');};
+    im.src=src;
+  }
+  // Open the site's crop tool, starting with a box shaped like this slot.
+  function startCrop(i,src,name,orig){
+    var r=rects[i],ratio=r?r.w/r.h:0;
+    if(typeof openCropper!=='function'){setImg(i,src,name,orig);return;}
+    openCropper(src,function(res){if(res)setImg(i,res,name,orig);},ratio);
+  }
   function loadFile(i,file){
     if(!file||!/^image\//.test(file.type)){toast('Choose an image file.','error');return;}
     if(file.size>15*1024*1024){toast('Image must be under 15MB.','error');return;}
-    var url=URL.createObjectURL(file),im=new Image();
-    im.onload=function(){var p=S.p[i];p.img=im;p.name=file.name;p.x=0;p.y=0;p.zoom=1;el('cb-z'+i).value=100;labels();draw();};
-    im.onerror=function(){toast('That file could not be read as an image.','error');};
-    im.src=url;
+    var fr=new FileReader();
+    fr.onload=function(e){startCrop(i,e.target.result,file.name,e.target.result);};
+    fr.onerror=function(){toast('That file could not be read.','error');};
+    fr.readAsDataURL(file);
   }
   [0,1].forEach(function(i){
     el('cb-f'+i).addEventListener('change',function(e){loadFile(i,e.target.files[0]);e.target.value='';});
     el('cb-z'+i).addEventListener('input',function(e){S.p[i].zoom=e.target.value/100;draw();});
+    el('cb-c'+i).addEventListener('click',function(){var p=S.p[i];if(p.orig)startCrop(i,p.orig,p.name,p.orig);});
   });
   el('cb-gap').addEventListener('input',function(e){S.gap=+e.target.value;draw();});
   el('cb-head').addEventListener('input',function(e){S.head=e.target.value;draw();});
