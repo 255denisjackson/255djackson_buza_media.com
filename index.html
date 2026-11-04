@@ -673,6 +673,15 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
                   </div>
                 </div>
                 <div>
+                  <div class="cb-lab">Buza Media logo</div>
+                  <div class="cb-seg" id="cb-logo">
+                    <button type="button" data-v="wm" aria-pressed="true">Watermark</button>
+                    <button type="button" data-v="tl" aria-pressed="false">Top left</button>
+                    <button type="button" data-v="off" aria-pressed="false">None</button>
+                  </div>
+                  <div class="cb-row" style="margin-top:.5rem"><label for="cb-logosz">Logo size</label><input type="range" id="cb-logosz" min="12" max="34" value="22"></div>
+                </div>
+                <div>
                   <div class="cb-lab">Headline bar (optional)</div>
                   <input type="text" id="cb-head" maxlength="80" placeholder="e.g. Arsenal 1-0 Liverpool" aria-label="Headline bar text">
                   <div class="cb-sw" id="cb-bar" style="margin-top:.45rem">
@@ -3070,7 +3079,7 @@ setInterval(function(){
 (function(){
   var el=function(id){return document.getElementById(id);};
   if(!el('cb-cv'))return;
-  var S={layout:'side',ratio:'4:5',gap:8,divider:'#ffffff',bar:'#0b0f0e',head:'',
+  var S={layout:'side',ratio:'4:5',gap:8,divider:'#ffffff',bar:'#0b0f0e',head:'',logo:'wm',logoSize:22,
     p:[{img:null,name:'',zoom:1,x:0,y:0},{img:null,name:'',zoom:1,x:0,y:0}]};
   var SIZES={'1:1':[1080,1080],'4:5':[1080,1350],'16:9':[1080,608],'9:16':[1080,1920]};
   var cv=el('cb-cv'),rects=[],drag=null;
@@ -3095,6 +3104,29 @@ setInterval(function(){
     var fs=Math.round(Math.min(r.w,r.h)*0.1);ctx.font=FONT(fs);
     ctx.fillText('ADD PHOTO '+(n+1),r.x+r.w/2,r.y+r.h/2);ctx.restore();
   }
+  // Buza Media logo: full-colour version for the badge, white version for the watermark.
+  var LOGO={col:null,wh:null};
+  [['col','logo-brand.png'],['wh','logo-white.png']].forEach(function(a){
+    var im=new Image();im.onload=function(){LOGO[a[0]]=im;draw();};im.src=a[1];
+  });
+  function rrect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+  function drawLogo(ctx,W,H,barH){
+    if(S.logo==='off')return;
+    var m=Math.round(W*0.035),lw=Math.round(W*S.logoSize/100);
+    ctx.save();
+    if(S.logo==='tl'&&LOGO.col){
+      lw=Math.round(lw*0.78);
+      var lh=Math.round(lw*LOGO.col.naturalHeight/LOGO.col.naturalWidth),pad=Math.round(lw*0.14);
+      ctx.shadowColor='rgba(0,0,0,0.28)';ctx.shadowBlur=Math.round(W*0.012);ctx.shadowOffsetY=Math.round(W*0.003);
+      ctx.fillStyle='rgba(255,255,255,0.94)';rrect(ctx,m,m,lw+pad*2,lh+pad*2,Math.round(pad*0.9));ctx.fill();
+      ctx.shadowColor='transparent';ctx.drawImage(LOGO.col,m+pad,m+pad,lw,lh);
+    }else if(S.logo==='wm'&&LOGO.wh){
+      var wh=Math.round(lw*LOGO.wh.naturalHeight/LOGO.wh.naturalWidth);
+      ctx.globalAlpha=0.82;ctx.shadowColor='rgba(0,0,0,0.5)';ctx.shadowBlur=Math.round(W*0.01);ctx.shadowOffsetY=Math.round(W*0.002);
+      ctx.drawImage(LOGO.wh,W-lw-m,H-barH-wh-m,lw,wh);
+    }
+    ctx.restore();
+  }
   function draw(target){
     var c=target||cv,sz=SIZES[S.ratio],W=sz[0],H=sz[1];
     if(c.width!==W)c.width=W;if(c.height!==H)c.height=H;
@@ -3103,6 +3135,7 @@ setInterval(function(){
     if(!target)rects=rs;
     ctx.fillStyle=S.divider;ctx.fillRect(0,0,W,H);
     for(var i=0;i<2;i++){if(S.p[i].img)cover(ctx,S.p[i],rs[i]);else placeholder(ctx,rs[i],i);}
+    drawLogo(ctx,W,H,barH);
     if(hasBar){
       var y=H-barH;ctx.fillStyle=S.bar;ctx.fillRect(0,y,W,barH);
       ctx.fillStyle=S.bar.toLowerCase()==='#ffffff'?'#0b0f0e':'#ffffff';ctx.textAlign='center';ctx.textBaseline='middle';
@@ -3114,7 +3147,8 @@ setInterval(function(){
   }
   function setPressed(group,val){var bs=el(group).querySelectorAll('button');for(var i=0;i<bs.length;i++)bs[i].setAttribute('aria-pressed',bs[i].getAttribute('data-v')===val?'true':'false');}
   function wire(group,key){el(group).addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;S[key]=b.getAttribute('data-v');setPressed(group,S[key]);labels();draw();});}
-  wire('cb-layout','layout');wire('cb-ratio','ratio');wire('cb-div','divider');wire('cb-bar','bar');
+  wire('cb-layout','layout');wire('cb-ratio','ratio');wire('cb-div','divider');wire('cb-bar','bar');wire('cb-logo','logo');
+  el('cb-logosz').addEventListener('input',function(e){S.logoSize=+e.target.value;draw();});
   function labels(){
     var n=S.layout==='side'?['Left','Right']:['Top','Bottom'];
     for(var i=0;i<2;i++){el('cb-t'+i).textContent=n[i];el('cb-zl'+i).textContent=n[i]+' zoom';
