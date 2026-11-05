@@ -669,6 +669,7 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
                     <button type="button" data-v="side" aria-pressed="true">Left | Right</button>
                     <button type="button" data-v="stack" aria-pressed="false">Top / Bottom</button>
                   </div>
+                  <div class="cb-row" style="margin-bottom:.5rem"><label for="cb-ang">Divider angle</label><input type="range" id="cb-ang" min="0" max="360" step="1" value="90"><span class="cb-note" id="cb-angv" style="min-width:2.6rem;text-align:right">90°</span></div>
                   <div class="cb-seg" id="cb-ratio">
                     <button type="button" data-v="1:1" aria-pressed="false">1:1</button>
                     <button type="button" data-v="4:5" aria-pressed="true">4:5</button>
@@ -3185,9 +3186,9 @@ setInterval(function(){
 (function(){
   var el=function(id){return document.getElementById(id);};
   if(!el('cb-cv'))return;
-  // Measured from frame-buza.png (1810 x 2560): where photos go, and the blue headline box.
-  var FR={W:1810,H:2560,area:{x:9,y:8,w:1793,h:1846},box:{x:181,y:1949,w:1455,h:339},safeBottom:1715,img:null};
-  var S={frame:'buza',layout:'side',ratio:'4:5',gap:8,divider:'#ffffff',bar:'#0b0f0e',head:'',
+  // Measured from frame-buza-45.png (1810 x 2262): where photos go, and the blue headline box.
+  var FR={W:1810,H:2262,area:{x:9,y:8,w:1793,h:1548},box:{x:181,y:1651,w:1455,h:339},safeBottom:1417,img:null};   // 1810 x 2262 = Instagram portrait 4:5
+  var S={frame:'buza',layout:'side',angle:90,ratio:'4:5',gap:8,divider:'#ffffff',bar:'#0b0f0e',head:'',
     logo:'wm',logoSize:20,logoColor:'#ffffff',logoOpacity:90,logoPos:null,headSize:100,
     p:[{img:null,name:'',zoom:1,x:0,y:0},{img:null,name:'',zoom:1,x:0,y:0}]};
   var SIZES={'1:1':[1080,1080],'4:5':[1080,1350],'16:9':[1080,608],'9:16':[1080,1920]};
@@ -3196,23 +3197,55 @@ setInterval(function(){
   var HFONT='Poppins,Inter,"Arial Black",Arial,sans-serif',LH=1.12;
   var HF=function(px){return '800 '+px+'px '+HFONT;};
 
+  // The line between the two photos can point any way (0-360 degrees). 90 = straight up and down (Left | Right), 0 = flat (Top / Bottom).
+  function clipHalf(poly,f){
+    var out=[];
+    for(var i=0;i<poly.length;i++){
+      var p=poly[i],q=poly[(i+1)%poly.length],fp=f(p),fq=f(q);
+      if(fp>=0)out.push(p);
+      if((fp>=0)!==(fq>=0)){var t=fp/(fp-fq);out.push({x:p.x+(q.x-p.x)*t,y:p.y+(q.y-p.y)*t});}
+    }
+    return out;
+  }
   function layoutIn(a,g){
-    if(S.layout==='side'){var w=(a.w-g)/2;return [{x:a.x,y:a.y,w:w,h:a.h},{x:a.x+w+g,y:a.y,w:w,h:a.h}];}
-    var h=(a.h-g)/2;return [{x:a.x,y:a.y,w:a.w,h:h},{x:a.x,y:a.y+h+g,w:a.w,h:h}];
+    var rad=(((S.angle%360)+360)%360)*Math.PI/180,nx=Math.sin(rad),ny=Math.cos(rad);
+    if(Math.abs(nx)<1e-9)nx=0;if(Math.abs(ny)<1e-9)ny=0;
+    var cx=a.x+a.w/2,cy=a.y+a.h/2,out=[];
+    [-1,1].forEach(function(sg){
+      var poly=clipHalf([{x:a.x,y:a.y},{x:a.x+a.w,y:a.y},{x:a.x+a.w,y:a.y+a.h},{x:a.x,y:a.y+a.h}],function(p){return sg*((p.x-cx)*nx+(p.y-cy)*ny)-g/2;});
+      if(poly.length<3){out.push({x:cx,y:cy,w:1,h:1});return;}
+      var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9,sx=0,sy=0;
+      poly.forEach(function(p){x0=Math.min(x0,p.x);y0=Math.min(y0,p.y);x1=Math.max(x1,p.x);y1=Math.max(y1,p.y);sx+=p.x;sy+=p.y;});
+      var r={x:x0,y:y0,w:x1-x0,h:y1-y0};
+      if(nx!==0&&ny!==0){r.poly=poly;r.cx=sx/poly.length;r.cy=sy/poly.length;}   // slanted: the photo fills its own side only
+      out.push(r);
+    });
+    return out;
+  }
+  function regionPath(ctx,r){
+    ctx.beginPath();
+    if(r.poly){ctx.moveTo(r.poly[0].x,r.poly[0].y);for(var i=1;i<r.poly.length;i++)ctx.lineTo(r.poly[i].x,r.poly[i].y);ctx.closePath();}
+    else ctx.rect(r.x,r.y,r.w,r.h);
+  }
+  function inRegion(r,pt){
+    if(!r.poly)return pt.x>=r.x&&pt.x<=r.x+r.w&&pt.y>=r.y&&pt.y<=r.y+r.h;
+    var c=false,P=r.poly;
+    for(var i=0,j=P.length-1;i<P.length;j=i++){if(((P[i].y>pt.y)!==(P[j].y>pt.y))&&(pt.x<(P[j].x-P[i].x)*(pt.y-P[i].y)/(P[j].y-P[i].y)+P[i].x))c=!c;}
+    return c;
   }
   function cover(ctx,p,r){
     var iw=p.img.naturalWidth,ih=p.img.naturalHeight,s=Math.max(r.w/iw,r.h/ih)*p.zoom,dw=iw*s,dh=ih*s,ox=(dw-r.w)/2,oy=(dh-r.h)/2;
-    ctx.save();ctx.beginPath();ctx.rect(r.x,r.y,r.w,r.h);ctx.clip();
+    ctx.save();regionPath(ctx,r);ctx.clip();
     ctx.drawImage(p.img,r.x-ox+p.x*ox,r.y-oy+p.y*oy,dw,dh);ctx.restore();
   }
   function placeholder(ctx,r,n){
-    ctx.save();ctx.beginPath();ctx.rect(r.x,r.y,r.w,r.h);ctx.clip();
+    ctx.save();regionPath(ctx,r);ctx.clip();
     ctx.fillStyle=n===0?'#1f3a5f':'#3a2f5f';ctx.fillRect(r.x,r.y,r.w,r.h);
     ctx.strokeStyle='rgba(255,255,255,0.07)';ctx.lineWidth=36;
     for(var i=-r.h;i<r.w+r.h;i+=90){ctx.beginPath();ctx.moveTo(r.x+i,r.y+r.h);ctx.lineTo(r.x+i+r.h,r.y);ctx.stroke();}
     ctx.fillStyle='rgba(255,255,255,0.92)';ctx.textAlign='center';ctx.textBaseline='middle';
     var fs=Math.round(Math.min(r.w,r.h)*0.1);ctx.font=FONT(fs);
-    ctx.fillText('ADD PHOTO '+(n+1),r.x+r.w/2,r.y+r.h/2);ctx.restore();
+    ctx.fillText('ADD PHOTO '+(n+1),r.cx!==undefined?r.cx:r.x+r.w/2,r.cy!==undefined?r.cy:r.y+r.h/2);ctx.restore();
   }
 
   // Buza Media logo: a plain white cut-out that can be tinted any colour, or shown in its original colours.
@@ -3304,7 +3337,7 @@ setInterval(function(){
   function loadImg(src,cb){var im=new Image();im.onload=function(){cb(im);};im.src=src;}
   function start(){ // runs the first time the combiner is actually on screen, so visitors never download any of this
     if(started)return;started=true;
-    loadImg('frame-buza.png',function(im){FR.img=im;draw();});
+    loadImg('frame-buza-45.png',function(im){FR.img=im;draw();});
     loadImg('logo-brand.png',function(im){LOGO.col=im;draw();});
     loadImg('logo-white.png',function(im){LOGO.wh=im;draw();});
     try{
@@ -3328,13 +3361,16 @@ setInterval(function(){
     el('cb-tl').textContent=f?'Top right':'Top left';
   }
   el('cb-frame').addEventListener('click',function(e){if(e.target.closest('button'))applyMode();});
+  function angUi(){el('cb-ang').value=S.angle;el('cb-angv').textContent=Math.round(S.angle)+'°';setPressed('cb-layout',S.angle===90?'side':S.angle===0?'stack':'');}
+  el('cb-layout').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;S.angle=b.getAttribute('data-v')==='side'?90:0;angUi();labels();draw();});
+  el('cb-ang').addEventListener('input',function(e){S.angle=+e.target.value;angUi();labels();draw();});
   el('cb-logo').addEventListener('click',function(e){if(e.target.closest('button')){S.logoPos=null;draw();}}); // picking a preset puts the logo back in that spot
   el('cb-logosz').addEventListener('input',function(e){S.logoSize=+e.target.value;draw();});
   el('cb-lop').addEventListener('input',function(e){S.logoOpacity=+e.target.value;draw();});
   el('cb-lcolor').addEventListener('input',function(e){S.logoColor=e.target.value;setPressed('cb-lcol','');draw();});
   el('cb-hsz').addEventListener('input',function(e){S.headSize=+e.target.value;draw();});
   function labels(){
-    var n=S.layout==='side'?['Left','Right']:['Top','Bottom'];
+    var ag=((S.angle%360)+360)%360,n=ag===90?['Left','Right']:ag===270?['Right','Left']:ag===0?['Top','Bottom']:ag===180?['Bottom','Top']:['Photo 1','Photo 2'];
     for(var i=0;i<2;i++){el('cb-t'+i).textContent=n[i];el('cb-zl'+i).textContent=n[i]+' zoom';
       el('cb-n'+i).textContent=S.p[i].img?S.p[i].name:'Add photo';el('cb-s'+i).classList.toggle('has',!!S.p[i].img);el('cb-c'+i).disabled=!S.p[i].img;}
   }
@@ -3371,7 +3407,7 @@ setInterval(function(){
   el('cb-reset').addEventListener('click',function(){for(var i=0;i<2;i++){S.p[i].x=0;S.p[i].y=0;S.p[i].zoom=1;el('cb-z'+i).value=100;}draw();});
 
   function toCanvas(e){var b=cv.getBoundingClientRect();return {x:(e.clientX-b.left)*cv.width/b.width,y:(e.clientY-b.top)*cv.height/b.height};}
-  function hit(pt){for(var i=0;i<2;i++){var r=rects[i];if(r&&pt.x>=r.x&&pt.x<=r.x+r.w&&pt.y>=r.y&&pt.y<=r.y+r.h)return i;}return -1;}
+  function hit(pt){for(var i=0;i<2;i++){var r=rects[i];if(r&&inRegion(r,pt))return i;}return -1;}
   function onLogo(pt){return !!logoRect&&S.logo!=='off'&&pt.x>=logoRect.x&&pt.x<=logoRect.x+logoRect.w&&pt.y>=logoRect.y&&pt.y<=logoRect.y+logoRect.h;}
   cv.addEventListener('pointerdown',function(e){
     var pt=toCanvas(e);
