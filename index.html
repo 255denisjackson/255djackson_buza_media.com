@@ -425,7 +425,7 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
 .cb-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:1rem}
 @media(min-width:860px){.cb-grid{grid-template-columns:minmax(0,1fr) 300px;align-items:start}}
 .cb-stage{background:#e9ecef;border:1px solid var(--border);border-radius:10px;padding:10px;display:grid;justify-items:center}
-#cb-cv{max-width:100%;max-height:80vh;width:auto;height:auto;touch-action:none;cursor:grab;display:block;background:#000}
+#cb-cv,#vb-cv{max-width:100%;max-height:80vh;width:auto;height:auto;touch-action:none;cursor:grab;display:block;background:#000}
 .cb-hint{font-size:.74rem;color:var(--muted);margin-top:.5rem;text-align:center}
 .cb-ctl{display:grid;gap:.85rem;min-width:0}
 .cb-lab{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem}
@@ -721,6 +721,86 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
                   <button type="button" class="btn btn-primary full" id="cb-use"><i class="ti ti-photo-check" aria-hidden="true"></i> Use as cover photo</button>
                   <button type="button" class="btn btn-secondary full" id="cb-dl"><i class="ti ti-download" aria-hidden="true"></i> Download image</button>
                   <button type="button" class="btn btn-secondary full" id="cb-clear"><i class="ti ti-trash" aria-hidden="true"></i> Clear photos &amp; start over</button>
+                </div>
+              </div>
+            </div>
+          </details>
+          <details class="cb-box" id="vb-box">
+            <summary><i class="ti ti-video" aria-hidden="true"></i> Video banner (portrait) <i class="ti ti-chevron-down cb-chev" aria-hidden="true"></i></summary>
+            <div class="cb-sub">Make a Buza Media banner video. Choose a portrait video (or a photo and a video side by side), crop the area you want shown, trim the length, type the headline, then press Create. The finished video is attached to the post for you.</div>
+            <div class="cb-grid">
+              <div>
+                <div class="cb-stage"><canvas id="vb-cv" aria-label="Video banner preview"></canvas></div>
+                <div class="cb-btns" style="margin-top:.5rem"><button type="button" class="btn btn-secondary" id="vb-play"><i class="ti ti-player-play" aria-hidden="true"></i> Play preview</button></div>
+                <div class="cb-hint">Tap an empty box to add a file. Drag the logo on the preview to place it anywhere.</div>
+              </div>
+              <div class="cb-ctl">
+                <div>
+                  <div class="cb-lab">Design</div>
+                  <div class="cb-seg" id="vb-mode">
+                    <button type="button" data-v="video" aria-pressed="true">Video only</button>
+                    <button type="button" data-v="pv" aria-pressed="false">Photo + Video</button>
+                  </div>
+                </div>
+                <div>
+                  <div class="cb-lab">Files</div>
+                  <div class="cb-slots">
+                    <div class="cb-slot"><div class="cb-pick" id="vb-sv"><strong>Video</strong><span id="vb-nv">Add portrait video</span><input type="file" id="vb-fv" accept="video/*"></div><button type="button" class="btn btn-secondary" id="vb-cropv" disabled><i class="ti ti-crop" aria-hidden="true"></i> Crop video area</button></div>
+                    <div class="cb-slot" id="vb-photoslot"><div class="cb-pick" id="vb-sp"><strong>Photo</strong><span id="vb-np">Add photo</span><input type="file" id="vb-fp" accept="image/*"></div><button type="button" class="btn btn-secondary" id="vb-cropp" disabled><i class="ti ti-crop" aria-hidden="true"></i> Crop photo</button></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="cb-lab">Trim length</div>
+                  <div class="cb-row"><label for="vb-ts">Start</label><input type="range" id="vb-ts" min="0" max="0" step="0.1" value="0" disabled></div>
+                  <div class="cb-row"><label for="vb-te">End</label><input type="range" id="vb-te" min="0" max="0" step="0.1" value="0" disabled></div>
+                  <div class="cb-note" id="vb-tl">Add a video to trim it.</div>
+                  <label class="cb-note" style="display:flex;gap:.4rem;align-items:center;margin-top:.3rem"><input type="checkbox" id="vb-snd" checked> Keep the video's sound</label>
+                </div>
+                <div id="vb-pvctl" style="display:none">
+                  <div class="cb-lab">Layout</div>
+                  <div class="cb-seg" id="vb-layout" style="margin-bottom:.5rem">
+                    <button type="button" data-v="side" aria-pressed="true">Left | Right</button>
+                    <button type="button" data-v="stack" aria-pressed="false">Top / Bottom</button>
+                  </div>
+                  <div class="cb-btns"><button type="button" class="btn btn-secondary" id="vb-swap"><i class="ti ti-arrows-exchange" aria-hidden="true"></i> Swap photo &amp; video</button></div>
+                  <div class="cb-row" style="margin-top:.5rem"><label for="vb-gap">Divider</label><input type="range" id="vb-gap" min="0" max="48" value="8"></div>
+                  <div class="cb-sw" id="vb-div" style="margin-top:.4rem">
+                    <button type="button" data-v="#ffffff" style="background:#ffffff" aria-label="White divider" aria-pressed="true"></button>
+                    <button type="button" data-v="#0b0f0e" style="background:#0b0f0e" aria-label="Black divider" aria-pressed="false"></button>
+                    <button type="button" data-v="#e63946" style="background:#e63946" aria-label="Red divider" aria-pressed="false"></button>
+                    <button type="button" data-v="#2065fe" style="background:#2065fe" aria-label="Blue divider" aria-pressed="false"></button>
+                  </div>
+                </div>
+                <div>
+                  <div class="cb-lab">Buza Media logo</div>
+                  <div class="cb-seg" id="vb-logo">
+                    <button type="button" data-v="wm" aria-pressed="true">Watermark</button>
+                    <button type="button" data-v="tl" aria-pressed="false">Top right</button>
+                    <button type="button" data-v="off" aria-pressed="false">None</button>
+                  </div>
+                  <div class="cb-sw" id="vb-lcol" style="margin-top:.5rem">
+                    <button type="button" data-v="#ffffff" style="background:#ffffff" aria-label="White logo" aria-pressed="true"></button>
+                    <button type="button" data-v="#0b0f0e" style="background:#0b0f0e" aria-label="Black logo" aria-pressed="false"></button>
+                    <button type="button" data-v="#2065fe" style="background:#2065fe" aria-label="Blue logo" aria-pressed="false"></button>
+                    <button type="button" data-v="#ffd400" style="background:#ffd400" aria-label="Yellow logo" aria-pressed="false"></button>
+                    <button type="button" data-v="#e63946" style="background:#e63946" aria-label="Red logo" aria-pressed="false"></button>
+                    <button type="button" class="orig" data-v="orig" aria-label="Original logo colours" title="Original colours" aria-pressed="false"></button>
+                    <input type="color" id="vb-lcolor" value="#ffffff" aria-label="Pick any logo colour" title="Pick any colour">
+                  </div>
+                  <div class="cb-row" style="margin-top:.5rem"><label for="vb-logosz">Logo size</label><input type="range" id="vb-logosz" min="8" max="40" value="20"></div>
+                  <div class="cb-row"><label for="vb-lop">Opacity</label><input type="range" id="vb-lop" min="25" max="100" value="90"></div>
+                </div>
+                <div>
+                  <div class="cb-lab">Headline (fills the blue box)</div>
+                  <textarea id="vb-head" rows="2" maxlength="200" placeholder="e.g. Arsenal 1-0 Liverpool" aria-label="Headline text"></textarea>
+                  <div class="cb-row" style="margin-top:.4rem"><label for="vb-hsz">Text size</label><input type="range" id="vb-hsz" min="50" max="100" value="100"></div>
+                  <div class="cb-note">Long headlines wrap to the next line automatically.</div>
+                </div>
+                <div class="cb-btns">
+                  <button type="button" class="btn btn-primary full" id="vb-make"><i class="ti ti-movie" aria-hidden="true"></i> Create banner video</button>
+                  <div id="vb-prog" class="cb-note" style="display:none;width:100%"><div style="height:8px;border-radius:6px;background:#e3e6ea;overflow:hidden"><div id="vb-bar" style="height:100%;width:0;background:#2065fe"></div></div><span id="vb-ptxt"></span> <button type="button" class="btn btn-secondary" id="vb-stop">Stop</button></div>
+                  <div id="vb-res" style="display:none;width:100%"></div>
+                  <button type="button" class="btn btn-secondary full" id="vb-clear"><i class="ti ti-trash" aria-hidden="true"></i> Clear video &amp; start over</button>
                 </div>
               </div>
             </div>
@@ -2057,7 +2137,7 @@ function openCropper(src,done,startRatio){
   <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"><button id="cr-cancel" style="${bs}">Cancel</button><button id="cr-full" style="${bs}">Use whole photo</button><button id="cr-ok" style="${bs};background:#2065fe;border-color:#2065fe;font-weight:700">Crop &amp; use</button></div>`;
   document.body.appendChild(ov);
   const img=ov.querySelector('#cr-img'),box=ov.querySelector('#cr-box'),stage=ov.querySelector('#cr-stage');
-  const close=(r)=>{ov.remove();done(r);};
+  const close=(r,rect)=>{ov.remove();done(r,rect);};
   let sw=0,sh=0,ratio=startRatio||0,B={x:0,y:0,w:0,h:0};
   const draw=()=>{box.style.left=B.x+'px';box.style.top=B.y+'px';box.style.width=B.w+'px';box.style.height=B.h+'px';};
   const fit=()=>{ // biggest centred box of the chosen shape
@@ -2094,13 +2174,13 @@ function openCropper(src,done,startRatio){
   const end=()=>{drag=null;};
   box.addEventListener('pointerup',end);box.addEventListener('pointercancel',end);
   ov.querySelector('#cr-cancel').onclick=()=>close(null);
-  ov.querySelector('#cr-full').onclick=()=>close(src);
+  ov.querySelector('#cr-full').onclick=()=>close(src,{x:0,y:0,w:img.naturalWidth,h:img.naturalHeight});
   ov.querySelector('#cr-ok').onclick=()=>{
     try{
       const k=img.naturalWidth/sw,c=document.createElement('canvas');
       c.width=Math.max(1,Math.round(B.w*k));c.height=Math.max(1,Math.round(B.h*k));
       c.getContext('2d').drawImage(img,B.x*k,B.y*k,B.w*k,B.h*k,0,0,c.width,c.height);
-      close(c.toDataURL('image/jpeg',.98));
+      close(c.toDataURL('image/jpeg',.98),{x:B.x*k,y:B.y*k,w:B.w*k,h:B.h*k});
     }catch(e){showToast('Could not crop this photo. Try uploading it from your device.','error');close(null);}
   };
   img.onload=()=>{sw=img.clientWidth;sh=img.clientHeight;fit();};
@@ -3362,6 +3442,361 @@ setInterval(function(){
     var io=new IntersectionObserver(function(es){if(es.some(function(x){return x.isIntersecting;})){io.disconnect();start();}});
     io.observe(cv);
   }else start();
+})();
+</script>
+<script>
+/* Video banner (portrait): same Buza Media frame as the photo combiner, but the photo area plays a video.
+   The banner is recorded in the browser (real time) and attached to the post as its video. */
+(function(){
+  var el=function(id){return document.getElementById(id);};
+  if(!el('vb-cv'))return;
+  var FR={W:1810,H:2560,area:{x:9,y:8,w:1793,h:1846},box:{x:181,y:1949,w:1455,h:339},safeBottom:1715,img:null};
+  var S={mode:'video',layout:'side',gap:8,divider:'#ffffff',head:'',headSize:100,swap:false,
+    logo:'wm',logoSize:20,logoColor:'#ffffff',logoOpacity:90,logoPos:null,sound:true};
+  var V={file:null,url:null,el:null,w:0,h:0,dur:0,crop:null,start:0,end:0};   // the video
+  var P={img:null,name:'',orig:null};                                          // the photo
+  var LOGO={col:null,wh:null},started=false,cv=el('vb-cv'),PW=905,PH=1280,rects=[],logoRect=null,logoDrag=null;
+  var overlay=null,overlayKey='',playing=false,raf=0,busy=false,cancel=false,result=null;
+  var HFONT='Poppins,Inter,"Arial Black",Arial,sans-serif',LH=1.12,HF=function(px){return '800 '+px+'px '+HFONT;};
+  var FONT=function(px){return '800 '+px+'px '+(getComputedStyle(document.body).fontFamily||'Arial');};
+  function toast(m,t){if(typeof showToast==='function')showToast(m,t||'success');}
+  function fmt(t){var m=Math.floor(t/60),s=t-m*60;return m+':'+(s<10?'0':'')+s.toFixed(1);}
+
+  /* ---------- layout ---------- */
+  function slots(){
+    var a=FR.area,g=Math.round(S.gap*FR.W/1080);
+    if(S.mode==='video')return [{x:a.x,y:a.y,w:a.w,h:a.h,k:'v'}];
+    var r;if(S.layout==='side'){var w=(a.w-g)/2;r=[{x:a.x,y:a.y,w:w,h:a.h},{x:a.x+w+g,y:a.y,w:w,h:a.h}];}
+    else{var h=(a.h-g)/2;r=[{x:a.x,y:a.y,w:a.w,h:h},{x:a.x,y:a.y+h+g,w:a.w,h:h}];}
+    r[0].k=S.swap?'v':'p';r[1].k=S.swap?'p':'v';return r;
+  }
+  function slotOf(k){var s=slots();for(var i=0;i<s.length;i++)if(s[i].k===k)return s[i];return null;}
+  // the part of the video that fills a slot: the user's crop, trimmed to the slot's shape so nothing is stretched
+  function srcRect(r){
+    var c=V.crop||{x:0,y:0,w:V.w,h:V.h},ar=r.w/r.h,w=c.w,h=c.h;
+    if(w/h>ar){var nw=h*ar;return {x:c.x+(w-nw)/2,y:c.y,w:nw,h:h};}
+    var nh=w/ar;return {x:c.x,y:c.y+(h-nh)/2,w:w,h:nh};
+  }
+  function coverImg(ctx,im,r){
+    var iw=im.naturalWidth,ih=im.naturalHeight,s=Math.max(r.w/iw,r.h/ih),dw=iw*s,dh=ih*s;
+    ctx.save();ctx.beginPath();ctx.rect(r.x,r.y,r.w,r.h);ctx.clip();ctx.drawImage(im,r.x+(r.w-dw)/2,r.y+(r.h-dh)/2,dw,dh);ctx.restore();
+  }
+  function placeholder(ctx,r,txt,col){
+    ctx.save();ctx.beginPath();ctx.rect(r.x,r.y,r.w,r.h);ctx.clip();
+    ctx.fillStyle=col;ctx.fillRect(r.x,r.y,r.w,r.h);
+    ctx.strokeStyle='rgba(255,255,255,0.07)';ctx.lineWidth=36;
+    for(var i=-r.h;i<r.w+r.h;i+=90){ctx.beginPath();ctx.moveTo(r.x+i,r.y+r.h);ctx.lineTo(r.x+i+r.h,r.y);ctx.stroke();}
+    ctx.fillStyle='rgba(255,255,255,0.92)';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.font=FONT(Math.round(Math.min(r.w,r.h)*0.09));ctx.fillText(txt,r.x+r.w/2,r.y+r.h/2);ctx.restore();
+  }
+
+  /* ---------- logo + headline (template units 1810 x 2560) ---------- */
+  var tintKey='',tintCv=null;
+  function tinted(base,colour,w,h){
+    var key=colour+'|'+w+'|'+h;if(key===tintKey&&tintCv)return tintCv;
+    var c=document.createElement('canvas');c.width=w;c.height=h;var x=c.getContext('2d');
+    x.drawImage(base,0,0,w,h);x.globalCompositeOperation='source-in';x.fillStyle=colour;x.fillRect(0,0,w,h);
+    tintKey=key;tintCv=c;return c;
+  }
+  function drawLogo(ctx,preview){
+    if(preview)logoRect=null;
+    if(S.logo==='off')return;
+    var orig=S.logoColor==='orig',base=orig?LOGO.col:LOGO.wh;if(!base)return;
+    var W=FR.W,H=FR.H,lw=Math.round(W*S.logoSize/100),lh=Math.round(lw*base.naturalHeight/base.naturalWidth),m=Math.round(W*0.035),x,y;
+    if(S.logoPos){x=S.logoPos.x*W;y=S.logoPos.y*H;}
+    else if(S.logo==='wm'){x=FR.area.x+m;y=FR.safeBottom-lh-m;}
+    else{x=FR.area.x+FR.area.w-lw-m;y=FR.area.y+m;}
+    x=Math.round(Math.max(0,Math.min(W-lw,x)));y=Math.round(Math.max(0,Math.min(H-lh,y)));
+    ctx.save();ctx.globalAlpha=S.logoOpacity/100;
+    if(!orig){ctx.shadowColor='rgba(0,0,0,0.35)';ctx.shadowBlur=Math.round(W*0.008);ctx.shadowOffsetY=Math.round(W*0.002);}
+    ctx.drawImage(orig?base:tinted(base,S.logoColor,lw,lh),x,y,lw,lh);ctx.restore();
+    if(preview)logoRect={x:x,y:y,w:lw,h:lh};
+  }
+  function wrapLines(ctx,text,fs,maxW){
+    ctx.font=HF(fs);var out=[];
+    text.toUpperCase().split(/\r?\n/).forEach(function(para){
+      var words=para.trim().split(/\s+/).filter(Boolean),line='';
+      if(!words.length){out.push('');return;}
+      words.forEach(function(w){var t=line?line+' '+w:w;if(!line||ctx.measureText(t).width<=maxW)line=t;else{out.push(line);line=w;}});
+      out.push(line);
+    });
+    return out;
+  }
+  function drawHeadline(ctx,preview){
+    var b=FR.box,txt=S.head,hint=false;
+    if(!txt.trim()){if(!preview)return;txt='TYPE YOUR HEADLINE';hint=true;}
+    function ok(fs){var L=wrapLines(ctx,txt,fs,b.w);if(L.length*fs*LH>b.h)return false;
+      for(var i=0;i<L.length;i++)if(ctx.measureText(L[i]).width>b.w+0.5)return false;return true;}
+    var lo=14,hi=260,best=14;
+    while(lo<=hi){var mid=(lo+hi)>>1;if(ok(mid)){best=mid;lo=mid+1;}else hi=mid-1;}
+    var fs=Math.max(12,Math.floor(best*(S.headSize/100)));if(hint)fs=Math.min(fs,90);
+    var L=wrapLines(ctx,txt,fs,b.w),lh=fs*LH,top=b.y+(b.h-L.length*lh)/2+lh/2;
+    ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#ffffff';if(hint)ctx.globalAlpha=0.4;
+    for(var i=0;i<L.length;i++)ctx.fillText(L[i],b.x+b.w/2,top+i*lh);ctx.restore();
+  }
+  // Frame + logo + headline never change while a video plays, so they are drawn once and reused for every frame.
+  function getOverlay(pw,ph,preview){
+    var key=[pw,preview,S.head,S.headSize,S.logo,S.logoColor,S.logoSize,S.logoOpacity,JSON.stringify(S.logoPos),!!LOGO.wh,!!LOGO.col,!!FR.img,document.fonts&&document.fonts.status].join('|');
+    if(overlay&&overlay.key===key&&overlay.pw===pw)return overlay.c;
+    var c=document.createElement('canvas');c.width=pw;c.height=ph;var x=c.getContext('2d'),k=pw/FR.W;
+    x.scale(k,k);if(FR.img)x.drawImage(FR.img,0,0,FR.W,FR.H);
+    drawLogo(x,preview);drawHeadline(x,preview);
+    overlay={key:key,pw:pw,c:c};return c;
+  }
+
+  /* ---------- drawing a frame ---------- */
+  function drawFrame(c,preview,vid){
+    var pw=c.width,ph=c.height,ctx=c.getContext('2d'),k=pw/FR.W,a=FR.area,rs=slots();
+    if(preview)rects=rs;
+    ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#ffffff';ctx.fillRect(0,0,pw,ph);
+    ctx.save();ctx.scale(k,k);
+    ctx.fillStyle=S.divider;ctx.fillRect(a.x,a.y,a.w,a.h);
+    rs.forEach(function(r){
+      if(r.k==='v'){
+        if(V.el&&V.el.readyState>=2&&V.w){var s=srcRect(r);ctx.save();ctx.beginPath();ctx.rect(r.x,r.y,r.w,r.h);ctx.clip();
+          try{ctx.drawImage(vid||V.el,s.x,s.y,s.w,s.h,r.x,r.y,r.w,r.h);}catch(e){}ctx.restore();}
+        else if(preview)placeholder(ctx,r,'ADD VIDEO','#1f3a5f');
+        else{ctx.fillStyle='#000';ctx.fillRect(r.x,r.y,r.w,r.h);}
+      }else{
+        if(P.img)coverImg(ctx,P.img,r);else placeholder(ctx,r,'ADD PHOTO','#3a2f5f');
+      }
+    });
+    ctx.restore();
+    ctx.drawImage(getOverlay(pw,ph,preview),0,0);
+  }
+  function draw(){if(!started)return;if(cv.width!==PW){cv.width=PW;cv.height=PH;}drawFrame(cv,true);}
+  function loop(){
+    raf=0;if(!playing)return;
+    if(V.el.currentTime>=V.end-0.03){V.el.currentTime=V.start;}
+    draw();raf=requestAnimationFrame(loop);
+  }
+  function setPlaying(on){
+    if(on&&!V.el){toast('Add a video first.','error');return;}
+    playing=on;var b=el('vb-play');
+    b.innerHTML=on?'<i class="ti ti-player-pause" aria-hidden="true"></i> Pause':'<i class="ti ti-player-play" aria-hidden="true"></i> Play preview';
+    if(!V.el)return;
+    if(on){V.el.muted=true;if(V.el.currentTime<V.start||V.el.currentTime>=V.end)V.el.currentTime=V.start;var p=V.el.play();if(p&&p.catch)p.catch(function(){});if(!raf)raf=requestAnimationFrame(loop);}
+    else V.el.pause();
+  }
+
+  /* ---------- loading files ---------- */
+  function loadImg(src,cb){var im=new Image();im.onload=function(){cb(im);};im.src=src;}
+  function start(){
+    if(started)return;started=true;
+    loadImg('frame-buza.png',function(im){FR.img=im;draw();});
+    loadImg('logo-brand.png',function(im){LOGO.col=im;draw();});
+    loadImg('logo-white.png',function(im){LOGO.wh=im;draw();});
+    try{
+      if(!document.querySelector('link[href*="family=Poppins"]')){
+        var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Poppins:wght@800&display=swap';
+        l.onload=function(){if(document.fonts&&document.fonts.load)document.fonts.load('800 40px Poppins').then(draw,draw);};document.head.appendChild(l);
+      }
+    }catch(e){}
+    draw();
+  }
+  function labels(){
+    el('vb-nv').textContent=V.file?V.file.name:'Add portrait video';el('vb-sv').classList.toggle('has',!!V.file);el('vb-cropv').disabled=!V.file;
+    el('vb-np').textContent=P.img?P.name:'Add photo';el('vb-sp').classList.toggle('has',!!P.img);el('vb-cropp').disabled=!P.img;
+    el('vb-pvctl').style.display=S.mode==='pv'?'':'none';el('vb-photoslot').style.display=S.mode==='pv'?'':'none';
+    el('vb-ts').disabled=el('vb-te').disabled=!V.el;
+    el('vb-tl').textContent=V.el?'Start '+fmt(V.start)+'  ·  End '+fmt(V.end)+'  ·  Length '+(V.end-V.start).toFixed(1)+' s':'Add a video to trim it.';
+  }
+  function loadVideo(file){
+    if(!file)return;
+    if(!/^video\//.test(file.type)&&!/\.(mp4|mov|webm|m4v)$/i.test(file.name)){toast('Choose a video file.','error');return;}
+    var url=URL.createObjectURL(file),v=document.createElement('video');
+    v.muted=true;v.playsInline=true;v.preload='auto';v.setAttribute('playsinline','');
+    v.onloadedmetadata=function(){
+      if(v.videoWidth>v.videoHeight){URL.revokeObjectURL(url);toast('This is a landscape video. Portrait videos only for now. Landscape is coming later.','error');return;}
+      if(!isFinite(v.duration)||v.duration<1){URL.revokeObjectURL(url);toast('This video is too short or could not be read.','error');return;}
+      if(v.duration>180){URL.revokeObjectURL(url);toast('Please use a video under 3 minutes (you can trim it after).','error');return;}
+      setPlaying(false);if(V.url)URL.revokeObjectURL(V.url);
+      V={file:file,url:url,el:v,w:v.videoWidth,h:v.videoHeight,dur:v.duration,crop:null,start:0,end:Math.min(v.duration,60)};
+      var ts=el('vb-ts'),te=el('vb-te');ts.max=te.max=v.duration.toFixed(1);ts.value=0;te.value=V.end.toFixed(1);
+      labels();v.currentTime=0.05;
+    };
+    v.onseeked=function(){draw();};
+    v.onloadeddata=function(){draw();};
+    v.onerror=function(){URL.revokeObjectURL(url);toast('This video could not be opened in the browser. Try an MP4.','error');};
+    v.src=url;
+  }
+  function loadPhoto(file){
+    if(!file||!/^image\//.test(file.type)){toast('Choose an image file.','error');return;}
+    var fr=new FileReader();
+    fr.onload=function(e){cropPhoto(e.target.result,file.name);};
+    fr.readAsDataURL(file);
+  }
+  function setPhoto2(src,name,orig){var im=new Image();im.onload=function(){P={img:im,name:name,orig:orig};labels();draw();};im.src=src;}
+  function cropPhoto(src,name){
+    var r=slotOf('p'),ratio=r?r.w/r.h:0;
+    if(typeof openCropper!=='function'){setPhoto2(src,name,src);return;}
+    openCropper(src,function(res){if(res)setPhoto2(res,name,src);},ratio);
+  }
+  function cropVideo(){
+    if(!V.el)return;
+    var r=slotOf('v'),ratio=r?r.w/r.h:0,c=document.createElement('canvas');
+    c.width=V.w;c.height=V.h;
+    try{c.getContext('2d').drawImage(V.el,0,0,V.w,V.h);}catch(e){}
+    if(typeof openCropper!=='function')return;
+    setPlaying(false);
+    openCropper(c.toDataURL('image/jpeg',0.92),function(res,rect){if(res&&rect){V.crop=rect;labels();draw();toast('Video area selected.');}},ratio);
+  }
+
+  /* ---------- controls ---------- */
+  function setPressed(group,val){var bs=el(group).querySelectorAll('button');for(var i=0;i<bs.length;i++)bs[i].setAttribute('aria-pressed',bs[i].getAttribute('data-v')===val?'true':'false');}
+  function wire(group,key,after){el(group).addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;S[key]=b.getAttribute('data-v');setPressed(group,S[key]);if(after)after();labels();draw();});}
+  wire('vb-mode','mode',function(){V.crop=null;});wire('vb-layout','layout',function(){V.crop=null;});wire('vb-div','divider');wire('vb-logo','logo',function(){S.logoPos=null;});wire('vb-lcol','logoColor');
+  el('vb-gap').addEventListener('input',function(e){S.gap=+e.target.value;draw();});
+  el('vb-logosz').addEventListener('input',function(e){S.logoSize=+e.target.value;draw();});
+  el('vb-lop').addEventListener('input',function(e){S.logoOpacity=+e.target.value;draw();});
+  el('vb-lcolor').addEventListener('input',function(e){S.logoColor=e.target.value;setPressed('vb-lcol','');draw();});
+  el('vb-hsz').addEventListener('input',function(e){S.headSize=+e.target.value;draw();});
+  el('vb-head').addEventListener('input',function(e){S.head=e.target.value;draw();});
+  el('vb-snd').addEventListener('change',function(e){S.sound=e.target.checked;});
+  el('vb-swap').addEventListener('click',function(){S.swap=!S.swap;V.crop=null;draw();});
+  el('vb-fv').addEventListener('change',function(e){loadVideo(e.target.files[0]);e.target.value='';});
+  el('vb-fp').addEventListener('change',function(e){loadPhoto(e.target.files[0]);e.target.value='';});
+  el('vb-cropv').addEventListener('click',cropVideo);
+  el('vb-cropp').addEventListener('click',function(){if(P.orig)cropPhoto(P.orig,P.name);});
+  el('vb-play').addEventListener('click',function(){setPlaying(!playing);});
+  function trimChange(which){
+    if(!V.el)return;var ts=el('vb-ts'),te=el('vb-te'),s=+ts.value,e=+te.value;
+    if(which==='s'&&s>e-1){e=Math.min(V.dur,s+1);if(e-s<1)s=e-1;}
+    if(which==='e'&&e<s+1){s=Math.max(0,e-1);if(e-s<1)e=s+1;}
+    V.start=Math.max(0,s);V.end=Math.min(V.dur,e);ts.value=V.start;te.value=V.end;labels();
+    V.el.currentTime=which==='e'?Math.max(V.start,V.end-0.1):V.start;
+  }
+  el('vb-ts').addEventListener('input',function(){trimChange('s');});
+  el('vb-te').addEventListener('input',function(){trimChange('e');});
+
+  function toCanvas(e){var b=cv.getBoundingClientRect();return {x:(e.clientX-b.left)*FR.W/b.width,y:(e.clientY-b.top)*FR.H/b.height};}
+  function onLogo(p){return !!logoRect&&S.logo!=='off'&&p.x>=logoRect.x&&p.x<=logoRect.x+logoRect.w&&p.y>=logoRect.y&&p.y<=logoRect.y+logoRect.h;}
+  function slotAt(p){for(var i=0;i<rects.length;i++){var r=rects[i];if(p.x>=r.x&&p.x<=r.x+r.w&&p.y>=r.y&&p.y<=r.y+r.h)return r.k;}return '';}
+  cv.addEventListener('pointerdown',function(e){
+    var p=toCanvas(e);
+    if(onLogo(p)){logoDrag={dx:p.x-logoRect.x,dy:p.y-logoRect.y};cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing';return;}
+    var k=slotAt(p);
+    if(k==='v'&&!V.el)el('vb-fv').click();
+    else if(k==='p'&&!P.img)el('vb-fp').click();
+  });
+  cv.addEventListener('pointermove',function(e){
+    var p=toCanvas(e);
+    if(logoDrag){S.logoPos={x:(p.x-logoDrag.dx)/FR.W,y:(p.y-logoDrag.dy)/FR.H};draw();return;}
+    cv.style.cursor=onLogo(p)?'move':'default';
+  });
+  function end(){logoDrag=null;}
+  cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);
+  cv.addEventListener('dragover',function(e){e.preventDefault();});
+  cv.addEventListener('drop',function(e){
+    e.preventDefault();var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];if(!f)return;
+    if(/^video\//.test(f.type))loadVideo(f);else if(/^image\//.test(f.type)&&S.mode==='pv')loadPhoto(f);
+  });
+
+  /* ---------- recording ---------- */
+  function pickMime(){
+    if(!window.MediaRecorder||!MediaRecorder.isTypeSupported)return null;
+    var c=['video/mp4;codecs=avc1.640028,mp4a.40.2','video/mp4;codecs=avc1,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
+    for(var i=0;i<c.length;i++)if(MediaRecorder.isTypeSupported(c[i]))return c[i];return null;
+  }
+  function once(t,ev){return new Promise(function(res,rej){var ok=function(){t.removeEventListener(ev,ok);res();};t.addEventListener(ev,ok);});}
+  function showProg(on,pct,txt){el('vb-prog').style.display=on?'':'none';if(on){el('vb-bar').style.width=(pct||0)+'%';el('vb-ptxt').textContent=txt||'';}}
+  function ready(){
+    if(!V.el){toast('Add a video first.','error');return false;}
+    if(S.mode==='pv'&&!P.img){toast('Add the photo too, or switch to Video only.','error');return false;}
+    if(!FR.img){toast('The frame is still loading. Try again in a moment.','error');return false;}
+    if(!pickMime()){toast('This browser cannot record video. Please use Chrome or Edge.','error');return false;}
+    return true;
+  }
+  function clearResult(){if(result&&result.url)URL.revokeObjectURL(result.url);result=null;var r=el('vb-res');r.style.display='none';r.innerHTML='';}
+  async function make(){
+    if(busy||!ready())return;
+    setPlaying(false);clearResult();busy=true;cancel=false;el('vb-make').disabled=true;
+    var RW=1080,RH=1528,dur=V.end-V.start,rv=document.createElement('video'),ac=null,rec=null,chunks=[],mime=pickMime();
+    try{
+      rv.src=V.url;rv.playsInline=true;rv.preload='auto';rv.muted=!S.sound;
+      await new Promise(function(res,rej){rv.onloadeddata=res;rv.onerror=function(){rej(new Error('video'));};});
+      rv.currentTime=V.start;await once(rv,'seeked');
+      var rc=document.createElement('canvas');rc.width=RW;rc.height=RH;
+      drawFrame(rc,false,rv);
+      var poster=rc.toDataURL('image/jpeg',0.92);
+      var stream=rc.captureStream(30);
+      if(S.sound){
+        try{
+          ac=new (window.AudioContext||window.webkitAudioContext)();var src=ac.createMediaElementSource(rv),dst=ac.createMediaStreamDestination();
+          src.connect(dst);dst.stream.getAudioTracks().forEach(function(t){stream.addTrack(t);});if(ac.resume)await ac.resume();
+        }catch(e){ac=null;}
+      }
+      var vbps=Math.max(1000000,Math.min(6000000,Math.floor((44*1024*1024*8)/dur-160000)));
+      var opts={mimeType:mime,videoBitsPerSecond:vbps};if(S.sound)opts.audioBitsPerSecond=128000;
+      rec=new MediaRecorder(stream,opts);
+      rec.ondataavailable=function(e){if(e.data&&e.data.size)chunks.push(e.data);};
+      var stopped=new Promise(function(res){rec.onstop=res;});
+      showProg(true,0,'Creating… keep this tab open');
+      rec.start(1000);
+      var p=rv.play();if(p&&p.catch)await p.catch(function(){throw new Error('play');});
+      await new Promise(function(done){
+        (function tick(){
+          drawFrame(rc,false,rv);
+          var t=rv.currentTime-V.start;showProg(true,Math.min(100,t/dur*100),'Creating… '+Math.max(0,t).toFixed(1)+' / '+dur.toFixed(1)+' s · keep this tab open');
+          if(cancel||rv.currentTime>=V.end-0.02||rv.ended){done();return;}
+          requestAnimationFrame(tick);
+        })();
+      });
+      rv.pause();rec.stop();await stopped;
+      if(ac&&ac.close)ac.close();
+      showProg(false);
+      if(cancel){toast('Stopped.');return;}
+      var base=mime.split(';')[0],ext=base==='video/mp4'?'mp4':'webm',blob=new Blob(chunks,{type:base});
+      if(blob.size>50*1024*1024){toast('The video came out over 50MB. Trim it shorter and try again.','error');return;}
+      var name='buza-banner-'+new Date().toISOString().slice(0,10)+'.'+ext;
+      result={blob:blob,file:new File([blob],name,{type:base}),url:URL.createObjectURL(blob),name:name,poster:poster};
+      var r=el('vb-res');r.style.display='';
+      r.innerHTML='<video controls playsinline src="'+result.url+'" style="width:100%;max-height:60vh;border-radius:10px;background:#000"></video>'+
+        '<div class="cb-note">Ready · '+(blob.size/1048576).toFixed(1)+' MB · '+ext.toUpperCase()+'</div>'+
+        '<label class="cb-note" style="display:flex;gap:.4rem;align-items:center;margin:.3rem 0"><input type="checkbox" id="vb-cov" checked> Also use the banner as the cover photo</label>'+
+        '<div class="cb-btns"><button type="button" class="btn btn-primary full" id="vb-use"><i class="ti ti-video-plus" aria-hidden="true"></i> Use as post video</button>'+
+        '<button type="button" class="btn btn-secondary full" id="vb-dl"><i class="ti ti-download" aria-hidden="true"></i> Download video</button></div>';
+      el('vb-use').onclick=useResult;el('vb-dl').onclick=function(){var a=document.createElement('a');a.href=result.url;a.download=result.name;document.body.appendChild(a);a.click();a.remove();};
+      toast('Banner video is ready.');
+    }catch(err){
+      showProg(false);try{rv.pause();}catch(e){}try{if(rec&&rec.state!=='inactive')rec.stop();}catch(e){}
+      toast('Could not create the video. Try Chrome, a shorter clip or another file.','error');
+    }finally{busy=false;el('vb-make').disabled=false;draw();}
+  }
+  function useResult(){
+    if(!result)return;
+    var inp={files:[result.file],value:''};
+    try{if(typeof removeVideo==='function'&&el('video-upload-zone-wrap'))removeVideo(false);}catch(e){}
+    if(typeof handleVideoUpload==='function')handleVideoUpload(inp,false);
+    var c=el('vb-cov');
+    if(c&&c.checked&&typeof setPhoto==='function'){var u=el('p-photo-url');if(u)u.value='';try{nfPicked='';}catch(e){}setPhoto(result.poster,'video-banner-cover.jpg',false);}
+    toast('Banner video attached to the post.');
+    var t=el('video-upload-zone-wrap');if(t&&t.scrollIntoView)t.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+  el('vb-make').addEventListener('click',make);
+  el('vb-stop').addEventListener('click',function(){cancel=true;});
+
+  function clearAll(quiet){
+    cancel=true;setPlaying(false);clearResult();
+    if(V.url)URL.revokeObjectURL(V.url);
+    V={file:null,url:null,el:null,w:0,h:0,dur:0,crop:null,start:0,end:0};P={img:null,name:'',orig:null};
+    S.head='';el('vb-head').value='';el('vb-ts').value=0;el('vb-te').value=0;el('vb-ts').max=el('vb-te').max=0;
+    labels();draw();if(!quiet)toast('Cleared. Ready for the next video.');
+  }
+  el('vb-clear').addEventListener('click',function(){clearAll(false);});
+  if(typeof window.clearForm==='function'){
+    var oldClear=window.clearForm;
+    window.clearForm=function(){var r=oldClear.apply(this,arguments);try{clearAll(true);}catch(e){}return r;};
+  }
+  labels();
+  window.__vb={S:S,V:function(){return V;},make:make,draw:draw,result:function(){return result;},pick:pickMime};
+  var box=el('vb-box');
+  function boot(){start();}
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){if(es.some(function(x){return x.isIntersecting;})){io.disconnect();boot();}});
+    io.observe(cv);
+  }else boot();
+  box.addEventListener('toggle',function(){if(box.open)boot();});
 })();
 </script>
 </body>
