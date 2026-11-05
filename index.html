@@ -425,7 +425,7 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
 .cb-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:1rem}
 @media(min-width:860px){.cb-grid{grid-template-columns:minmax(0,1fr) 300px;align-items:start}}
 .cb-stage{background:#e9ecef;border:1px solid var(--border);border-radius:10px;padding:10px;display:grid;justify-items:center}
-#cb-cv{max-width:100%;max-height:60vh;width:auto;height:auto;touch-action:none;cursor:grab;display:block;background:#000}
+#cb-cv{max-width:100%;max-height:80vh;width:auto;height:auto;touch-action:none;cursor:grab;display:block;background:#000}
 .cb-hint{font-size:.74rem;color:var(--muted);margin-top:.5rem;text-align:center}
 .cb-ctl{display:grid;gap:.85rem;min-width:0}
 .cb-lab{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem}
@@ -450,6 +450,10 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
 .cb-sw button{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);cursor:pointer;padding:0}
 .cb-sw button[aria-pressed="true"]{outline:2px solid var(--accent);outline-offset:2px}
 .cb-ctl input[type=text]{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:8px 11px;font-size:.86rem;background:#fff;font-family:inherit}
+.cb-ctl textarea{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:8px 11px;font-size:.86rem;background:#fff;font-family:inherit;resize:vertical;min-height:64px}
+.cb-note{font-size:.72rem;color:var(--muted);margin-top:.35rem}
+.cb-sw input[type=color]{width:30px;height:26px;padding:0;border:2px solid var(--border);border-radius:6px;background:none;cursor:pointer}
+.cb-sw button.orig{background:linear-gradient(135deg,#2065fe 50%,#ffd400 50%)}
 .cb-btns{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
 .cb-btns .full{grid-column:1/-1}
 .nf-pics{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.5rem}
@@ -636,13 +640,20 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
           </div>
           <details class="cb-box" id="cb-box" open>
             <summary><i class="ti ti-layout-columns" aria-hidden="true"></i> Combine two photos into one <i class="ti ti-chevron-down cb-chev" aria-hidden="true"></i></summary>
-            <div class="cb-sub">Add two photos and crop each one to the area you want. Place them left and right (or top and bottom), then use the result as the cover photo below. Drag a photo to move it inside its half.</div>
+            <div class="cb-sub">Add two photos and crop each one to the area you want. Place them left and right (or top and bottom) inside the Buza Media frame, type the headline, then use the result as the cover photo below.</div>
             <div class="cb-grid">
               <div>
                 <div class="cb-stage"><canvas id="cb-cv" aria-label="Combined photo preview"></canvas></div>
-                <div class="cb-hint">Tap an empty half to add a photo.</div>
+                <div class="cb-hint">Tap an empty half to add a photo. Drag a photo to move it inside its half. Drag the logo to place it anywhere.</div>
               </div>
               <div class="cb-ctl">
+                <div>
+                  <div class="cb-lab">Design</div>
+                  <div class="cb-seg" id="cb-frame">
+                    <button type="button" data-v="buza" aria-pressed="true">Buza Media frame</button>
+                    <button type="button" data-v="plain" aria-pressed="false">Plain</button>
+                  </div>
+                </div>
                 <div>
                   <div class="cb-lab">Photos</div>
                   <div class="cb-slots">
@@ -676,20 +687,33 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
                   <div class="cb-lab">Buza Media logo</div>
                   <div class="cb-seg" id="cb-logo">
                     <button type="button" data-v="wm" aria-pressed="true">Watermark</button>
-                    <button type="button" data-v="tl" aria-pressed="false">Top left</button>
+                    <button type="button" id="cb-tl" data-v="tl" aria-pressed="false">Top left</button>
                     <button type="button" data-v="off" aria-pressed="false">None</button>
                   </div>
-                  <div class="cb-row" style="margin-top:.5rem"><label for="cb-logosz">Logo size</label><input type="range" id="cb-logosz" min="12" max="34" value="22"></div>
+                  <div class="cb-sw" id="cb-lcol" style="margin-top:.5rem">
+                    <button type="button" data-v="#ffffff" style="background:#ffffff" aria-label="White logo" aria-pressed="true"></button>
+                    <button type="button" data-v="#0b0f0e" style="background:#0b0f0e" aria-label="Black logo" aria-pressed="false"></button>
+                    <button type="button" data-v="#2065fe" style="background:#2065fe" aria-label="Blue logo" aria-pressed="false"></button>
+                    <button type="button" data-v="#ffd400" style="background:#ffd400" aria-label="Yellow logo" aria-pressed="false"></button>
+                    <button type="button" data-v="#e63946" style="background:#e63946" aria-label="Red logo" aria-pressed="false"></button>
+                    <button type="button" class="orig" data-v="orig" aria-label="Original logo colours" title="Original colours" aria-pressed="false"></button>
+                    <input type="color" id="cb-lcolor" value="#ffffff" aria-label="Pick any logo colour" title="Pick any colour">
+                  </div>
+                  <div class="cb-row" style="margin-top:.5rem"><label for="cb-logosz">Logo size</label><input type="range" id="cb-logosz" min="8" max="40" value="20"></div>
+                  <div class="cb-row"><label for="cb-lop">Opacity</label><input type="range" id="cb-lop" min="25" max="100" value="90"></div>
+                  <div class="cb-note">Drag the logo on the preview to move it anywhere. Pressing Watermark or the corner button puts it back.</div>
                 </div>
                 <div>
-                  <div class="cb-lab">Headline bar (optional)</div>
-                  <input type="text" id="cb-head" maxlength="80" placeholder="e.g. Arsenal 1-0 Liverpool" aria-label="Headline bar text">
-                  <div class="cb-sw" id="cb-bar" style="margin-top:.45rem">
+                  <div class="cb-lab" id="cb-headlab">Headline (fills the blue box)</div>
+                  <textarea id="cb-head" rows="2" maxlength="200" placeholder="e.g. Arsenal 1-0 Liverpool" aria-label="Headline text"></textarea>
+                  <div class="cb-row" id="cb-hszrow" style="margin-top:.4rem"><label for="cb-hsz">Text size</label><input type="range" id="cb-hsz" min="50" max="100" value="100"></div>
+                  <div class="cb-sw" id="cb-bar" style="margin-top:.45rem;display:none">
                     <button type="button" data-v="#0b0f0e" style="background:#0b0f0e" aria-label="Black bar" aria-pressed="true"></button>
                     <button type="button" data-v="#e63946" style="background:#e63946" aria-label="Red bar" aria-pressed="false"></button>
                     <button type="button" data-v="#2065fe" style="background:#2065fe" aria-label="Blue bar" aria-pressed="false"></button>
                     <button type="button" data-v="#ffffff" style="background:#ffffff" aria-label="White bar" aria-pressed="false"></button>
                   </div>
+                  <div class="cb-note" id="cb-headnote"></div>
                 </div>
                 <div class="cb-btns">
                   <button type="button" class="btn btn-secondary" id="cb-swap"><i class="ti ti-arrows-exchange" aria-hidden="true"></i> Swap</button>
@@ -3076,20 +3100,25 @@ setInterval(function(){
 },60000);
 </script>
 <script>
-/* Combine two photos (added): builds one image from two photos and hands it to the existing cover-photo flow. */
+/* Combine two photos (added): builds one image from two photos and hands it to the existing cover-photo flow.
+   Buza Media frame: the template (frame-buza.png) is laid over the photos and the headline fills the blue box. */
 (function(){
   var el=function(id){return document.getElementById(id);};
   if(!el('cb-cv'))return;
-  var S={layout:'side',ratio:'4:5',gap:8,divider:'#ffffff',bar:'#0b0f0e',head:'',logo:'wm',logoSize:22,
+  // Measured from frame-buza.png (1810 x 2560): where photos go, and the blue headline box.
+  var FR={W:1810,H:2560,area:{x:9,y:8,w:1793,h:1846},box:{x:181,y:1949,w:1455,h:339},safeBottom:1715,img:null};
+  var S={frame:'buza',layout:'side',ratio:'4:5',gap:8,divider:'#ffffff',bar:'#0b0f0e',head:'',
+    logo:'wm',logoSize:20,logoColor:'#ffffff',logoOpacity:90,logoPos:null,headSize:100,
     p:[{img:null,name:'',zoom:1,x:0,y:0},{img:null,name:'',zoom:1,x:0,y:0}]};
   var SIZES={'1:1':[1080,1080],'4:5':[1080,1350],'16:9':[1080,608],'9:16':[1080,1920]};
-  var cv=el('cb-cv'),rects=[],drag=null;
+  var cv=el('cb-cv'),rects=[],drag=null,logoDrag=null,logoRect=null,started=false;
   var FONT=function(px){return '800 '+px+'px '+(getComputedStyle(document.body).fontFamily||'Arial')};
+  var HFONT='Poppins,Inter,"Arial Black",Arial,sans-serif',LH=1.12;
+  var HF=function(px){return '800 '+px+'px '+HFONT;};
 
-  function layoutRects(W,H,barH){
-    var area=H-barH,g=S.gap;
-    if(S.layout==='side'){var w=(W-g)/2;return [{x:0,y:0,w:w,h:area},{x:w+g,y:0,w:w,h:area}];}
-    var h=(area-g)/2;return [{x:0,y:0,w:W,h:h},{x:0,y:h+g,w:W,h:h}];
+  function layoutIn(a,g){
+    if(S.layout==='side'){var w=(a.w-g)/2;return [{x:a.x,y:a.y,w:w,h:a.h},{x:a.x+w+g,y:a.y,w:w,h:a.h}];}
+    var h=(a.h-g)/2;return [{x:a.x,y:a.y,w:a.w,h:h},{x:a.x,y:a.y+h+g,w:a.w,h:h}];
   }
   function cover(ctx,p,r){
     var iw=p.img.naturalWidth,ih=p.img.naturalHeight,s=Math.max(r.w/iw,r.h/ih)*p.zoom,dw=iw*s,dh=ih*s,ox=(dw-r.w)/2,oy=(dh-r.h)/2;
@@ -3105,51 +3134,125 @@ setInterval(function(){
     var fs=Math.round(Math.min(r.w,r.h)*0.1);ctx.font=FONT(fs);
     ctx.fillText('ADD PHOTO '+(n+1),r.x+r.w/2,r.y+r.h/2);ctx.restore();
   }
-  // Buza Media logo: full-colour version for the badge, white version for the watermark.
-  var LOGO={col:null,wh:null};
-  [['col','logo-brand.png'],['wh','logo-white.png']].forEach(function(a){
-    var im=new Image();im.onload=function(){LOGO[a[0]]=im;draw();};im.src=a[1];
-  });
-  function rrect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
-  function drawLogo(ctx,W,H,barH){
+
+  // Buza Media logo: a plain white cut-out that can be tinted any colour, or shown in its original colours.
+  var LOGO={col:null,wh:null},tintKey='',tintCv=null;
+  function tinted(base,colour,w,h){
+    var key=colour+'|'+w+'|'+h;if(key===tintKey&&tintCv)return tintCv;
+    var c=document.createElement('canvas');c.width=w;c.height=h;var x=c.getContext('2d');
+    x.drawImage(base,0,0,w,h);x.globalCompositeOperation='source-in';x.fillStyle=colour;x.fillRect(0,0,w,h);
+    tintKey=key;tintCv=c;return c;
+  }
+  function drawLogo(ctx,W,H,barH,useFrame,preview){
+    if(preview)logoRect=null;
     if(S.logo==='off')return;
-    var m=Math.round(W*0.035),lw=Math.round(W*S.logoSize/100);
-    ctx.save();
-    if(S.logo==='tl'&&LOGO.col){
-      lw=Math.round(lw*0.78);
-      var lh=Math.round(lw*LOGO.col.naturalHeight/LOGO.col.naturalWidth),pad=Math.round(lw*0.14);
-      ctx.shadowColor='rgba(0,0,0,0.28)';ctx.shadowBlur=Math.round(W*0.012);ctx.shadowOffsetY=Math.round(W*0.003);
-      ctx.fillStyle='rgba(255,255,255,0.94)';rrect(ctx,m,m,lw+pad*2,lh+pad*2,Math.round(pad*0.9));ctx.fill();
-      ctx.shadowColor='transparent';ctx.drawImage(LOGO.col,m+pad,m+pad,lw,lh);
-    }else if(S.logo==='wm'&&LOGO.wh){
-      var wh=Math.round(lw*LOGO.wh.naturalHeight/LOGO.wh.naturalWidth);
-      ctx.globalAlpha=0.82;ctx.shadowColor='rgba(0,0,0,0.5)';ctx.shadowBlur=Math.round(W*0.01);ctx.shadowOffsetY=Math.round(W*0.002);
-      ctx.drawImage(LOGO.wh,W-lw-m,H-barH-wh-m,lw,wh);
+    var orig=S.logoColor==='orig',base=orig?LOGO.col:LOGO.wh;if(!base)return;
+    var lw=Math.round(W*S.logoSize/100),lh=Math.round(lw*base.naturalHeight/base.naturalWidth),m=Math.round(W*0.035),x,y;
+    if(S.logoPos){x=S.logoPos.x*W;y=S.logoPos.y*H;}
+    else if(useFrame){
+      if(S.logo==='wm'){x=FR.area.x+m;y=FR.safeBottom-lh-m;}            // bottom-left, above the red stripe
+      else{x=FR.area.x+FR.area.w-lw-m;y=FR.area.y+m;}                    // top-right (the frame has its own logo top-left)
+    }else{
+      if(S.logo==='wm'){x=W-lw-m;y=H-barH-lh-m;}else{x=m;y=m;}
     }
+    x=Math.round(Math.max(0,Math.min(W-lw,x)));y=Math.round(Math.max(0,Math.min(H-lh,y)));
+    ctx.save();
+    ctx.globalAlpha=S.logoOpacity/100;
+    if(!orig){ctx.shadowColor='rgba(0,0,0,0.35)';ctx.shadowBlur=Math.round(W*0.008);ctx.shadowOffsetY=Math.round(W*0.002);}
+    ctx.drawImage(orig?base:tinted(base,S.logoColor,lw,lh),x,y,lw,lh);
+    ctx.restore();
+    if(preview)logoRect={x:x,y:y,w:lw,h:lh};
+  }
+
+  // Headline: capitals, wraps to the next line when a line is full, and grows to fill the blue box.
+  function wrapLines(ctx,text,fs,maxW){
+    ctx.font=HF(fs);var out=[],paras=text.toUpperCase().split(/\r?\n/);
+    paras.forEach(function(para){
+      var words=para.trim().split(/\s+/).filter(Boolean),line='';
+      if(!words.length){out.push('');return;}
+      words.forEach(function(w){var t=line?line+' '+w:w;if(!line||ctx.measureText(t).width<=maxW)line=t;else{out.push(line);line=w;}});
+      out.push(line);
+    });
+    return out;
+  }
+  function drawHeadline(ctx,preview){
+    var b=FR.box,txt=S.head,hint=false;
+    if(!txt.trim()){if(!preview)return;txt='TYPE YOUR HEADLINE';hint=true;}
+    function ok(fs){
+      var L=wrapLines(ctx,txt,fs,b.w);if(L.length*fs*LH>b.h)return false;
+      for(var i=0;i<L.length;i++)if(ctx.measureText(L[i]).width>b.w+0.5)return false;
+      return true;
+    }
+    var lo=14,hi=260,best=14;
+    while(lo<=hi){var mid=(lo+hi)>>1;if(ok(mid)){best=mid;lo=mid+1;}else hi=mid-1;}
+    var fs=Math.max(12,Math.floor(best*(S.headSize/100)));if(hint)fs=Math.min(fs,90);
+    var L=wrapLines(ctx,txt,fs,b.w),lh=fs*LH,top=b.y+(b.h-L.length*lh)/2+lh/2;
+    ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#ffffff';if(hint)ctx.globalAlpha=0.4;
+    for(var i=0;i<L.length;i++)ctx.fillText(L[i],b.x+b.w/2,top+i*lh);
     ctx.restore();
   }
+
   function draw(target){
-    var c=target||cv,sz=SIZES[S.ratio],W=sz[0],H=sz[1];
+    if(!target&&!started)return;
+    var useFrame=S.frame==='buza'&&!!FR.img,sz=SIZES[S.ratio];
+    var c=target||cv,W=useFrame?FR.W:sz[0],H=useFrame?FR.H:sz[1];
     if(c.width!==W)c.width=W;if(c.height!==H)c.height=H;
-    var ctx=c.getContext('2d'),hasBar=S.head.trim().length>0;
-    var barH=hasBar?Math.round(H*(S.ratio==='16:9'?0.17:0.1)):0,rs=layoutRects(W,H,barH);
+    var ctx=c.getContext('2d'),hasBar=S.head.trim().length>0,g=Math.round(S.gap*W/1080);
+    var barH=(!useFrame&&hasBar)?Math.round(H*(S.ratio==='16:9'?0.17:0.1)):0;
+    var area=useFrame?FR.area:{x:0,y:0,w:W,h:H-barH},rs=layoutIn(area,g);
     if(!target)rects=rs;
-    ctx.fillStyle=S.divider;ctx.fillRect(0,0,W,H);
+    if(useFrame){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);ctx.fillStyle=S.divider;ctx.fillRect(area.x,area.y,area.w,area.h);}
+    else{ctx.fillStyle=S.divider;ctx.fillRect(0,0,W,H);}
     for(var i=0;i<2;i++){if(S.p[i].img)cover(ctx,S.p[i],rs[i]);else placeholder(ctx,rs[i],i);}
-    drawLogo(ctx,W,H,barH);
+    if(useFrame){
+      ctx.drawImage(FR.img,0,0,W,H);
+      drawLogo(ctx,W,H,0,true,!target);
+      drawHeadline(ctx,!target);
+      return;
+    }
+    drawLogo(ctx,W,H,barH,false,!target);
     if(hasBar){
       var y=H-barH;ctx.fillStyle=S.bar;ctx.fillRect(0,y,W,barH);
       ctx.fillStyle=S.bar.toLowerCase()==='#ffffff'?'#0b0f0e':'#ffffff';ctx.textAlign='center';ctx.textBaseline='middle';
-      var fs=Math.round(barH*0.5),txt=S.head.trim().toUpperCase();ctx.font=FONT(fs);
+      var fs=Math.round(barH*0.5),txt=S.head.replace(/\s+/g,' ').trim().toUpperCase();ctx.font=FONT(fs);
       var mw=ctx.measureText(txt).width,maxW=W*0.92;
       if(mw>maxW){fs=Math.floor(fs*maxW/mw);ctx.font=FONT(fs);}
       ctx.fillText(txt,W/2,y+barH/2);
     }
   }
+
+  function loadImg(src,cb){var im=new Image();im.onload=function(){cb(im);};im.src=src;}
+  function start(){ // runs the first time the combiner is actually on screen, so visitors never download any of this
+    if(started)return;started=true;
+    loadImg('frame-buza.png',function(im){FR.img=im;draw();});
+    loadImg('logo-brand.png',function(im){LOGO.col=im;draw();});
+    loadImg('logo-white.png',function(im){LOGO.wh=im;draw();});
+    try{
+      var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Poppins:wght@800&display=swap';
+      l.onload=function(){if(document.fonts&&document.fonts.load)document.fonts.load('800 40px Poppins').then(draw,draw);};
+      document.head.appendChild(l);
+    }catch(e){}
+    draw();
+  }
+
   function setPressed(group,val){var bs=el(group).querySelectorAll('button');for(var i=0;i<bs.length;i++)bs[i].setAttribute('aria-pressed',bs[i].getAttribute('data-v')===val?'true':'false');}
   function wire(group,key){el(group).addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;S[key]=b.getAttribute('data-v');setPressed(group,S[key]);labels();draw();});}
-  wire('cb-layout','layout');wire('cb-ratio','ratio');wire('cb-div','divider');wire('cb-bar','bar');wire('cb-logo','logo');
+  wire('cb-frame','frame');wire('cb-layout','layout');wire('cb-ratio','ratio');wire('cb-div','divider');wire('cb-bar','bar');wire('cb-logo','logo');wire('cb-lcol','logoColor');
+  function applyMode(){
+    var f=S.frame==='buza';
+    el('cb-ratio').style.display=f?'none':'';
+    el('cb-bar').style.display=f?'none':'';
+    el('cb-hszrow').style.display=f?'':'none';
+    el('cb-headlab').textContent=f?'Headline (fills the blue box)':'Headline bar (optional)';
+    el('cb-headnote').textContent=f?'Long headlines wrap to the next line automatically. The text grows to fill the whole box.':'Clear the text to hide the bar.';
+    el('cb-tl').textContent=f?'Top right':'Top left';
+  }
+  el('cb-frame').addEventListener('click',function(e){if(e.target.closest('button'))applyMode();});
+  el('cb-logo').addEventListener('click',function(e){if(e.target.closest('button')){S.logoPos=null;draw();}}); // picking a preset puts the logo back in that spot
   el('cb-logosz').addEventListener('input',function(e){S.logoSize=+e.target.value;draw();});
+  el('cb-lop').addEventListener('input',function(e){S.logoOpacity=+e.target.value;draw();});
+  el('cb-lcolor').addEventListener('input',function(e){S.logoColor=e.target.value;setPressed('cb-lcol','');draw();});
+  el('cb-hsz').addEventListener('input',function(e){S.headSize=+e.target.value;draw();});
   function labels(){
     var n=S.layout==='side'?['Left','Right']:['Top','Bottom'];
     for(var i=0;i<2;i++){el('cb-t'+i).textContent=n[i];el('cb-zl'+i).textContent=n[i]+' zoom';
@@ -3188,20 +3291,26 @@ setInterval(function(){
   el('cb-reset').addEventListener('click',function(){for(var i=0;i<2;i++){S.p[i].x=0;S.p[i].y=0;S.p[i].zoom=1;el('cb-z'+i).value=100;}draw();});
 
   function toCanvas(e){var b=cv.getBoundingClientRect();return {x:(e.clientX-b.left)*cv.width/b.width,y:(e.clientY-b.top)*cv.height/b.height};}
-  function hit(pt){for(var i=0;i<2;i++){var r=rects[i];if(pt.x>=r.x&&pt.x<=r.x+r.w&&pt.y>=r.y&&pt.y<=r.y+r.h)return i;}return -1;}
+  function hit(pt){for(var i=0;i<2;i++){var r=rects[i];if(r&&pt.x>=r.x&&pt.x<=r.x+r.w&&pt.y>=r.y&&pt.y<=r.y+r.h)return i;}return -1;}
+  function onLogo(pt){return !!logoRect&&S.logo!=='off'&&pt.x>=logoRect.x&&pt.x<=logoRect.x+logoRect.w&&pt.y>=logoRect.y&&pt.y<=logoRect.y+logoRect.h;}
   cv.addEventListener('pointerdown',function(e){
-    var pt=toCanvas(e),i=hit(pt);if(i<0)return;
+    var pt=toCanvas(e);
+    if(onLogo(pt)){logoDrag={dx:pt.x-logoRect.x,dy:pt.y-logoRect.y};cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing';return;} // the logo sits on top, so it is picked first
+    var i=hit(pt);if(i<0)return;
     if(!S.p[i].img){el('cb-f'+i).click();return;}
     drag={i:i,x:pt.x,y:pt.y};cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing';
   });
   cv.addEventListener('pointermove',function(e){
-    if(!drag)return;var pt=toCanvas(e),p=S.p[drag.i],r=rects[drag.i];
+    var pt=toCanvas(e);
+    if(logoDrag){S.logoPos={x:(pt.x-logoDrag.dx)/cv.width,y:(pt.y-logoDrag.dy)/cv.height};draw();return;}
+    if(!drag){cv.style.cursor=onLogo(pt)?'move':'grab';return;}
+    var p=S.p[drag.i],r=rects[drag.i];
     var iw=p.img.naturalWidth,ih=p.img.naturalHeight,s=Math.max(r.w/iw,r.h/ih)*p.zoom,ox=(iw*s-r.w)/2,oy=(ih*s-r.h)/2;
     if(ox>0)p.x=Math.max(-1,Math.min(1,p.x+(pt.x-drag.x)/ox));
     if(oy>0)p.y=Math.max(-1,Math.min(1,p.y+(pt.y-drag.y)/oy));
     drag.x=pt.x;drag.y=pt.y;draw();
   });
-  function end(){drag=null;cv.style.cursor='grab';}
+  function end(){drag=null;logoDrag=null;cv.style.cursor='grab';}
   cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);
   cv.addEventListener('dragover',function(e){e.preventDefault();});
   cv.addEventListener('drop',function(e){
@@ -3210,7 +3319,11 @@ setInterval(function(){
     var i=hit(toCanvas(e));loadFile(i<0?(S.p[0].img?1:0):i,f[0]);
   });
 
-  function ready(){if(!S.p[0].img||!S.p[1].img){toast('Add both photos first.','error');return false;}return true;}
+  function ready(){
+    if(!S.p[0].img||!S.p[1].img){toast('Add both photos first.','error');return false;}
+    if(S.frame==='buza'&&!FR.img){toast('The frame is still loading. Try again in a moment.','error');return false;}
+    return true;
+  }
   el('cb-use').addEventListener('click',function(){
     if(!ready())return;
     var out=document.createElement('canvas');draw(out);
@@ -3224,12 +3337,13 @@ setInterval(function(){
   el('cb-dl').addEventListener('click',function(){
     if(!ready())return;
     var out=document.createElement('canvas');draw(out);
+    var jpg=S.frame==='buza'; // the framed post is a full photo, so JPG keeps the file small
     out.toBlob(function(b){
       if(!b){toast('Could not build the image.','error');return;}
       var a=document.createElement('a');a.href=URL.createObjectURL(b);
-      a.download='buza-combined-'+new Date().toISOString().slice(0,10)+'.png';
+      a.download='buza-'+(jpg?'post':'combined')+'-'+new Date().toISOString().slice(0,10)+(jpg?'.jpg':'.png');
       document.body.appendChild(a);a.click();a.remove();
-    },'image/png');
+    },jpg?'image/jpeg':'image/png',jpg?0.95:undefined);
   });
   // Start over: removes both photos and the headline (layout, size and logo choices stay).
   function clearAll(quiet){
@@ -3243,7 +3357,11 @@ setInterval(function(){
     var oldClear=window.clearForm;
     window.clearForm=function(){var r=oldClear.apply(this,arguments);try{clearAll(true);}catch(e){}return r;};
   }
-  labels();draw();
+  labels();applyMode();
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){if(es.some(function(x){return x.isIntersecting;})){io.disconnect();start();}});
+    io.observe(cv);
+  }else start();
 })();
 </script>
 </body>
