@@ -3609,9 +3609,9 @@ setInterval(function(){
     v.onloadedmetadata=function(){
       if(v.videoWidth>v.videoHeight){URL.revokeObjectURL(url);toast('This is a landscape video. Portrait videos only for now. Landscape is coming later.','error');return;}
       if(!isFinite(v.duration)||v.duration<1){URL.revokeObjectURL(url);toast('This video is too short or could not be read.','error');return;}
-      if(v.duration>180){URL.revokeObjectURL(url);toast('Please use a video under 3 minutes (you can trim it after).','error');return;}
+      if(v.duration>1800){URL.revokeObjectURL(url);toast('This video is over 30 minutes. Please cut it shorter first.','error');return;}
       setPlaying(false);if(V.url)URL.revokeObjectURL(V.url);
-      V={file:file,url:url,el:v,w:v.videoWidth,h:v.videoHeight,dur:v.duration,crop:null,start:0,end:Math.min(v.duration,60)};
+      V={file:file,url:url,el:v,w:v.videoWidth,h:v.videoHeight,dur:v.duration,crop:null,start:0,end:v.duration};
       var ts=el('vb-ts'),te=el('vb-te');ts.max=te.max=v.duration.toFixed(1);ts.value=0;te.value=V.end.toFixed(1);
       labels();v.currentTime=0.05;
     };
@@ -3726,8 +3726,8 @@ setInterval(function(){
           src.connect(dst);dst.stream.getAudioTracks().forEach(function(t){stream.addTrack(t);});if(ac.resume)await ac.resume();
         }catch(e){ac=null;}
       }
-      var vbps=Math.max(1000000,Math.min(6000000,Math.floor((44*1024*1024*8)/dur-160000)));
-      var opts={mimeType:mime,videoBitsPerSecond:vbps};if(S.sound)opts.audioBitsPerSecond=128000;
+      var vbps=Math.max(250000,Math.min(6000000,Math.floor((44*1024*1024*8)/dur-(dur>600?100000:160000))));
+      var opts={mimeType:mime,videoBitsPerSecond:vbps};if(S.sound)opts.audioBitsPerSecond=dur>600?64000:128000;
       rec=new MediaRecorder(stream,opts);
       rec.ondataavailable=function(e){if(e.data&&e.data.size)chunks.push(e.data);};
       var stopped=new Promise(function(res){rec.onstop=res;});
@@ -3834,7 +3834,7 @@ setInterval(function(){
   async function makeExact(){
     if(!(window.VideoEncoder&&window.VideoFrame))return false;
     var RW=1080,RH=1528,FPS=30,dur=V.end-V.start,n=Math.round(dur*FPS),i;
-    var vbps=Math.max(1000000,Math.min(6000000,Math.floor((44*1024*1024*8)/dur-160000)));
+    var vbps=Math.max(250000,Math.min(6000000,Math.floor((44*1024*1024*8)/dur-(dur>600?100000:160000))));
     var vcfg={codec:'avc1.640032',width:RW,height:RH,bitrate:vbps,framerate:FPS,avc:{format:'avc'},latencyMode:'realtime'};
     try{var sup=await VideoEncoder.isConfigSupported(vcfg);if(!sup.supported)return false;}catch(e){return false;}
     setPlaying(false);clearResult();busy=true;cancel=false;el('vb-make').disabled=true;
@@ -3856,7 +3856,7 @@ setInterval(function(){
           var ac=new (window.AudioContext||window.webkitAudioContext)({sampleRate:48000});
           var buf=await ac.decodeAudioData(await V.file.arrayBuffer());if(ac.close)ac.close();
           ch=Math.min(2,buf.numberOfChannels);sr=48000;
-          var cfgs=[{codec:'mp4a.40.2',sampleRate:sr,numberOfChannels:ch,bitrate:128000},{codec:'opus',sampleRate:sr,numberOfChannels:ch,bitrate:96000}],acfg=null;
+          var cfgs=[{codec:'mp4a.40.2',sampleRate:sr,numberOfChannels:ch,bitrate:dur>600?64000:128000},{codec:'opus',sampleRate:sr,numberOfChannels:ch,bitrate:dur>600?48000:96000}],acfg=null;
           for(i=0;i<cfgs.length&&!acfg;i++){try{if((await AudioEncoder.isConfigSupported(cfgs[i])).supported)acfg=cfgs[i];}catch(e){}}
           if(acfg){
             acodec=acfg.codec==='opus'?'opus':'aac';
