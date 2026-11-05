@@ -696,6 +696,7 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
                   <button type="button" class="btn btn-secondary" id="cb-reset"><i class="ti ti-refresh" aria-hidden="true"></i> Reset</button>
                   <button type="button" class="btn btn-primary full" id="cb-use"><i class="ti ti-photo-check" aria-hidden="true"></i> Use as cover photo</button>
                   <button type="button" class="btn btn-secondary full" id="cb-dl"><i class="ti ti-download" aria-hidden="true"></i> Download image</button>
+                  <button type="button" class="btn btn-secondary full" id="cb-clear"><i class="ti ti-trash" aria-hidden="true"></i> Clear photos &amp; start over</button>
                 </div>
               </div>
             </div>
@@ -3230,6 +3231,18 @@ setInterval(function(){
       document.body.appendChild(a);a.click();a.remove();
     },'image/png');
   });
+  // Start over: removes both photos and the headline (layout, size and logo choices stay).
+  function clearAll(quiet){
+    for(var i=0;i<2;i++){S.p[i]={img:null,name:'',orig:null,zoom:1,x:0,y:0};el('cb-z'+i).value=100;}
+    S.head='';el('cb-head').value='';labels();draw();
+    if(!quiet)toast('Cleared. Ready for the next design.');
+  }
+  el('cb-clear').addEventListener('click',function(){clearAll(false);});
+  // Also clear when the post form is cleared or a post is published/saved.
+  if(typeof window.clearForm==='function'){
+    var oldClear=window.clearForm;
+    window.clearForm=function(){var r=oldClear.apply(this,arguments);try{clearAll(true);}catch(e){}return r;};
+  }
   labels();draw();
 })();
 </script>
