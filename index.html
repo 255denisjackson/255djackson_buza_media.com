@@ -656,20 +656,24 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
                 </div>
                 <div>
                   <div class="cb-lab">Photos</div>
-                  <div class="cb-slots">
+                  <div class="cb-seg" id="cb-count" style="margin-bottom:.5rem">
+                    <button type="button" data-v="2" aria-pressed="true">Two photos</button>
+                    <button type="button" data-v="1" aria-pressed="false">One photo</button>
+                  </div>
+                  <div class="cb-slots" id="cb-slots">
                     <div class="cb-slot"><div class="cb-pick" id="cb-s0"><strong id="cb-t0">Left</strong><span id="cb-n0">Add photo</span><input type="file" id="cb-f0" accept="image/*"></div><button type="button" class="btn btn-secondary cb-cropbtn" id="cb-c0" disabled><i class="ti ti-crop" aria-hidden="true"></i> Crop</button></div>
                     <div class="cb-slot"><div class="cb-pick" id="cb-s1"><strong id="cb-t1">Right</strong><span id="cb-n1">Add photo</span><input type="file" id="cb-f1" accept="image/*"></div><button type="button" class="btn btn-secondary cb-cropbtn" id="cb-c1" disabled><i class="ti ti-crop" aria-hidden="true"></i> Crop</button></div>
                   </div>
                   <div class="cb-row" style="margin-top:.5rem"><label for="cb-z0" id="cb-zl0">Left zoom</label><input type="range" id="cb-z0" min="100" max="300" value="100"></div>
                   <div class="cb-row"><label for="cb-z1" id="cb-zl1">Right zoom</label><input type="range" id="cb-z1" min="100" max="300" value="100"></div>
                 </div>
-                <div>
+                <div id="cb-layblock">
                   <div class="cb-lab">Layout</div>
                   <div class="cb-seg" id="cb-layout" style="margin-bottom:.5rem">
                     <button type="button" data-v="side" aria-pressed="true">Left | Right</button>
                     <button type="button" data-v="stack" aria-pressed="false">Top / Bottom</button>
                   </div>
-                  <div class="cb-row" style="margin-bottom:.5rem"><label for="cb-ang">Divider angle</label><input type="range" id="cb-ang" min="0" max="360" step="1" value="90"><span class="cb-note" id="cb-angv" style="min-width:2.6rem;text-align:right">90°</span></div>
+                  <div class="cb-row" id="cb-angrow" style="margin-bottom:.5rem"><label for="cb-ang">Divider angle</label><input type="range" id="cb-ang" min="0" max="360" step="1" value="90"><span class="cb-note" id="cb-angv" style="min-width:2.6rem;text-align:right">90°</span></div>
                   <div class="cb-seg" id="cb-ratio">
                     <button type="button" data-v="1:1" aria-pressed="false">1:1</button>
                     <button type="button" data-v="4:5" aria-pressed="true">4:5</button>
@@ -3188,7 +3192,7 @@ setInterval(function(){
   if(!el('cb-cv'))return;
   // Measured from frame-buza-45.png (1810 x 2262): where photos go, and the blue headline box.
   var FR={W:1810,H:2262,area:{x:9,y:8,w:1793,h:1548},box:{x:181,y:1651,w:1455,h:339},safeBottom:1417,img:null};   // 1810 x 2262 = Instagram portrait 4:5
-  var S={frame:'buza',layout:'side',angle:90,ratio:'4:5',gap:8,divider:'#ffffff',bar:'#0b0f0e',head:'',
+  var S={frame:'buza',count:2,layout:'side',angle:90,ratio:'4:5',gap:8,divider:'#ffffff',bar:'#0b0f0e',head:'',
     logo:'wm',logoSize:20,logoColor:'#ffffff',logoOpacity:90,logoPos:null,headSize:100,
     p:[{img:null,name:'',zoom:1,x:0,y:0},{img:null,name:'',zoom:1,x:0,y:0}]};
   var SIZES={'1:1':[1080,1080],'4:5':[1080,1350],'16:9':[1080,608],'9:16':[1080,1920]};
@@ -3208,6 +3212,7 @@ setInterval(function(){
     return out;
   }
   function layoutIn(a,g){
+    if(S.count===1)return [{x:a.x,y:a.y,w:a.w,h:a.h}];   // one photo fills the whole picture area
     var rad=(((S.angle%360)+360)%360)*Math.PI/180,nx=Math.sin(rad),ny=Math.cos(rad);
     if(Math.abs(nx)<1e-9)nx=0;if(Math.abs(ny)<1e-9)ny=0;
     var cx=a.x+a.w/2,cy=a.y+a.h/2,out=[];
@@ -3316,7 +3321,7 @@ setInterval(function(){
     if(!target)rects=rs;
     if(useFrame){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);ctx.fillStyle=S.divider;ctx.fillRect(area.x,area.y,area.w,area.h);}
     else{ctx.fillStyle=S.divider;ctx.fillRect(0,0,W,H);}
-    for(var i=0;i<2;i++){if(S.p[i].img)cover(ctx,S.p[i],rs[i]);else placeholder(ctx,rs[i],i);}
+    for(var i=0;i<rs.length;i++){if(S.p[i].img)cover(ctx,S.p[i],rs[i]);else placeholder(ctx,rs[i],i);}
     if(useFrame){
       ctx.drawImage(FR.img,0,0,W,H);
       drawLogo(ctx,W,H,0,true,!target);
@@ -3361,6 +3366,16 @@ setInterval(function(){
     el('cb-tl').textContent=f?'Top right':'Top left';
   }
   el('cb-frame').addEventListener('click',function(e){if(e.target.closest('button'))applyMode();});
+  function applyCount(){
+    var one=S.count===1,f=S.frame==='buza';
+    el('cb-s1').parentElement.style.display=one?'none':'';el('cb-z1').parentElement.style.display=one?'none':'';
+    el('cb-slots').style.gridTemplateColumns=one?'1fr':'';
+    el('cb-layout').style.display=el('cb-angrow').style.display=el('cb-gap').parentElement.style.display=el('cb-div').style.display=el('cb-swap').style.display=one?'none':'';
+    el('cb-layblock').style.display=(one&&f)?'none':'';
+    labels();draw();
+  }
+  el('cb-count').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;S.count=+b.getAttribute('data-v');setPressed('cb-count',String(S.count));applyCount();});
+  el('cb-frame').addEventListener('click',function(e){if(e.target.closest('button'))applyCount();});
   function angUi(){el('cb-ang').value=S.angle;el('cb-angv').textContent=Math.round(S.angle)+'°';setPressed('cb-layout',S.angle===90?'side':S.angle===0?'stack':'');}
   el('cb-layout').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;S.angle=b.getAttribute('data-v')==='side'?90:0;angUi();labels();draw();});
   el('cb-ang').addEventListener('input',function(e){S.angle=+e.target.value;angUi();labels();draw();});
@@ -3370,7 +3385,7 @@ setInterval(function(){
   el('cb-lcolor').addEventListener('input',function(e){S.logoColor=e.target.value;setPressed('cb-lcol','');draw();});
   el('cb-hsz').addEventListener('input',function(e){S.headSize=+e.target.value;draw();});
   function labels(){
-    var ag=((S.angle%360)+360)%360,n=ag===90?['Left','Right']:ag===270?['Right','Left']:ag===0?['Top','Bottom']:ag===180?['Bottom','Top']:['Photo 1','Photo 2'];
+    var ag=((S.angle%360)+360)%360,n=S.count===1?['Photo','']:ag===90?['Left','Right']:ag===270?['Right','Left']:ag===0?['Top','Bottom']:ag===180?['Bottom','Top']:['Photo 1','Photo 2'];
     for(var i=0;i<2;i++){el('cb-t'+i).textContent=n[i];el('cb-zl'+i).textContent=n[i]+' zoom';
       el('cb-n'+i).textContent=S.p[i].img?S.p[i].name:'Add photo';el('cb-s'+i).classList.toggle('has',!!S.p[i].img);el('cb-c'+i).disabled=!S.p[i].img;}
   }
@@ -3407,7 +3422,7 @@ setInterval(function(){
   el('cb-reset').addEventListener('click',function(){for(var i=0;i<2;i++){S.p[i].x=0;S.p[i].y=0;S.p[i].zoom=1;el('cb-z'+i).value=100;}draw();});
 
   function toCanvas(e){var b=cv.getBoundingClientRect();return {x:(e.clientX-b.left)*cv.width/b.width,y:(e.clientY-b.top)*cv.height/b.height};}
-  function hit(pt){for(var i=0;i<2;i++){var r=rects[i];if(r&&inRegion(r,pt))return i;}return -1;}
+  function hit(pt){for(var i=0;i<S.count;i++){var r=rects[i];if(r&&inRegion(r,pt))return i;}return -1;}
   function onLogo(pt){return !!logoRect&&S.logo!=='off'&&pt.x>=logoRect.x&&pt.x<=logoRect.x+logoRect.w&&pt.y>=logoRect.y&&pt.y<=logoRect.y+logoRect.h;}
   cv.addEventListener('pointerdown',function(e){
     var pt=toCanvas(e);
@@ -3431,12 +3446,13 @@ setInterval(function(){
   cv.addEventListener('dragover',function(e){e.preventDefault();});
   cv.addEventListener('drop',function(e){
     e.preventDefault();var f=e.dataTransfer&&e.dataTransfer.files;if(!f||!f.length)return;
-    if(f.length>=2){loadFile(0,f[0]);loadFile(1,f[1]);return;}
+    if(f.length>=2&&S.count===2){loadFile(0,f[0]);loadFile(1,f[1]);return;}
+    if(S.count===1){loadFile(0,f[0]);return;}
     var i=hit(toCanvas(e));loadFile(i<0?(S.p[0].img?1:0):i,f[0]);
   });
 
   function ready(){
-    if(!S.p[0].img||!S.p[1].img){toast('Add both photos first.','error');return false;}
+    if(!S.p[0].img||(S.count===2&&!S.p[1].img)){toast(S.count===1?'Add the photo first.':'Add both photos first.','error');return false;}
     if(S.frame==='buza'&&!FR.img){toast('The frame is still loading. Try again in a moment.','error');return false;}
     return true;
   }
