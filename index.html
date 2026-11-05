@@ -3704,11 +3704,11 @@ setInterval(function(){
     if(!V.el){toast('Add a video first.','error');return false;}
     if(S.mode==='pv'&&!P.img){toast('Add the photo too, or switch to Video only.','error');return false;}
     if(!FR.img){toast('The frame is still loading. Try again in a moment.','error');return false;}
-    if(!pickMime()){toast('This browser cannot record video. Please use Chrome or Edge.','error');return false;}
+    if(!pickMime()&&!window.VideoEncoder){toast('This browser cannot create video. Please use Chrome or Edge.','error');return false;}
     return true;
   }
   function clearResult(){if(result&&result.url)URL.revokeObjectURL(result.url);result=null;var r=el('vb-res');r.style.display='none';r.innerHTML='';}
-  async function make(){
+  async function makeLive(){
     if(busy||!ready())return;
     setPlaying(false);clearResult();busy=true;cancel=false;el('vb-make').disabled=true;
     var RW=1080,RH=1528,dur=V.end-V.start,rv=document.createElement('video'),ac=null,rec=null,chunks=[],mime=pickMime();
@@ -3748,20 +3748,193 @@ setInterval(function(){
       if(cancel){toast('Stopped.');return;}
       var base=mime.split(';')[0],ext=base==='video/mp4'?'mp4':'webm',blob=new Blob(chunks,{type:base});
       if(blob.size>50*1024*1024){toast('The video came out over 50MB. Trim it shorter and try again.','error');return;}
-      var name='buza-banner-'+new Date().toISOString().slice(0,10)+'.'+ext;
-      result={blob:blob,file:new File([blob],name,{type:base}),url:URL.createObjectURL(blob),name:name,poster:poster};
-      var r=el('vb-res');r.style.display='';
-      r.innerHTML='<video controls playsinline src="'+result.url+'" style="width:100%;max-height:60vh;border-radius:10px;background:#000"></video>'+
-        '<div class="cb-note">Ready · '+(blob.size/1048576).toFixed(1)+' MB · '+ext.toUpperCase()+'</div>'+
-        '<label class="cb-note" style="display:flex;gap:.4rem;align-items:center;margin:.3rem 0"><input type="checkbox" id="vb-cov" checked> Also use the banner as the cover photo</label>'+
-        '<div class="cb-btns"><button type="button" class="btn btn-primary full" id="vb-use"><i class="ti ti-video-plus" aria-hidden="true"></i> Use as post video</button>'+
-        '<button type="button" class="btn btn-secondary full" id="vb-dl"><i class="ti ti-download" aria-hidden="true"></i> Download video</button></div>';
-      el('vb-use').onclick=useResult;el('vb-dl').onclick=function(){var a=document.createElement('a');a.href=result.url;a.download=result.name;document.body.appendChild(a);a.click();a.remove();};
-      toast('Banner video is ready.');
+      showResult(blob,ext,base,poster);
     }catch(err){
       showProg(false);try{rv.pause();}catch(e){}try{if(rec&&rec.state!=='inactive')rec.stop();}catch(e){}
       toast('Could not create the video. Try Chrome, a shorter clip or another file.','error');
     }finally{busy=false;el('vb-make').disabled=false;draw();}
+  }
+  function showResult(blob,ext,base,poster){
+    var name='buza-banner-'+new Date().toISOString().slice(0,10)+'.'+ext;
+    result={blob:blob,file:new File([blob],name,{type:base}),url:URL.createObjectURL(blob),name:name,poster:poster};
+    var r=el('vb-res');r.style.display='';
+    r.innerHTML='<video controls playsinline src="'+result.url+'" style="width:100%;max-height:60vh;border-radius:10px;background:#000"></video>'+
+      '<div class="cb-note">Ready · '+(blob.size/1048576).toFixed(1)+' MB · '+ext.toUpperCase()+'</div>'+
+      '<label class="cb-note" style="display:flex;gap:.4rem;align-items:center;margin:.3rem 0"><input type="checkbox" id="vb-cov" checked> Also use the banner as the cover photo</label>'+
+      '<div class="cb-btns"><button type="button" class="btn btn-primary full" id="vb-use"><i class="ti ti-video-plus" aria-hidden="true"></i> Use as post video</button>'+
+      '<button type="button" class="btn btn-secondary full" id="vb-dl"><i class="ti ti-download" aria-hidden="true"></i> Download video</button></div>';
+    el('vb-use').onclick=useResult;el('vb-dl').onclick=function(){var a=document.createElement('a');a.href=result.url;a.download=result.name;document.body.appendChild(a);a.click();a.remove();};
+    toast('Banner video is ready.');
+  }
+  /* ---------- exact (frame by frame) creation ----------
+     Every frame is taken at its exact time and the sound is cut from the original, so the result is never
+     slower, faster or out of sync, whatever the speed of the device. Falls back to live recording if unsupported. */
+  var u8=function(a){return new Uint8Array(a);};
+  function cat(list){var n=0,i;for(i=0;i<list.length;i++)n+=list[i].length;var o=new Uint8Array(n),p=0;for(i=0;i<list.length;i++){o.set(list[i],p);p+=list[i].length;}return o;}
+  function be(n,b){var o=new Uint8Array(b);for(var i=b-1;i>=0;i--){o[i]=n&255;n=Math.floor(n/256);}return o;}
+  function str(s){var o=new Uint8Array(s.length);for(var i=0;i<s.length;i++)o[i]=s.charCodeAt(i);return o;}
+  function bx(type){var parts=[].slice.call(arguments,1),b=cat(parts);return cat([be(b.length+8,4),str(type),b]);}
+  function fb(type,ver,flags){return bx.apply(null,[type,be(ver*16777216+flags,4)].concat([].slice.call(arguments,3)));}
+  var MAT=cat([be(0x10000,4),be(0,4),be(0,4),be(0,4),be(0x10000,4),be(0,4),be(0,4),be(0,4),be(0x40000000,4)]);
+  function trak(o,id,mdur){
+    var v=o.kind==='v',n=o.samples.length,i;
+    var sizes=[],data=[];for(i=0;i<n;i++){sizes.push(be(o.samples[i].data.length,4));}
+    var stts=[],run=null;
+    for(i=0;i<n;i++){var d=o.samples[i].d;if(run&&run.d===d)run.c++;else{run={c:1,d:d};stts.push(run);}}
+    var sttsB=fb.apply(null,['stts',0,0,be(stts.length,4)].concat(stts.map(function(r){return cat([be(r.c,4),be(r.d,4)]);})));
+    var entry;
+    if(v){
+      entry=bx('avc1',u8(6),be(1,2),u8(16),be(o.w,2),be(o.h,2),be(0x480000,4),be(0x480000,4),be(0,4),be(1,2),u8(32),be(0x18,2),be(0xFFFF,2),bx('avcC',o.desc));
+    }else if(o.codec==='aac'){
+      var asc=o.desc,dec=cat([u8([0x40,0x15,0,0,0]),be(0,4),be(0,4),u8([5,asc.length]),asc]),
+          es=cat([u8([3,3+2+dec.length+5+3,0,0,0]),u8([4,dec.length]),dec,u8([6,1,2])]);
+      es=cat([u8([3,es.length-2+0]),es.subarray(2)]);
+      entry=bx('mp4a',u8(6),be(1,2),u8(8),be(o.ch,2),be(16,2),be(0,2),be(0,2),be(o.sr*65536,4),fb('esds',0,0,es));
+    }else{
+      entry=bx('Opus',u8(6),be(1,2),u8(8),be(o.ch,2),be(16,2),be(0,2),be(0,2),be(48000*65536,4),bx('dOps',u8([0,o.ch]),be(o.pre||312,2),be(o.sr,4),be(0,2),u8([0])));
+    }
+    var stsd=fb('stsd',0,0,be(1,4),entry);
+    var kf=[];if(v)for(i=0;i<n;i++)if(o.samples[i].key)kf.push(be(i+1,4));
+    var stbl=[stsd,sttsB];
+    if(v)stbl.push(fb.apply(null,['stss',0,0,be(kf.length,4)].concat(kf)));
+    stbl.push(fb('stsc',0,0,be(1,4),be(1,4),be(n,4),be(1,4)));
+    stbl.push(fb.apply(null,['stsz',0,0,be(0,4),be(n,4)].concat(sizes)));
+    stbl.push(fb('stco',0,0,be(1,4),be(o.offset||0,4)));
+    var minf=bx('minf',v?fb('vmhd',0,1,be(0,2),u8(6)):fb('smhd',0,0,be(0,2),be(0,2)),
+      bx('dinf',fb('dref',0,0,be(1,4),fb('url ',0,1))),bx.apply(null,['stbl'].concat(stbl)));
+    var mdhd=fb('mdhd',0,0,be(0,4),be(0,4),be(o.ts,4),be(Math.round(o.dur*o.ts),4),be(0x55C4,2),be(0,2));
+    var hdlr=fb('hdlr',0,0,be(0,4),str(v?'vide':'soun'),u8(12),str(v?'VideoHandler':'SoundHandler'),u8(1));
+    var tkhd=fb('tkhd',0,3,be(0,4),be(0,4),be(id,4),be(0,4),be(Math.round(mdur*1000),4),u8(8),be(0,2),be(0,2),be(v?0:0x100,2),be(0,2),MAT,be(v?o.w*65536:0,4),be(v?o.h*65536:0,4));
+    return bx('trak',tkhd,bx('mdia',mdhd,hdlr,minf));
+  }
+  function mux(vid,aud){
+    var dur=vid.dur;
+    var ftyp=bx('ftyp',str('isom'),be(512,4),str('isom'),str('iso2'),str('avc1'),str('mp41'));
+    function moov(){
+      var tr=[trak(vid,1,dur)];if(aud)tr.push(trak(aud,2,dur));
+      var mvhd=fb('mvhd',0,0,be(0,4),be(0,4),be(1000,4),be(Math.round(dur*1000),4),be(0x10000,4),be(0x100,2),u8(10),MAT,u8(24),be(aud?3:2,4));
+      return bx.apply(null,['moov',mvhd].concat(tr));
+    }
+    vid.offset=0;if(aud)aud.offset=0;
+    var size=moov().length,base=ftyp.length+size+8;
+    vid.offset=base;var vb=0;vid.samples.forEach(function(s){vb+=s.data.length;});
+    if(aud)aud.offset=base+vb;
+    var parts=[ftyp,moov()],body=[];
+    vid.samples.forEach(function(s){body.push(s.data);});if(aud)aud.samples.forEach(function(s){body.push(s.data);});
+    var bl=0;body.forEach(function(b){bl+=b.length;});
+    parts.push(be(bl+8,4),str('mdat'));
+    return new Blob(parts.concat(body),{type:'video/mp4'});
+  }
+  function seekTo(v,t){
+    return new Promise(function(res){
+      var done=false,f=function(){if(done)return;done=true;v.removeEventListener('seeked',f);clearTimeout(to);res();};
+      var to=setTimeout(f,6000);v.addEventListener('seeked',f);v.currentTime=t;
+    });
+  }
+  async function makeExact(){
+    if(!(window.VideoEncoder&&window.VideoFrame))return false;
+    var RW=1080,RH=1528,FPS=30,dur=V.end-V.start,n=Math.round(dur*FPS),i;
+    var vbps=Math.max(1000000,Math.min(6000000,Math.floor((44*1024*1024*8)/dur-160000)));
+    var vcfg={codec:'avc1.640032',width:RW,height:RH,bitrate:vbps,framerate:FPS,avc:{format:'avc'},latencyMode:'realtime'};
+    try{var sup=await VideoEncoder.isConfigSupported(vcfg);if(!sup.supported)return false;}catch(e){return false;}
+    setPlaying(false);clearResult();busy=true;cancel=false;el('vb-make').disabled=true;
+    var rv=document.createElement('video'),ok=false;
+    try{
+      var vs=[],vdesc=null,aenc=null,asamples=[],adesc=null,acodec='',sr=48000,ch=2,pre=312;
+      rv.src=V.url;rv.muted=true;rv.playsInline=true;rv.preload='auto';
+      await new Promise(function(res,rej){rv.onloadeddata=res;rv.onerror=function(){rej(new Error('video'));};});
+      var rc=document.createElement('canvas');rc.width=RW;rc.height=RH;
+      var venc=new VideoEncoder({output:function(c,m){var d=new Uint8Array(c.byteLength);c.copyTo(d);
+        if(m&&m.decoderConfig&&m.decoderConfig.description)vdesc=new Uint8Array(m.decoderConfig.description.buffer?m.decoderConfig.description:m.decoderConfig.description);
+        vs.push({data:d,d:1000,key:c.type==='key'});},error:function(e){throw e;}});
+      venc.configure(vcfg);
+      /* sound: cut the chosen part out of the original file's sound */
+      var hasSound=false;
+      if(S.sound&&window.AudioEncoder&&window.AudioData){
+        showProg(true,0,'Reading the sound…');
+        try{
+          var ac=new (window.AudioContext||window.webkitAudioContext)({sampleRate:48000});
+          var buf=await ac.decodeAudioData(await V.file.arrayBuffer());if(ac.close)ac.close();
+          ch=Math.min(2,buf.numberOfChannels);sr=48000;
+          var cfgs=[{codec:'mp4a.40.2',sampleRate:sr,numberOfChannels:ch,bitrate:128000},{codec:'opus',sampleRate:sr,numberOfChannels:ch,bitrate:96000}],acfg=null;
+          for(i=0;i<cfgs.length&&!acfg;i++){try{if((await AudioEncoder.isConfigSupported(cfgs[i])).supported)acfg=cfgs[i];}catch(e){}}
+          if(acfg){
+            acodec=acfg.codec==='opus'?'opus':'aac';
+            aenc=new AudioEncoder({output:function(c,m){var d=new Uint8Array(c.byteLength);c.copyTo(d);
+              if(m&&m.decoderConfig&&m.decoderConfig.description){var ds=m.decoderConfig.description;adesc=new Uint8Array(ds.buffer?ds.buffer.slice(ds.byteOffset,ds.byteOffset+ds.byteLength):ds);}
+              var dd=c.duration?Math.round(c.duration*sr/1e6):(acodec==='aac'?1024:960);asamples.push({data:d,d:dd});},error:function(e){throw e;}});
+            aenc.configure(acfg);
+            var s0=Math.floor(V.start*sr),s1=Math.min(buf.length,Math.floor(V.end*sr)),step=4800,chans=[];
+            for(i=0;i<ch;i++)chans.push(buf.getChannelData(i));
+            for(var p=s0;p<s1;p+=step){
+              var m=Math.min(step,s1-p),pl=new Float32Array(m*ch);
+              for(i=0;i<ch;i++)pl.set(chans[i].subarray(p,p+m),i*m);
+              var ad=new AudioData({format:'f32-planar',sampleRate:sr,numberOfFrames:m,numberOfChannels:ch,timestamp:Math.round((p-s0)*1e6/sr),data:pl});
+              aenc.encode(ad);ad.close();
+              while(aenc.encodeQueueSize>20)await new Promise(function(r){setTimeout(r,5);});
+            }
+            await aenc.flush();hasSound=asamples.length>0&&!!adesc;
+          }
+        }catch(e){hasSound=false;}
+        if(!hasSound)toast('No sound could be read from this video, so the banner will have no sound.','error');
+      }
+      /* pictures: every frame is stamped with its exact time, so the length can never drift */
+      var poster='',next=0;
+      function encodeCanvas(k){
+        if(k===0)poster=rc.toDataURL('image/jpeg',0.92);
+        var fr=new VideoFrame(rc,{timestamp:Math.round(k*1e6/FPS),duration:Math.round(1e6/FPS)});
+        venc.encode(fr,{keyFrame:k%60===0});fr.close();
+      }
+      function prog(){showProg(true,Math.min(100,next/n*100),'Creating… '+(next/FPS).toFixed(1)+' / '+dur.toFixed(1)+' s · keep this tab open');}
+      function playPhase(){   // fast: play once, take each frame as it is shown, using the video's own clock
+        return new Promise(function(resolve){
+          var last=Date.now(),fin=false;
+          function finish(r){if(fin)return;fin=true;clearInterval(wd);try{rv.pause();}catch(e){}resolve(r);}
+          var wd=setInterval(function(){if(Date.now()-last>3000)finish(false);},500);
+          function cb(now,meta){
+            last=Date.now();
+            drawFrame(rc,false,rv);
+            var idx=Math.min(n-1,Math.max(0,Math.round((meta.mediaTime-V.start)*FPS)));
+            while(next<=idx){encodeCanvas(next);next++;}
+            prog();
+            if(cancel||next>=n||meta.mediaTime>=V.end)finish(true);else rv.requestVideoFrameCallback(cb);
+          }
+          rv.onended=function(){while(next<n){encodeCanvas(next);next++;}finish(true);};
+          seekTo(rv,V.start).then(function(){rv.playbackRate=1;var p=rv.play();if(p&&p.catch)p.catch(function(){finish(false);});rv.requestVideoFrameCallback(cb);});
+        });
+      }
+      if('requestVideoFrameCallback' in HTMLVideoElement.prototype&&document.visibilityState==='visible'){
+        await playPhase();
+        while(venc.encodeQueueSize>0)await new Promise(function(r){setTimeout(r,10);});
+      }
+      // slow but exact: take one frame at a time by jumping to its time (used if playing is not possible)
+      for(;next<n&&!cancel;){
+        await seekTo(rv,Math.min(V.start+next/FPS,Math.max(0,V.dur-0.001)));
+        drawFrame(rc,false,rv);encodeCanvas(next);next++;
+        while(venc.encodeQueueSize>6)await new Promise(function(r){setTimeout(r,4);});
+        if(next%3===0)prog();
+      }
+      if(cancel){try{venc.close();}catch(e){}showProg(false);toast('Stopped.');ok=true;return true;}
+      await venc.flush();venc.close();
+      if(!vdesc||!vs.length)throw new Error('encode');
+      var vtrack={kind:'v',samples:vs,w:RW,h:RH,desc:vdesc,ts:30000,dur:vs.length*1000/30000};
+      var atrack=hasSound?{kind:'a',samples:asamples,codec:acodec,desc:adesc,ch:ch,sr:sr,ts:sr,pre:pre,dur:0}:null;
+      if(atrack){var tot=0;asamples.forEach(function(s){tot+=s.d;});atrack.dur=tot/sr;
+        if(acodec==='opus'&&adesc&&adesc.length>=12&&adesc[0]===0x4F)atrack.pre=adesc[10]+adesc[11]*256;}
+      var blob=mux(vtrack,atrack);
+      showProg(false);
+      if(blob.size>50*1024*1024){toast('The video came out over 50MB. Trim it shorter and try again.','error');ok=true;return true;}
+      showResult(blob,'mp4','video/mp4',poster);
+      ok=true;return true;
+    }catch(err){
+      showProg(false);try{rv.pause();}catch(e){}
+      return false;   // let the live recorder try instead
+    }finally{busy=false;el('vb-make').disabled=false;draw();}
+  }
+  async function make(){
+    if(busy||!ready())return;
+    var done=false;try{done=await makeExact();}catch(e){done=false;}
+    if(!done)await makeLive();
   }
   function useResult(){
     if(!result)return;
