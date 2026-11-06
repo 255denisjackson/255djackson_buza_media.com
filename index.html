@@ -639,7 +639,7 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
             <div id="nf-results"></div>
           </div>
           <details class="cb-box" id="cb-box" open>
-            <summary><i class="ti ti-layout-columns" aria-hidden="true"></i> Combine two photos into one <i class="ti ti-chevron-down cb-chev" aria-hidden="true"></i></summary>
+            <summary><i class="ti ti-layout-columns" aria-hidden="true"></i> Photo banner: one or two photos <i class="ti ti-chevron-down cb-chev" aria-hidden="true"></i></summary>
             <div class="cb-sub">Add two photos and crop each one to the area you want. Place them left and right (or top and bottom) inside the Buza Media frame, type the headline, then use the result as the cover photo below.</div>
             <div class="cb-grid">
               <div>
@@ -647,6 +647,13 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
                 <div class="cb-hint">Tap an empty half to add a photo. Drag a photo to move it inside its half. Drag the logo to place it anywhere.</div>
               </div>
               <div class="cb-ctl">
+                <div>
+                  <div class="cb-lab">How many photos?</div>
+                  <div class="cb-seg" id="cb-count">
+                    <button type="button" data-v="2" aria-pressed="true">Two photos</button>
+                    <button type="button" data-v="1" aria-pressed="false">One photo</button>
+                  </div>
+                </div>
                 <div>
                   <div class="cb-lab">Design</div>
                   <div class="cb-seg" id="cb-frame">
@@ -656,10 +663,6 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
                 </div>
                 <div>
                   <div class="cb-lab">Photos</div>
-                  <div class="cb-seg" id="cb-count" style="margin-bottom:.5rem">
-                    <button type="button" data-v="2" aria-pressed="true">Two photos</button>
-                    <button type="button" data-v="1" aria-pressed="false">One photo</button>
-                  </div>
                   <div class="cb-slots" id="cb-slots">
                     <div class="cb-slot"><div class="cb-pick" id="cb-s0"><strong id="cb-t0">Left</strong><span id="cb-n0">Add photo</span><input type="file" id="cb-f0" accept="image/*"></div><button type="button" class="btn btn-secondary cb-cropbtn" id="cb-c0" disabled><i class="ti ti-crop" aria-hidden="true"></i> Crop</button></div>
                     <div class="cb-slot"><div class="cb-pick" id="cb-s1"><strong id="cb-t1">Right</strong><span id="cb-n1">Add photo</span><input type="file" id="cb-f1" accept="image/*"></div><button type="button" class="btn btn-secondary cb-cropbtn" id="cb-c1" disabled><i class="ti ti-crop" aria-hidden="true"></i> Crop</button></div>
@@ -3250,7 +3253,7 @@ setInterval(function(){
     for(var i=-r.h;i<r.w+r.h;i+=90){ctx.beginPath();ctx.moveTo(r.x+i,r.y+r.h);ctx.lineTo(r.x+i+r.h,r.y);ctx.stroke();}
     ctx.fillStyle='rgba(255,255,255,0.92)';ctx.textAlign='center';ctx.textBaseline='middle';
     var fs=Math.round(Math.min(r.w,r.h)*0.1);ctx.font=FONT(fs);
-    ctx.fillText('ADD PHOTO '+(n+1),r.cx!==undefined?r.cx:r.x+r.w/2,r.cy!==undefined?r.cy:r.y+r.h/2);ctx.restore();
+    ctx.fillText(S.count===1?'ADD PHOTO':'ADD PHOTO '+(n+1),r.cx!==undefined?r.cx:r.x+r.w/2,r.cy!==undefined?r.cy:r.y+r.h/2);ctx.restore();
   }
 
   // Buza Media logo: a plain white cut-out that can be tinted any colour, or shown in its original colours.
