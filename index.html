@@ -537,6 +537,7 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
   <div class="engage-bar">
     <button class="engage-btn" id="like-btn" onclick="toggleLike()"><i class="ti ti-heart" aria-hidden="true"></i> <span id="like-count">0</span> Like</button>
     <button class="engage-btn" onclick="downloadPostCard()"><i class="ti ti-download" aria-hidden="true"></i> Download banner</button>
+    <button class="engage-btn hidden" id="push-social-btn" onclick="pushToSocial(currentArticleId,this)"><i class="ti ti-send" aria-hidden="true"></i> <span>Post to social</span></button>
     <button class="engage-btn hidden" id="download-video-btn" onclick="downloadVideo()"><i class="ti ti-video" aria-hidden="true"></i> Download video</button>
     <div class="share-wrap">
       <button class="engage-btn" onclick="toggleShareMenu()"><i class="ti ti-share-3" aria-hidden="true"></i> Share</button>
@@ -1335,6 +1336,26 @@ const viewedThisSession=new Set();
 function kickSocialPoster(){ // ask the server to design + post the card right away (the 2-minute schedule is the safety net)
   try{sb.functions.invoke('social-poster',{body:{}}).catch(function(){});}catch(e){}
 }
+async function pushToSocial(id,btn){ // admin only: send this post to the connected social pages right now
+  if(!isLoggedIn||!id)return;
+  const label=btn&&btn.querySelector('span'),old=btn?btn.innerHTML:'';
+  if(btn){if(btn.dataset.busy)return;btn.dataset.busy='1';btn.disabled=true;if(label)label.textContent='Posting…';else btn.innerHTML='<i class="ti ti-loader-2" aria-hidden="true"></i>';}
+  showToast('Posting to social media… this takes about 20 seconds.','success');
+  try{
+    const {data,error}=await sb.functions.invoke('social-poster',{body:{article_id:id}});
+    if(error)throw error;
+    if(data&&data.results&&data.results.length){
+      const ok=data.results.filter(r=>r.status==='published').map(r=>r.platform[0].toUpperCase()+r.platform.slice(1));
+      const bad=data.results.filter(r=>r.status!=='published');
+      if(ok.length)showToast('Posted to '+ok.join(' & ')+(bad.length?' — but '+bad.map(r=>r.platform).join(', ')+' failed.':'.'),bad.length?'error':'success');
+      else showToast('Could not post: '+String(bad[0].error||bad[0].status).slice(0,120),'error');
+    }else if(data&&data.message==='already being handled')showToast('This post was already sent to social media.','success');
+    else if(data&&data.skipped)showToast('Not posted: '+data.skipped+'.','error');
+    else if(data&&data.error)showToast('Could not post: '+String(data.detail||data.error).slice(0,120),'error');
+    else showToast('Nothing to post — no social account is switched on.','error');
+  }catch(e){showToast('Could not post right now. Please try again.','error');}
+  if(btn){delete btn.dataset.busy;btn.disabled=false;if(label)label.textContent='Post to social';else btn.innerHTML=old;}
+}
 function recordView(id){
   if(viewedThisSession.has(id))return;
   viewedThisSession.add(id);
@@ -1964,6 +1985,7 @@ function openArticle(id,asEntry){
   }
   document.getElementById('article-hero').classList.toggle('portrait',p.orientation==='portrait');
   document.getElementById('download-video-btn').classList.toggle('hidden',!(p.mediaType==='video'&&p.video)||!!ytId);
+  document.getElementById('push-social-btn').classList.toggle('hidden',!(isLoggedIn&&p.status==='published'));
   renderArticleText(id);
   document.getElementById('view-public').classList.add('hidden');
   document.getElementById('view-login').classList.add('hidden');
@@ -2085,6 +2107,7 @@ function renderNavLoggedOut(){ // visitors only ever see the Follow button — a
 async function doLogout(){
   try{await sb.auth.signOut();}catch(e){}
   isLoggedIn=false;
+  const psb=document.getElementById('push-social-btn');if(psb)psb.classList.add('hidden');
   renderNavLoggedOut();
   goHome();
   await loadPosts(true); // drop drafts from memory
@@ -2342,6 +2365,7 @@ function renderPostsTable(){
     <td style="font-size:.74rem;color:var(--muted)">${fmtDateShort(p.date)}</td>
     <td><div style="display:flex;gap:.3rem">
       <button class="btn btn-sm btn-secondary" onclick="openEdit('${p.id}')"><i class="ti ti-edit" aria-hidden="true"></i></button>
+      ${p.status==='published'?`<button class="btn btn-sm btn-secondary" title="Post to social media" onclick="pushToSocial('${p.id}',this)"><i class="ti ti-send" aria-hidden="true"></i></button>`:''}
       <button class="btn btn-sm btn-secondary" style="font-size:.7rem" onclick="toggleStatus('${p.id}')">${p.status==='published'?'Unpublish':'Publish'}</button>
       <button class="btn btn-sm btn-danger" onclick="deletePost('${p.id}')"><i class="ti ti-trash" aria-hidden="true"></i></button>
     </div></td>
@@ -2357,6 +2381,7 @@ function renderPostsTable(){
       </div>
       <div class="post-card-item-actions">
         <button class="btn btn-sm btn-secondary" onclick="openEdit('${p.id}')"><i class="ti ti-edit" aria-hidden="true"></i> Edit</button>
+        ${p.status==='published'?`<button class="btn btn-sm btn-secondary" onclick="pushToSocial('${p.id}',this)"><i class="ti ti-send" aria-hidden="true"></i> Post to social</button>`:''}
         <button class="btn btn-sm btn-secondary" onclick="toggleStatus('${p.id}')">${p.status==='published'?'Unpublish':'Publish'}</button>
         <button class="btn btn-sm btn-danger" onclick="deletePost('${p.id}')"><i class="ti ti-trash" aria-hidden="true"></i></button>
       </div>
