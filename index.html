@@ -806,6 +806,25 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
                   <div class="cb-row" style="margin-top:.4rem"><label for="vb-hsz">Text size</label><input type="range" id="vb-hsz" min="50" max="100" value="100"></div>
                   <div class="cb-note">Long headlines wrap to the next line automatically.</div>
                 </div>
+                <div>
+                  <div class="cb-lab">Video quality</div>
+                  <div class="cb-note" style="margin-bottom:.25rem">Frame rate (smoothness of the picture)</div>
+                  <div class="cb-seg" id="vb-fps">
+                    <button type="button" data-v="24" aria-pressed="false">24 fps</button>
+                    <button type="button" data-v="25" aria-pressed="false">25 fps</button>
+                    <button type="button" data-v="30" aria-pressed="true">30 fps</button>
+                    <button type="button" data-v="50" aria-pressed="false">50 fps</button>
+                    <button type="button" data-v="60" aria-pressed="false">60 fps</button>
+                  </div>
+                  <div class="cb-note" style="margin:.5rem 0 .25rem">Sound quality (48 kHz stereo)</div>
+                  <div class="cb-seg" id="vb-abr">
+                    <button type="button" data-v="96" aria-pressed="false">Light 96 kbps</button>
+                    <button type="button" data-v="128" aria-pressed="true">Standard 128 kbps</button>
+                    <button type="button" data-v="192" aria-pressed="false">High 192 kbps</button>
+                    <button type="button" data-v="256" aria-pressed="false">Best 256 kbps</button>
+                  </div>
+                  <div class="cb-note">Both are saved together inside the finished MP4. Higher settings make a bigger file, so the picture is compressed a little more to stay under 50 MB. Videos over 10 minutes always use light sound.</div>
+                </div>
                 <div class="cb-btns">
                   <button type="button" class="btn btn-primary full" id="vb-make"><i class="ti ti-movie" aria-hidden="true"></i> Create banner video</button>
                   <div id="vb-prog" class="cb-note" style="display:none;width:100%"><div style="height:8px;border-radius:6px;background:#e3e6ea;overflow:hidden"><div id="vb-bar" style="height:100%;width:0;background:#2065fe"></div></div><span id="vb-ptxt"></span> <button type="button" class="btn btn-secondary" id="vb-stop">Stop</button></div>
@@ -3558,7 +3577,7 @@ setInterval(function(){
   if(!el('vb-cv'))return;
   var FR={W:1810,H:2560,area:{x:9,y:8,w:1793,h:1846},box:{x:181,y:1949,w:1455,h:339},safeBottom:1715,img:null};
   var S={mode:'video',layout:'side',gap:8,divider:'#ffffff',head:'',headSize:100,swap:false,
-    logo:'wm',logoSize:20,logoColor:'#ffffff',logoOpacity:90,logoPos:null,sound:true};
+    logo:'wm',logoSize:20,logoColor:'#ffffff',logoOpacity:90,logoPos:null,sound:true,fps:'30',abr:'128'};
   var V={file:null,url:null,el:null,w:0,h:0,dur:0,crop:null,start:0,end:0};   // the video
   var P={img:null,name:'',orig:null};                                          // the photo
   var LOGO={col:null,wh:null},started=false,cv=el('vb-cv'),PW=905,PH=1280,rects=[],logoRect=null,logoDrag=null;
@@ -3751,7 +3770,7 @@ setInterval(function(){
   /* ---------- controls ---------- */
   function setPressed(group,val){var bs=el(group).querySelectorAll('button');for(var i=0;i<bs.length;i++)bs[i].setAttribute('aria-pressed',bs[i].getAttribute('data-v')===val?'true':'false');}
   function wire(group,key,after){el(group).addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;S[key]=b.getAttribute('data-v');setPressed(group,S[key]);if(after)after();labels();draw();});}
-  wire('vb-mode','mode',function(){V.crop=null;});wire('vb-layout','layout',function(){V.crop=null;});wire('vb-div','divider');wire('vb-logo','logo',function(){S.logoPos=null;});wire('vb-lcol','logoColor');
+  wire('vb-fps','fps');wire('vb-abr','abr');wire('vb-mode','mode',function(){V.crop=null;});wire('vb-layout','layout',function(){V.crop=null;});wire('vb-div','divider');wire('vb-logo','logo',function(){S.logoPos=null;});wire('vb-lcol','logoColor');
   el('vb-gap').addEventListener('input',function(e){S.gap=+e.target.value;draw();});
   el('vb-logosz').addEventListener('input',function(e){S.logoSize=+e.target.value;draw();});
   el('vb-lop').addEventListener('input',function(e){S.logoOpacity=+e.target.value;draw();});
@@ -3825,15 +3844,15 @@ setInterval(function(){
       var rc=document.createElement('canvas');rc.width=RW;rc.height=RH;
       drawFrame(rc,false,rv);
       var poster=rc.toDataURL('image/jpeg',0.92);
-      var stream=rc.captureStream(30);
+      var stream=rc.captureStream((+S.fps)||30);
       if(S.sound){
         try{
           ac=new (window.AudioContext||window.webkitAudioContext)();var src=ac.createMediaElementSource(rv),dst=ac.createMediaStreamDestination();
           src.connect(dst);dst.stream.getAudioTracks().forEach(function(t){stream.addTrack(t);});if(ac.resume)await ac.resume();
         }catch(e){ac=null;}
       }
-      var vbps=Math.max(250000,Math.min(6000000,Math.floor((44*1024*1024*8)/dur-(dur>600?100000:160000))));
-      var opts={mimeType:mime,videoBitsPerSecond:vbps};if(S.sound)opts.audioBitsPerSecond=dur>600?64000:128000;
+      var vbps=Math.max(250000,Math.min(6000000,Math.floor((44*1024*1024*8)/dur-(dur>600?100000:((+S.abr)||128)*1000+32000))));
+      var opts={mimeType:mime,videoBitsPerSecond:vbps};if(S.sound)opts.audioBitsPerSecond=dur>600?64000:((+S.abr)||128)*1000;
       rec=new MediaRecorder(stream,opts);
       rec.ondataavailable=function(e){if(e.data&&e.data.size)chunks.push(e.data);};
       var stopped=new Promise(function(res){rec.onstop=res;});
@@ -3860,6 +3879,51 @@ setInterval(function(){
       toast('Could not create the video. Try Chrome, a shorter clip or another file.','error');
     }finally{busy=false;el('vb-make').disabled=false;draw();}
   }
+  // One click: upload the finished video and send it to every connected social account (no length limit of our own;
+  // each platform applies its own rules and any refusal is reported per platform).
+  async function postVideo(btn){
+    var lab=btn.querySelector('span'),st=el('vb-socst'),say=function(t){if(st)st.textContent=t;};
+    if(btn.dataset.busy||!result)return;
+    if(typeof isLoggedIn!=='undefined'&&!isLoggedIn){toast('Log in as admin first.','error');return;}
+    if(!/\.mp4$/i.test(result.name)){toast('Social media needs an MP4 video. Please create it in Chrome or Edge.','error');return;}
+    btn.dataset.busy='1';btn.disabled=true;if(lab)lab.textContent='Posting…';
+    var cap=(S.head||'').replace(/\s+/g,' ').trim();cap=(cap?cap+'\n\n':'')+'#BuzaMedia #HabariZaLeo #Tanzania';
+    var done=[],failed=[],name=function(p){return p.charAt(0).toUpperCase()+p.slice(1);};
+    try{
+      say('Uploading the video… keep this tab open');
+      var pr=await sb.functions.invoke('social-post-video',{body:{action:'prepare'}});
+      if(pr.error||!pr.data||pr.data.error)throw new Error('prepare');
+      var up=await sb.storage.from('social-videos').uploadToSignedUrl(pr.data.path,pr.data.token,result.blob,{contentType:'video/mp4'});
+      if(up.error)throw new Error('upload');
+      say('Sending to social media…');
+      var sr=await sb.functions.invoke('social-post-video',{body:{action:'start',path:pr.data.path,caption:cap}});
+      if(sr.error||!sr.data||sr.data.error)throw new Error('start');
+      var wait=[];
+      (sr.data.results||[]).forEach(function(r){
+        if(r.status==='published')done.push(name(r.platform));
+        else if(r.status==='processing')wait.push(r);
+        else failed.push(name(r.platform)+': '+String(r.error||'failed').slice(0,110));
+      });
+      for(var w=0;w<wait.length;w++){ // Instagram needs a few minutes to process a video before it can be published
+        var r=wait[w],ok=false;
+        for(var k=0;k<200&&!ok;k++){
+          say('Instagram is processing the video… '+Math.round((k*6)/60*10)/10+' min'+(done.length?' (posted to '+done.join(' & ')+' already)':''));
+          await new Promise(function(res){setTimeout(res,6000);});
+          var f=await sb.functions.invoke('social-post-video',{body:{action:'finish',container:r.container,account:r.account}});
+          var d=f.data||{};
+          if(d.status==='published'){done.push(name(r.platform));ok=true;}
+          else if(d.status==='failed'){failed.push(name(r.platform)+': '+String(d.error||'failed').slice(0,110));ok=true;}
+        }
+        if(!ok)failed.push(name(r.platform)+': still processing after 20 minutes — check Instagram later.');
+      }
+      var msg=(done.length?'Posted to '+done.join(' & ')+'.':'')+(failed.length?(done.length?' ':'')+'Not posted — '+failed.join(' | '):'');
+      say(msg||'Nothing to post: no social account is switched on.');
+      toast(done.length?('Posted to '+done.join(' & ')+(failed.length?' (some failed)':'')+'.'):'Could not post the video.',done.length&&!failed.length?'success':'error');
+    }catch(e){
+      say('Could not post the video right now. Please try again.');toast('Could not post the video right now.','error');
+    }
+    delete btn.dataset.busy;btn.disabled=false;if(lab)lab.textContent='Post to social media';
+  }
   function showResult(blob,ext,base,poster){
     var name='buza-banner-'+new Date().toISOString().slice(0,10)+'.'+ext;
     result={blob:blob,file:new File([blob],name,{type:base}),url:URL.createObjectURL(blob),name:name,poster:poster};
@@ -3868,7 +3932,10 @@ setInterval(function(){
       '<div class="cb-note">Ready · '+(blob.size/1048576).toFixed(1)+' MB · '+ext.toUpperCase()+'</div>'+
       '<label class="cb-note" style="display:flex;gap:.4rem;align-items:center;margin:.3rem 0"><input type="checkbox" id="vb-cov" checked> Also use the banner as the cover photo</label>'+
       '<div class="cb-btns"><button type="button" class="btn btn-primary full" id="vb-use"><i class="ti ti-video-plus" aria-hidden="true"></i> Use as post video</button>'+
-      '<button type="button" class="btn btn-secondary full" id="vb-dl"><i class="ti ti-download" aria-hidden="true"></i> Download video</button></div>';
+      '<button type="button" class="btn btn-secondary full" id="vb-dl"><i class="ti ti-download" aria-hidden="true"></i> Download video</button>'+
+      '<button type="button" class="btn btn-primary full" id="vb-social"><i class="ti ti-send" aria-hidden="true"></i> <span>Post to social media</span></button></div>'+
+      '<div class="cb-note" id="vb-socst" style="margin-top:.3rem"></div>';
+    el('vb-social').onclick=function(){postVideo(this);};
     el('vb-use').onclick=useResult;el('vb-dl').onclick=function(){var a=document.createElement('a');a.href=result.url;a.download=result.name;document.body.appendChild(a);a.click();a.remove();};
     toast('Banner video is ready.');
   }
@@ -3939,8 +4006,8 @@ setInterval(function(){
   }
   async function makeExact(){
     if(!(window.VideoEncoder&&window.VideoFrame))return false;
-    var RW=1080,RH=1528,FPS=30,dur=V.end-V.start,n=Math.round(dur*FPS),i;
-    var vbps=Math.max(250000,Math.min(6000000,Math.floor((44*1024*1024*8)/dur-(dur>600?100000:160000))));
+    var RW=1080,RH=1528,FPS=(+S.fps)||30,dur=V.end-V.start,n=Math.round(dur*FPS),i;
+    var vbps=Math.max(250000,Math.min(6000000,Math.floor((44*1024*1024*8)/dur-(dur>600?100000:((+S.abr)||128)*1000+32000))));
     var vcfg={codec:'avc1.640032',width:RW,height:RH,bitrate:vbps,framerate:FPS,avc:{format:'avc'},latencyMode:'realtime'};
     try{var sup=await VideoEncoder.isConfigSupported(vcfg);if(!sup.supported)return false;}catch(e){return false;}
     setPlaying(false);clearResult();busy=true;cancel=false;el('vb-make').disabled=true;
@@ -3962,7 +4029,7 @@ setInterval(function(){
           var ac=new (window.AudioContext||window.webkitAudioContext)({sampleRate:48000});
           var buf=await ac.decodeAudioData(await V.file.arrayBuffer());if(ac.close)ac.close();
           ch=Math.min(2,buf.numberOfChannels);sr=48000;
-          var cfgs=[{codec:'mp4a.40.2',sampleRate:sr,numberOfChannels:ch,bitrate:dur>600?64000:128000},{codec:'opus',sampleRate:sr,numberOfChannels:ch,bitrate:dur>600?48000:96000}],acfg=null;
+          var cfgs=[{codec:'mp4a.40.2',sampleRate:sr,numberOfChannels:ch,bitrate:dur>600?64000:((+S.abr)||128)*1000},{codec:'opus',sampleRate:sr,numberOfChannels:ch,bitrate:dur>600?48000:Math.round(((+S.abr)||128)*750)}],acfg=null;
           for(i=0;i<cfgs.length&&!acfg;i++){try{if((await AudioEncoder.isConfigSupported(cfgs[i])).supported)acfg=cfgs[i];}catch(e){}}
           if(acfg){
             acodec=acfg.codec==='opus'?'opus':'aac';
@@ -4023,7 +4090,7 @@ setInterval(function(){
       if(cancel){try{venc.close();}catch(e){}showProg(false);toast('Stopped.');ok=true;return true;}
       await venc.flush();venc.close();
       if(!vdesc||!vs.length)throw new Error('encode');
-      var vtrack={kind:'v',samples:vs,w:RW,h:RH,desc:vdesc,ts:30000,dur:vs.length*1000/30000};
+      var vtrack={kind:'v',samples:vs,w:RW,h:RH,desc:vdesc,ts:FPS*1000,dur:vs.length/FPS};
       var atrack=hasSound?{kind:'a',samples:asamples,codec:acodec,desc:adesc,ch:ch,sr:sr,ts:sr,pre:pre,dur:0}:null;
       if(atrack){var tot=0;asamples.forEach(function(s){tot+=s.d;});atrack.dur=tot/sr;
         if(acodec==='opus'&&adesc&&adesc.length>=12&&adesc[0]===0x4F)atrack.pre=adesc[10]+adesc[11]*256;}
