@@ -827,6 +827,7 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
                 </div>
                 <div class="cb-btns">
                   <button type="button" class="btn btn-primary full" id="vb-make"><i class="ti ti-movie" aria-hidden="true"></i> Create banner video</button>
+                  <button type="button" class="btn btn-primary full" id="vb-makepost"><i class="ti ti-send" aria-hidden="true"></i> Create video &amp; post to social media</button>
                   <div id="vb-prog" class="cb-note" style="display:none;width:100%"><div style="height:8px;border-radius:6px;background:#e3e6ea;overflow:hidden"><div id="vb-bar" style="height:100%;width:0;background:#2065fe"></div></div><span id="vb-ptxt"></span> <button type="button" class="btn btn-secondary" id="vb-stop">Stop</button></div>
                   <div id="vb-res" style="display:none;width:100%"></div>
                   <button type="button" class="btn btn-secondary full" id="vb-clear"><i class="ti ti-trash" aria-hidden="true"></i> Clear video &amp; start over</button>
@@ -3835,7 +3836,7 @@ setInterval(function(){
   function clearResult(){if(result&&result.url)URL.revokeObjectURL(result.url);result=null;var r=el('vb-res');r.style.display='none';r.innerHTML='';}
   async function makeLive(){
     if(busy||!ready())return;
-    setPlaying(false);clearResult();busy=true;cancel=false;el('vb-make').disabled=true;
+    setPlaying(false);clearResult();busy=true;cancel=false;el('vb-make').disabled=el('vb-makepost').disabled=true;
     var RW=1080,RH=1528,dur=V.end-V.start,rv=document.createElement('video'),ac=null,rec=null,chunks=[],mime=pickMime();
     try{
       rv.src=V.url;rv.playsInline=true;rv.preload='auto';rv.muted=!S.sound;
@@ -3877,7 +3878,7 @@ setInterval(function(){
     }catch(err){
       showProg(false);try{rv.pause();}catch(e){}try{if(rec&&rec.state!=='inactive')rec.stop();}catch(e){}
       toast('Could not create the video. Try Chrome, a shorter clip or another file.','error');
-    }finally{busy=false;el('vb-make').disabled=false;draw();}
+    }finally{busy=false;el('vb-make').disabled=el('vb-makepost').disabled=false;draw();}
   }
   // One click: upload the finished video and send it to every connected social account (no length limit of our own;
   // each platform applies its own rules and any refusal is reported per platform).
@@ -3938,6 +3939,7 @@ setInterval(function(){
     el('vb-social').onclick=function(){postVideo(this);};
     el('vb-use').onclick=useResult;el('vb-dl').onclick=function(){var a=document.createElement('a');a.href=result.url;a.download=result.name;document.body.appendChild(a);a.click();a.remove();};
     toast('Banner video is ready.');
+    if(autoPost){autoPost=false;setTimeout(function(){var b=el('vb-social');if(b)postVideo(b);},400);}
   }
   /* ---------- exact (frame by frame) creation ----------
      Every frame is taken at its exact time and the sound is cut from the original, so the result is never
@@ -4010,7 +4012,7 @@ setInterval(function(){
     var vbps=Math.max(250000,Math.min(6000000,Math.floor((44*1024*1024*8)/dur-(dur>600?100000:((+S.abr)||128)*1000+32000))));
     var vcfg={codec:'avc1.640032',width:RW,height:RH,bitrate:vbps,framerate:FPS,avc:{format:'avc'},latencyMode:'realtime'};
     try{var sup=await VideoEncoder.isConfigSupported(vcfg);if(!sup.supported)return false;}catch(e){return false;}
-    setPlaying(false);clearResult();busy=true;cancel=false;el('vb-make').disabled=true;
+    setPlaying(false);clearResult();busy=true;cancel=false;el('vb-make').disabled=el('vb-makepost').disabled=true;
     var rv=document.createElement('video'),ok=false;
     try{
       var vs=[],vdesc=null,aenc=null,asamples=[],adesc=null,acodec='',sr=48000,ch=2,pre=312;
@@ -4102,7 +4104,7 @@ setInterval(function(){
     }catch(err){
       showProg(false);try{rv.pause();}catch(e){}
       return false;   // let the live recorder try instead
-    }finally{busy=false;el('vb-make').disabled=false;draw();}
+    }finally{busy=false;el('vb-make').disabled=el('vb-makepost').disabled=false;draw();}
   }
   async function make(){
     if(busy||!ready())return;
@@ -4119,7 +4121,12 @@ setInterval(function(){
     toast('Banner video attached to the post.');
     var t=el('video-upload-zone-wrap');if(t&&t.scrollIntoView)t.scrollIntoView({behavior:'smooth',block:'center'});
   }
-  el('vb-make').addEventListener('click',make);
+  var autoPost=false;
+  el('vb-make').addEventListener('click',function(){autoPost=false;make();});
+  el('vb-makepost').addEventListener('click',function(){ // creates the video, then posts it by itself as soon as it is ready
+    if(typeof isLoggedIn!=='undefined'&&!isLoggedIn){toast('Log in as admin first.','error');return;}
+    autoPost=true;make();
+  });
   el('vb-stop').addEventListener('click',function(){cancel=true;});
 
   function clearAll(quiet){
