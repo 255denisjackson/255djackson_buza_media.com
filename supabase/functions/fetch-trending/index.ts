@@ -8,7 +8,7 @@ const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers
 const json = (o: unknown, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
 
-const MAX_NEW_PER_RUN = 80, TIME_BUDGET_MS = 100_000, MAX_AGE_DAYS = 5, BUCKET = "article-images";
+const MAX_NEW_PER_RUN = 80, TIME_BUDGET_MS = 100_000, BUCKET = "article-images";
 const UA = "Mozilla/5.0 (compatible; BuzaMediaBot/1.0; +https://255denisjackson.github.io/255djackson_buza_media.com/)";
 
 async function authorize(req: Request): Promise<boolean> {
@@ -83,7 +83,9 @@ async function run() {
   try {
     const { data: sources, error } = await sb.from("news_sources").select("*").eq("enabled", true).order("rank").order("priority", { ascending: false }).order("id");
     if (error) throw error;
-    const cutoff = Date.now() - MAX_AGE_DAYS * 864e5;
+    // Only collect stories dated TODAY (Tanzania time, UTC+3): anything from yesterday or earlier is ignored.
+    const eat = new Date(Date.now() + 3 * 3600e3);
+    const cutoff = Date.UTC(eat.getUTCFullYear(), eat.getUTCMonth(), eat.getUTCDate()) - 3 * 3600e3;
 
     const doSource = async (src: any) => {
       if (Date.now() - started > TIME_BUDGET_MS || inserted >= MAX_NEW_PER_RUN) return;
@@ -91,7 +93,7 @@ async function run() {
         const r = await timedFetch(src.feed_url, 12000);
         if (!r.ok) throw new Error(`${src.name}: feed said ${r.status}`);
         const stories: Story[] = parseFeed(await r.text()).filter((s) => {
-          const t = Date.parse(s.published); return isNaN(t) || t >= cutoff;
+          const t = Date.parse(s.published); return !isNaN(t) && t >= cutoff;
         }).slice(0, Math.max(src.max_items * 4, 8));
         found += stories.length;
         const keyed = await Promise.all(stories.map(async (s) => ({ s, key: (await sha1(normalizeLink(s.link))).slice(0, 32) })));
