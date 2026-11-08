@@ -729,6 +729,7 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
                   <button type="button" class="btn btn-secondary" id="cb-reset"><i class="ti ti-refresh" aria-hidden="true"></i> Reset</button>
                   <button type="button" class="btn btn-primary full" id="cb-use"><i class="ti ti-photo-check" aria-hidden="true"></i> Use as cover photo</button>
                   <button type="button" class="btn btn-secondary full" id="cb-dl"><i class="ti ti-download" aria-hidden="true"></i> Download image</button>
+                  <button type="button" class="btn btn-primary full" id="cb-social"><i class="ti ti-send" aria-hidden="true"></i> <span>Post to social media</span></button>
                   <button type="button" class="btn btn-secondary full" id="cb-clear"><i class="ti ti-trash" aria-hidden="true"></i> Clear photos &amp; start over</button>
                 </div>
               </div>
@@ -3504,6 +3505,31 @@ setInterval(function(){
       a.download='buza-'+(jpg?'post':'combined')+'-'+new Date().toISOString().slice(0,10)+(jpg?'.jpg':'.png');
       document.body.appendChild(a);a.click();a.remove();
     },jpg?'image/jpeg':'image/png',jpg?0.95:undefined);
+  });
+  // One click: send the finished picture to every connected social account (Facebook, Instagram, and others as they are connected).
+  el('cb-social').addEventListener('click',function(){
+    var btn=this,lab=btn.querySelector('span');
+    if(btn.dataset.busy)return;
+    if(typeof isLoggedIn!=='undefined'&&!isLoggedIn){toast('Log in as admin first.','error');return;}
+    if(!ready())return;
+    var out=document.createElement('canvas');draw(out);
+    var c=out;
+    if(out.width>1440){c=document.createElement('canvas');c.width=1440;c.height=Math.round(out.height*1440/out.width);var g=c.getContext('2d');g.imageSmoothingQuality='high';g.drawImage(out,0,0,c.width,c.height);}
+    var data=c.toDataURL('image/jpeg',0.9);
+    var cap=(S.head||'').replace(/\s+/g,' ').trim();
+    cap=(cap?cap+'\n\n':'')+'#BuzaMedia #HabariZaLeo #Tanzania';
+    btn.dataset.busy='1';btn.disabled=true;if(lab)lab.textContent='Posting…';
+    toast('Posting to social media… about 20 seconds.');
+    sb.functions.invoke('social-post-image',{body:{image_b64:data,caption:cap}}).then(function(r){
+      if(r.error)throw r.error;
+      var d=r.data||{};
+      if(d.error){toast('Could not post: '+String(d.error).slice(0,120),'error');return;}
+      var ok=(d.results||[]).filter(function(x){return x.status==='published';}).map(function(x){return x.platform.charAt(0).toUpperCase()+x.platform.slice(1);});
+      var bad=(d.results||[]).filter(function(x){return x.status!=='published';});
+      if(ok.length)toast('Posted to '+ok.join(' & ')+(bad.length?' — but '+bad.map(function(x){return x.platform;}).join(', ')+' failed: '+String(bad[0].error).slice(0,90):'.'),bad.length?'error':'success');
+      else toast('Could not post: '+(bad[0]?String(bad[0].error).slice(0,120):'no social account is switched on.'),'error');
+    }).catch(function(){toast('Could not post right now. Please try again.','error');})
+    .then(function(){delete btn.dataset.busy;btn.disabled=false;if(lab)lab.textContent='Post to social media';});
   });
   // Start over: removes both photos and the headline (layout, size and logo choices stay).
   function clearAll(quiet){
