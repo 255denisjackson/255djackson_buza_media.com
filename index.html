@@ -563,6 +563,20 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
   .sp-team img,.sp-fb{width:76px;height:76px}.sp-score{font-size:2.7rem}.sp-mid{min-width:100px}
   .sp-tbl .gfga{display:none}
 }
+
+.sp-acts{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.sp-hero .sp-acts{justify-content:center;margin-top:12px}
+.sp-act{flex:1 1 130px;display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid rgba(90,140,255,.4);background:rgba(20,40,90,.55);color:#cfe0ff;border-radius:12px;padding:9px 10px;font-weight:700;font-size:.76rem;cursor:pointer}
+.sp-hero .sp-act{flex:0 1 190px}
+.sp-act:disabled{opacity:.6;cursor:wait}
+.sp-act-p{background:linear-gradient(180deg,#22c55e,#15934a);border-color:transparent;color:#fff}
+.sp-goal{background:linear-gradient(180deg,#fbbf24,#f59e0b);color:#1a1200;font-weight:800;font-size:.74rem;letter-spacing:.6px;padding:4px 12px;border-radius:999px;animation:spGoal .6s ease-in-out infinite alternate}
+@keyframes spGoal{from{transform:scale(1)}to{transform:scale(1.14)}}
+.sp-roll{display:inline-block;animation:spRoll .9s cubic-bezier(.2,.9,.25,1.2)}
+@keyframes spRoll{0%{transform:translateY(-70%) scale(1.8);opacity:0;color:#7cb4ff;text-shadow:0 0 30px #4a93ff}60%{opacity:1;transform:translateY(6%) scale(1.15)}100%{transform:none;opacity:1}}
+.sp-m.sp-flash{animation:spFlash 2.4s ease-out}
+@keyframes spFlash{0%,35%{box-shadow:0 0 0 2px rgba(110,170,255,.9),0 0 28px rgba(74,147,255,.6)}100%{box-shadow:0 0 0 0 rgba(110,170,255,0)}}
+.sp-bar i{transition:width 1.2s ease}
 </style>
 </head>
 <body>
@@ -613,7 +627,6 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
   <div class="sp-app">
     <div class="sp-top">
       <div class="sp-brand"><span class="lg"><i class="ti ti-ball-football" aria-hidden="true"></i></span><span>Buza Media <b>Sports</b></span></div>
-      <button class="sp-ico" id="sp-refresh" onclick="spLoad(true)" aria-label="Refresh scores" title="Refresh"><i class="ti ti-refresh" aria-hidden="true"></i></button>
       <div class="sp-chips" id="sp-chips" role="tablist" aria-label="Leagues"></div>
     </div>
     <div class="sp-grid">
@@ -2079,8 +2092,8 @@ function applyTopStoryGradient(imgUrl){
 }
 /* ===== Buza Media Sports (live scores) ===== */
 const SP_API='https://liingyivheqmuosuxwvd.supabase.co/functions/v1/live-scores';
-const SP_LEAGUES=[['all','All'],['eng.1','Premier League'],['esp.1','LaLiga'],['ger.1','Bundesliga'],['fra.1','Ligue 1'],['uefa.champions','Champions League'],['uefa.europa','Europa League'],['caf.champions','CAF CL'],['caf.confed','CAF Confed'],['eng.league_cup','Carabao Cup']];
-var SP={date:null,matches:[],league:'all',tLeague:'eng.1',heroId:null,stand:{},showAll:false,poll:null,tick:null,open:false,loaded:false,updated:null};
+const SP_LEAGUES=[['all','All'],['eng.1','Premier League'],['esp.1','LaLiga'],['ger.1','Bundesliga'],['fra.1','Ligue 1'],['uefa.champions','Champions League'],['uefa.europa','Europa League'],['caf.champions','CAF CL'],['caf.confed','CAF Confed'],['eng.league_cup','Carabao Cup'],['eng.fa','FA Cup']];
+const SP={date:null,matches:[],league:'all',tLeague:'eng.1',heroId:null,stand:{},showAll:false,poll:null,tick:null,open:false,loaded:false,updated:null};
 function spEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function spTodayKey(){return new Date(Date.now()+3*3600e3).toISOString().slice(0,10);}
 function spAddDays(key,n){const [y,m,d]=key.split('-').map(Number);return new Date(Date.UTC(y,m-1,d+n)).toISOString().slice(0,10);}
@@ -2099,12 +2112,12 @@ function openSports(btn){
   try{document.title='Buza Media Sports | Live scores';}catch(e){}
   SP.open=true;window.scrollTo(0,0);
   spRenderChips();
-  if(!SP.loaded){spInit();}else{spRenderAll();spLoad(true);}
-  clearInterval(SP.poll);SP.poll=setInterval(()=>{if(SP.open&&!document.hidden)spLoad(false);},30000);
+  if(!SP.loaded){spInit();}else{spRenderAll();spLoad();}
+  clearInterval(SP.poll);SP.poll=setInterval(()=>{if(SP.open&&!document.hidden)spLoad();},30000);
   clearInterval(SP.tick);SP.tick=setInterval(spTick,1000);
 }
 function hideSports(){
-  if(!SP||!SP.open)return;
+  if(!SP.open)return;
   SP.open=false;clearInterval(SP.poll);clearInterval(SP.tick);
   document.getElementById('view-sports').classList.add('hidden');
   try{document.title='Buza Media';}catch(e){}
@@ -2132,11 +2145,46 @@ async function spInit(){
   SP.tLeague=lgWith?lgWith.league:'eng.1';
   spRenderAll();spLoadTable();
 }
-async function spLoad(manual){
-  const b=document.getElementById('sp-refresh');if(manual&&b)b.classList.add('spin');
-  try{const res=await spFetch(SP.date||spTodayKey());SP.matches=res.matches||[];SP.updated=res.updated;spRenderAll();}
-  catch(e){}
-  if(b)setTimeout(()=>b.classList.remove('spin'),500);
+async function spLoad(){ // runs quietly in the background: nothing flashes, only changed numbers animate
+  try{const res=await spFetch(SP.date||spTodayKey());SP.updated=res.updated;spApply(res.matches||[]);}catch(e){}
+}
+function spSig(list){return list.map(m=>m.id+':'+m.state).join('|');}
+function spApply(next){
+  const prev=new Map(SP.matches.map(m=>[m.id,m]));
+  const oldSig=spSig(spVisible());
+  SP.matches=next;
+  const changed=[];
+  next.forEach(m=>{const o=prev.get(m.id);if(o&&(o.home.score!==m.home.score||o.away.score!==m.away.score))changed.push({m,o});});
+  if(!next.some(x=>x.id===SP.heroId)){const f=spVisible()[0];SP.heroId=f?f.id:null;}
+  if(oldSig!==spSig(spVisible()))spRenderAll();else spPatch();
+  changed.forEach(c=>spBump(c.m,c.o));
+}
+function spSet(el,txt){if(el&&el.textContent!==String(txt))el.textContent=txt;}
+function spPatch(){
+  spVisible().forEach(m=>{
+    const sc=[m.home.score==null?0:m.home.score,m.away.score==null?0:m.away.score];
+    const card=document.getElementById('spm-'+m.id);
+    if(card){
+      const h=card.querySelector('[data-s="h"]'),a=card.querySelector('[data-s="a"]');
+      spSet(h,sc[0]);spSet(a,sc[1]);
+      const bar=card.querySelector('.sp-bar i');if(bar)bar.style.width=Math.min(100,Math.round(spMinutes(m)/90*100))+'%';
+      spSet(card.querySelector('.sp-barlbl'),m.detail||m.clock);
+    }
+    if(m.id===SP.heroId){spSet(document.getElementById('sp-hs'),sc[0]);spSet(document.getElementById('sp-as'),sc[1]);spSet(document.getElementById('sp-hmin'),m.detail||m.clock);}
+  });
+  const f=document.getElementById('sp-foot');
+  if(f&&SP.updated){try{f.textContent='Buza Media Sports · Updated '+new Date(SP.updated).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'Africa/Dar_es_Salaam'})+' EAT';}catch(e){}}
+}
+function spRoll(el){if(!el)return;el.classList.remove('sp-roll');void el.offsetWidth;el.classList.add('sp-roll');setTimeout(()=>el.classList.remove('sp-roll'),1400);}
+function spBump(m,o){
+  const hc=o.home.score!==m.home.score,ac=o.away.score!==m.away.score;
+  const card=document.getElementById('spm-'+m.id);
+  if(card){if(hc)spRoll(card.querySelector('[data-s="h"]'));if(ac)spRoll(card.querySelector('[data-s="a"]'));card.classList.remove('sp-flash');void card.offsetWidth;card.classList.add('sp-flash');setTimeout(()=>card.classList.remove('sp-flash'),2600);}
+  if(m.id===SP.heroId){
+    if(hc)spRoll(document.getElementById('sp-hs'));if(ac)spRoll(document.getElementById('sp-as'));
+    const top=document.querySelector('#sp-hero .sp-hero-top');
+    if(top&&m.state==='in'&&!top.querySelector('.sp-goal')){const g=document.createElement('span');g.className='sp-goal';g.textContent='GOAL!';top.insertBefore(g,top.children[1]||null);setTimeout(()=>g.remove(),7000);}
+  }
 }
 async function spPickDay(key){
   SP.date=key;SP.heroId=null;
@@ -2188,10 +2236,10 @@ function spRenderHero(){
   const sc=(m.home.score==null?0:m.home.score)+' – '+(m.away.score==null?0:m.away.score);
   const mid=pre
     ?`<div class="sp-ev">${spEsc(m.leagueName)}</div><div class="sp-evs">${spEsc(spDateLong(m.date))} · ${spTime(m.date)}</div><div class="sp-cd" id="sp-cd">${spCdHtml(m.date)}</div><div class="sp-score pill">VS</div>`
-    :`<div class="sp-score">${sc}</div>${live?`<div class="sp-min"><i class="ti ti-clock" aria-hidden="true"></i> ${spEsc(m.detail||m.clock)}</div>`:`<div class="sp-evs">${spEsc(m.detail||'FT')}</div>`}`;
+    :`<div class="sp-score"><span id="sp-hs">${m.home.score==null?0:m.home.score}</span> – <span id="sp-as">${m.away.score==null?0:m.away.score}</span></div>${live?`<div class="sp-min"><i class="ti ti-clock" aria-hidden="true"></i> <span id="sp-hmin">${spEsc(m.detail||m.clock)}</span></div>`:`<div class="sp-evs">${spEsc(m.detail||'FT')}</div>`}`;
   el.innerHTML=`<div class="sp-hero-top">${pill}<div class="sp-days">${days}</div><div class="sp-hero-lg">${spEsc(m.leagueName)}</div></div>
   <div class="sp-hero-main"><div class="sp-team">${spCrest(m.home,'sp-fb')}<div class="nm">${spEsc(m.home.name)}</div></div><div class="sp-mid">${mid}</div><div class="sp-team">${spCrest(m.away,'sp-fb')}<div class="nm">${spEsc(m.away.name)}</div></div></div>
-  <div class="sp-hero-foot">${m.venue?'<i class="ti ti-map-pin" aria-hidden="true"></i> '+spEsc(m.venue)+' · ':''}${spTime(m.date)} EAT</div>`;
+  <div class="sp-hero-foot">${m.venue?'<i class="ti ti-map-pin" aria-hidden="true"></i> '+spEsc(m.venue)+' · ':''}${spTime(m.date)} EAT</div>${spActs(m)}`;
 }
 function spRenderLive(){
   const el=document.getElementById('sp-live'),v=spVisible(),anyLive=v.some(m=>m.state==='in');
@@ -2200,13 +2248,13 @@ function spRenderLive(){
   el.innerHTML=`<div class="sp-h"><span><i class="ti ti-broadcast" aria-hidden="true"></i>${title}</span><span class="sp-pill">${v.length}</span></div><div class="sp-list">`+v.map(m=>{
     const live=m.state==='in',pre=m.state==='pre',pct=Math.min(100,Math.round(spMinutes(m)/90*100));
     const tag=live?'<span class="sp-pill-live">LIVE</span>':pre?`<span class="sp-pill">${spTime(m.date)}</span>`:'<span class="sp-pill ft">FT</span>';
-    const sc=pre?'vs':(m.home.score==null?0:m.home.score)+' - '+(m.away.score==null?0:m.away.score);
+    const sc=pre?'vs':`<b data-s="h">${m.home.score==null?0:m.home.score}</b> - <b data-s="a">${m.away.score==null?0:m.away.score}</b>`;
     return `<div class="sp-m${m.id===SP.heroId?' sel':''}" id="spm-${spEsc(m.id)}" onclick="spSetHero('${spEsc(m.id)}')">
       <div class="sp-m-top">${tag}<span class="lgn">${spEsc(m.leagueName)}</span></div>
       <div class="sp-m-mid"><div class="t">${spCrest(m.home,'sp-fs')}${spEsc(m.home.name)}</div><div class="sp-m-sc">${sc}</div><div class="t">${spCrest(m.away,'sp-fs')}${spEsc(m.away.name)}</div></div>
       ${live?`<div class="sp-bar"><i style="width:${pct}%"></i></div><div class="sp-barlbl">${spEsc(m.detail||m.clock)}</div>`:''}
       <div class="sp-det"><div><i class="ti ti-calendar" aria-hidden="true"></i> ${spEsc(spDateLong(m.date))} · ${spTime(m.date)} EAT</div>${m.venue?`<div><i class="ti ti-map-pin" aria-hidden="true"></i> ${spEsc(m.venue)}</div>`:''}<div><i class="ti ti-trophy" aria-hidden="true"></i> ${spEsc(m.leagueName)}</div></div>
-      <button class="sp-btn" onclick="spToggle(event,'${spEsc(m.id)}')">Match Details</button></div>`;
+      <button class="sp-btn" onclick="spToggle(event,'${spEsc(m.id)}')">Match Details</button>${spActs(m)}</div>`;
   }).join('')+'</div>';
 }
 function spRenderTable(data){
@@ -2222,7 +2270,7 @@ function spRenderTable(data){
   for(const g of Object.keys(groups)){
     if(multi)body+=`<tr class="sp-grp"><td colspan="9">${spEsc(String(g).replace(/^\d{4}-\d{2,4}\s*/,''))}</td></tr>`;
     for(const r of groups[g]){if(n++>=limit)break;
-      body+=`<tr><td><span class="sp-pos">${r.rank}</span></td><td><div class="tm">${r.logo?`<img src="${spEsc(r.logo)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:`<span class="sp-fs">${spEsc((r.team||'?').slice(0,2))}</span>`}<span class="t">${spEsc(r.team)}</span></div></td><td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td><td class="gfga">${r.gf}</td><td class="gfga">${r.ga}</td><td class="pts">${r.pts}</td></tr>`;}
+      body+=`<tr><td><span class="sp-pos">${r.rank}</span></td><td><div class="tm">${r.logo?`<img src="${spEsc(r.logo)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:`<span class="sp-fs">${spEsc((r.team||'?').slice(0,2))}</span>`}${spEsc(r.team)}</div></td><td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td><td class="gfga">${r.gf}</td><td class="gfga">${r.ga}</td><td class="pts">${r.pts}</td></tr>`;}
   }
   const more=!multi&&rows.length>8?`<button class="sp-more" onclick="SP.showAll=!SP.showAll;spRenderTable(SP.stand[SP.tLeague])">${SP.showAll?'Show less':'View all '+rows.length+' teams'}</button>`:'';
   el.innerHTML=head+`<table class="sp-tbl"><thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th class="gfga">GF</th><th class="gfga">GA</th><th>Pts</th></tr></thead><tbody>${body}</tbody></table>`+more;
@@ -2231,7 +2279,129 @@ function spRenderAll(){
   spRenderHero();spRenderLive();
   if(SP.stand[SP.tLeague])spRenderTable(SP.stand[SP.tLeague]);
   const f=document.getElementById('sp-foot');
-  if(f&&SP.updated){try{f.textContent='Buza Media Sports · Updated '+new Date(SP.updated).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'Africa/Dar_es_Salaam'})+' EAT · refreshes every 30 seconds';}catch(e){}}
+  if(f&&SP.updated){try{f.textContent='Buza Media Sports · Updated '+new Date(SP.updated).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'Africa/Dar_es_Salaam'})+' EAT';}catch(e){}}
+}
+
+/* ---- download / post the result banner ---- */
+function spIsAdmin(){return typeof isLoggedIn!=='undefined'&&!!isLoggedIn;}
+function spActs(m){
+  const id=spEsc(m.id);
+  return `<div class="sp-acts"><button class="sp-act" onclick="spDownload(event,'${id}',this)"><i class="ti ti-download" aria-hidden="true"></i> <span>Download banner</span></button>${spIsAdmin()?`<button class="sp-act sp-act-p" onclick="spPost(event,'${id}',this)"><i class="ti ti-send" aria-hidden="true"></i> <span>Post to social</span></button>`:''}</div>`;
+}
+const SP_IMG={};
+async function spLoadImg(url){
+  if(!url)return null;if(SP_IMG[url]!==undefined)return SP_IMG[url];
+  let bm=null;try{const r=await fetch(`${SP_API}?action=img&u=${encodeURIComponent(url)}`);if(r.ok)bm=await createImageBitmap(await r.blob());}catch(e){}
+  SP_IMG[url]=bm;return bm;
+}
+function spStatus(m){
+  const ht=/^(HT|half)/i.test(m.detail||'');
+  if(m.state==='in')return ht?{t:'MAPUMZIKO',c:'#f59e0b',live:false}:{t:'MOJA KWA MOJA',c:'#e11d2e',live:true};
+  if(m.state==='pre')return {t:'INAKUJA',c:'#2065fe',live:false};
+  return {t:'MECHI IMEISHA',c:'#566074',live:false};
+}
+function spTitle(m){
+  const h=m.home.name,a=m.away.name;
+  return m.state==='pre'?`${h} vs ${a}`:`${h} ${m.home.score==null?0:m.home.score} - ${m.away.score==null?0:m.away.score} ${a}`;
+}
+async function spBanner(m){
+  try{await document.fonts.ready;}catch(e){}
+  const W=1080,H=1350,cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');
+  const F=(w,px)=>`${w} ${px}px Poppins,Inter,"Segoe UI",Arial,sans-serif`;
+  const [hi,ai]=await Promise.all([spLoadImg(m.home.logo),spLoadImg(m.away.logo)]);
+  const rr=(x,y,w,h,r)=>{g.beginPath();if(g.roundRect)g.roundRect(x,y,w,h,r);else g.rect(x,y,w,h);};
+  const wrap=(text,maxW,maxLines)=>{const words=String(text).split(/\s+/),lines=[];let l='';for(const w of words){const t=l?l+' '+w:w;if(l&&g.measureText(t).width>maxW){lines.push(l);l=w;}else l=t;}if(l)lines.push(l);if(lines.length>maxLines){const k=lines.slice(0,maxLines);let last=k[maxLines-1];while(last.length&&g.measureText(last+'…').width>maxW)last=last.slice(0,-1);k[maxLines-1]=last.trimEnd()+'…';return k;}return lines;};
+  const topH=830;
+  // dark stadium-night top with a soft blue glow and a faint pitch circle
+  let bg=g.createLinearGradient(0,0,0,topH);bg.addColorStop(0,'#0c1c45');bg.addColorStop(1,'#070d1f');g.fillStyle=bg;g.fillRect(0,0,W,H);
+  let gl=g.createRadialGradient(540,470,20,540,470,560);gl.addColorStop(0,'rgba(47,123,255,.38)');gl.addColorStop(1,'rgba(47,123,255,0)');g.fillStyle=gl;g.fillRect(0,0,W,topH);
+  g.strokeStyle='rgba(130,175,255,.12)';g.lineWidth=4;g.beginPath();g.arc(540,500,200,0,Math.PI*2);g.stroke();g.beginPath();g.moveTo(540,280);g.lineTo(540,720);g.stroke();
+  // header: brand + SPORTS + status
+  g.textBaseline='alphabetic';g.textAlign='left';g.fillStyle='#fff';g.font=F(800,38);try{g.letterSpacing='2px';}catch(e){}
+  g.shadowColor='rgba(0,0,0,.5)';g.shadowBlur=8;g.shadowOffsetY=3;g.fillText('BUZA MEDIA',60,98);g.shadowColor='transparent';
+  const bw=g.measureText('BUZA MEDIA').width;try{g.letterSpacing='0px';}catch(e){}
+  g.fillStyle='#2065fe';rr(60+bw+16,62,150,48,10);g.fill();g.fillStyle='#fff';g.font=F(800,26);try{g.letterSpacing='2px';}catch(e){}g.fillText('SPORTS',60+bw+16+22,96);try{g.letterSpacing='0px';}catch(e){}
+  const st=spStatus(m);g.font=F(800,26);const stw=g.measureText(st.t).width+(st.live?30:0)+48;
+  g.fillStyle=st.c;rr(W-60-stw,60,stw,52,26);g.fill();g.fillStyle='#fff';
+  if(st.live){g.beginPath();g.arc(W-60-stw+30,86,7,0,Math.PI*2);g.fill();}
+  g.textAlign='left';g.fillText(st.t,W-60-stw+(st.live?46:24),96);
+  // league + date
+  g.textAlign='center';g.fillStyle='#9fc2ff';g.font=F(800,32);g.fillText(String(m.leagueName).toUpperCase(),540,196);
+  let dtx='';try{dtx=new Date(m.date).toLocaleDateString('sw-TZ',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Africa/Dar_es_Salaam'});}catch(e){}
+  g.fillStyle='#8ea0cc';g.font=F(500,26);g.fillText(dtx,540,240);
+  // crests
+  const crest=(img,cx,cy,s,t)=>{
+    if(img){const k=Math.min(s/img.width,s/img.height),w=img.width*k,h=img.height*k;g.shadowColor='rgba(0,0,0,.55)';g.shadowBlur=30;g.shadowOffsetY=12;g.drawImage(img,cx-w/2,cy-h/2,w,h);g.shadowColor='transparent';}
+    else{g.fillStyle='rgba(80,120,220,.3)';g.beginPath();g.arc(cx,cy,s/2,0,Math.PI*2);g.fill();g.fillStyle='#cfe0ff';g.font=F(800,70);g.textAlign='center';g.fillText(String(t.abbr||t.name||'?').slice(0,3).toUpperCase(),cx,cy+24);}
+  };
+  crest(hi,205,510,270,m.home);crest(ai,875,510,270,m.away);
+  // score / kickoff in the middle
+  g.textAlign='center';g.fillStyle='#fff';
+  if(m.state==='pre'){
+    g.font=F(800,130);g.shadowColor='rgba(80,140,255,.7)';g.shadowBlur=30;g.fillText(spTime(m.date),540,545);g.shadowColor='transparent';
+    g.fillStyle='#9fc2ff';g.font=F(700,30);g.fillText('SAA ZA EAT',540,600);
+  }else{
+    const txt=`${m.home.score==null?0:m.home.score} – ${m.away.score==null?0:m.away.score}`;let px=190;g.font=F(800,px);while(g.measureText(txt).width>330&&px>90){px-=8;g.font=F(800,px);}
+    g.shadowColor='rgba(80,140,255,.8)';g.shadowBlur=34;g.fillText(txt,540,540);g.shadowColor='transparent';
+    g.fillStyle=m.state==='in'?'#8fc0ff':'#cfe0ff';g.font=F(800,m.state==='in'?52:30);
+    const sub=m.state==='in'?(/^(HT|half)/i.test(m.detail||'')?'MAPUMZIKO':(m.detail||m.clock||'')):'MECHI IMEISHA';
+    g.fillText(sub,540,615);
+  }
+  // team names
+  g.fillStyle='#fff';g.font=F(800,40);
+  [[m.home.name,205],[m.away.name,875]].forEach(([n,cx])=>{wrap(n,400,2).forEach((ln,i)=>g.fillText(ln,cx,700+i*50));});
+  // white lower panel like the site's news banner
+  g.fillStyle='#fff';g.fillRect(0,topH,W,H-topH);g.fillStyle='#2065fe';g.fillRect(0,topH,W,8);
+  g.textAlign='left';g.fillStyle='#1a1a1e';g.font=F(800,58);
+  const tl=wrap(spTitle(m).toUpperCase(),W-120,3);tl.forEach((ln,i)=>g.fillText(ln,60,topH+110+i*70));
+  g.fillStyle='#6c757d';g.font=F(500,30);
+  const sub2=wrap(m.leagueName+(m.venue?' · Uwanja: '+m.venue:''),W-120,2);sub2.forEach((ln,i)=>g.fillText(ln,60,topH+110+tl.length*70+14+i*42));
+  g.fillStyle='#e0e0e0';g.fillRect(60,H-110,W-120,2);
+  g.fillStyle='#1a1a1e';g.font=F(700,30);g.fillText('Na Buza Media Sports',60,H-62);
+  g.fillStyle='#6c757d';g.font=F(400,24);g.fillText(dtx,60,H-26);
+  g.textAlign='right';g.fillStyle='#2065fe';g.font=F(700,28);g.fillText('buzamedia.com',W-60,H-62);
+  g.fillStyle='#6c757d';g.font=F(400,22);g.fillText('Powered by Denis Jackson',W-60,H-26);
+  return cv;
+}
+function spBusy(btn,on,txt){if(!btn)return;const l=btn.querySelector('span');btn.disabled=!!on;if(l){if(on){btn.dataset.t=l.textContent;l.textContent=txt;}else if(btn.dataset.t)l.textContent=btn.dataset.t;}}
+async function spDownload(ev,id,btn){
+  if(ev)ev.stopPropagation();
+  const m=SP.matches.find(x=>x.id===id);if(!m)return;
+  spBusy(btn,true,'Preparing…');
+  try{
+    const cv=await spBanner(m);
+    const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',0.93));
+    const name='buza-media-sports-'+(m.home.name+'-vs-'+m.away.name).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.jpg';
+    if(typeof saveBlob==='function')saveBlob(blob,name);
+    else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);}
+    if(typeof showToast==='function')showToast('Banner saved!','success');
+  }catch(e){if(typeof showToast==='function')showToast('Could not make the banner: '+(e.message||e),'error');}
+  spBusy(btn,false);
+}
+async function spPost(ev,id,btn){
+  if(ev)ev.stopPropagation();
+  const m=SP.matches.find(x=>x.id===id);if(!m)return;
+  if(!spIsAdmin()){if(typeof showToast==='function')showToast('Log in as admin first.','error');return;}
+  spBusy(btn,true,'Posting…');
+  try{
+    const cv=await spBanner(m);
+    const data=cv.toDataURL('image/jpeg',0.92);
+    const lg=m.leagueName,ti=spTitle(m);
+    const lead=m.state==='pre'?`Mechi inakuja: ${ti} (${lg}) - saa ${spTime(m.date)} EAT`:m.state==='in'?`MOJA KWA MOJA: ${ti} (${lg}) ${m.detail||''}`.trim():`Matokeo: ${ti} (${lg})`;
+    const cap=`${lead}\n\nFuatilia matokeo ya moja kwa moja: ${typeof siteBaseUrl==='function'?siteBaseUrl():''}\n\n#BuzaMediaSports #Matokeo #Soka #BuzaMedia`;
+    if(typeof showToast==='function')showToast('Posting to social media…');
+    const r=await sb.functions.invoke('social-post-image',{body:{image_b64:data,caption:cap,audio:false}});
+    if(r.error)throw r.error;
+    const d=r.data||{};
+    if(d.error){showToast('Could not post: '+String(d.error).slice(0,120),'error');}
+    else{
+      const ok=(d.results||[]).filter(x=>x.status==='published').map(x=>x.platform.charAt(0).toUpperCase()+x.platform.slice(1));
+      const bad=(d.results||[]).filter(x=>x.status!=='published');
+      if(ok.length)showToast('Posted to '+ok.join(' & ')+(bad.length?' — but '+bad.map(x=>x.platform).join(', ')+' failed: '+String(bad[0].error||'').slice(0,90):'.'),bad.length?'error':'success');
+      else showToast('Could not post: '+(bad[0]?String(bad[0].error).slice(0,120):'no social account is switched on.'),'error');
+    }
+  }catch(e){if(typeof showToast==='function')showToast('Could not post right now. Please try again.','error');}
+  spBusy(btn,false);
 }
 
 function filterCategory(btn,cat){
