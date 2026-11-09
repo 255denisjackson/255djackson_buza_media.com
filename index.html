@@ -546,6 +546,7 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
 .sp-barlbl{text-align:center;font-size:.66rem;color:#9db0dd;margin-bottom:4px}
 .sp-det{display:none;margin-top:8px;padding-top:8px;border-top:1px dashed rgba(90,140,255,.25);font-size:.74rem;color:#b5c5ea;line-height:1.7}
 .sp-m.open .sp-det{display:block}
+.sp-det .sp-acts{margin-top:10px}
 .sp-btn{width:100%;margin-top:8px;border:0;border-radius:12px;padding:9px;font-weight:700;font-size:.78rem;color:#fff;background:linear-gradient(180deg,#4a93ff,#2468e8);cursor:pointer}
 .sp-empty{padding:26px 10px;text-align:center;color:#8ea0cc;font-size:.86rem}
 .sp-foot{text-align:center;color:#6f82b3;font-size:.68rem;margin-top:12px}
@@ -564,6 +565,11 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
   .sp-tbl .gfga{display:none}
 }
 
+.sp-goals{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin:6px 4px 0;font-size:.68rem;color:#b9c8ee;line-height:1.5}
+.sp-goals:empty{display:none}
+.sp-goals>div:first-child{text-align:right}.sp-goals>div:last-child{text-align:left}
+.sp-goals b{color:#fff;font-weight:700}.sp-goals i{font-style:normal;color:#8ea0cc}
+.sp-hero .sp-goals{font-size:.84rem;margin-top:10px;max-width:560px;margin-left:auto;margin-right:auto}
 .sp-acts{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
 .sp-hero .sp-acts{justify-content:center;margin-top:12px}
 .sp-act{flex:1 1 130px;display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid rgba(90,140,255,.4);background:rgba(20,40,90,.55);color:#cfe0ff;border-radius:12px;padding:9px 10px;font-weight:700;font-size:.76rem;cursor:pointer}
@@ -2165,12 +2171,13 @@ function spPatch(){
     const sc=[m.home.score==null?0:m.home.score,m.away.score==null?0:m.away.score];
     const card=document.getElementById('spm-'+m.id);
     if(card){
+      const gb=card.querySelector('.sp-goals');if(gb){const gh=spGoalsHtml(m);if(gb.innerHTML!==gh)gb.innerHTML=gh;}
       const h=card.querySelector('[data-s="h"]'),a=card.querySelector('[data-s="a"]');
       spSet(h,sc[0]);spSet(a,sc[1]);
       const bar=card.querySelector('.sp-bar i');if(bar)bar.style.width=Math.min(100,Math.round(spMinutes(m)/90*100))+'%';
       spSet(card.querySelector('.sp-barlbl'),m.detail||m.clock);
     }
-    if(m.id===SP.heroId){spSet(document.getElementById('sp-hs'),sc[0]);spSet(document.getElementById('sp-as'),sc[1]);spSet(document.getElementById('sp-hmin'),m.detail||m.clock);}
+    if(m.id===SP.heroId){const hg=document.getElementById('sp-hg');if(hg){const gh=spGoalsHtml(m);if(hg.innerHTML!==gh)hg.innerHTML=gh;}spSet(document.getElementById('sp-hs'),sc[0]);spSet(document.getElementById('sp-as'),sc[1]);spSet(document.getElementById('sp-hmin'),m.detail||m.clock);}
   });
   const f=document.getElementById('sp-foot');
   if(f&&SP.updated){try{f.textContent='Buza Media Sports · Updated '+new Date(SP.updated).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'Africa/Dar_es_Salaam'})+' EAT';}catch(e){}}
@@ -2194,7 +2201,8 @@ async function spPickDay(key){
 }
 function spSetLeague(l){SP.league=l;const f=spVisible()[0];SP.heroId=f?f.id:null;if(l!=='all'){SP.tLeague=l;spLoadTable();}spRenderChips();spRenderAll();}
 function spSetHero(id){SP.heroId=id;const m=SP.matches.find(x=>x.id===id);if(m&&m.league!==SP.tLeague){SP.tLeague=m.league;spLoadTable();}spRenderAll();if(window.innerWidth<=900)document.getElementById('sp-hero').scrollIntoView({behavior:'smooth',block:'start'});}
-function spToggle(ev,id){ev.stopPropagation();const el=document.getElementById('spm-'+id);if(el)el.classList.toggle('open');}
+SP.openIds=SP.openIds||new Set();
+function spToggle(ev,id){ev.stopPropagation();const el=document.getElementById('spm-'+id);if(!el)return;const on=el.classList.toggle('open');if(on)SP.openIds.add(id);else SP.openIds.delete(id);}
 async function spLoadTable(){
   const lg=SP.tLeague;
   if(!SP.stand[lg]){
@@ -2226,6 +2234,16 @@ function spTick(){
   const m=SP.matches.find(x=>x.id===SP.heroId);if(m&&m.state==='pre')c.innerHTML=spCdHtml(m.date);
 }
 function spMinutes(m){const n=parseInt(String(m.clock||m.detail||'').replace(/[^0-9]/g,''),10);return isNaN(n)?0:n;}
+function spGoalList(m,side){
+  return (m.goals||[]).filter(g=>g.team===side).map(g=>({p:g.player||'Goal',min:g.min||'',tag:g.og?' (OG)':g.pen?' (pen)':''}));
+}
+function spGoalsHtml(m){
+  if(m.state==='pre')return '';
+  const col=side=>spGoalList(m,side).map(g=>`<span><b>${spEsc(g.p)}</b> <i>${spEsc(g.min)}${spEsc(g.tag)}</i></span>`).join('<br>');
+  const h=col('home'),a=col('away');
+  return (h||a)?`<div>${h}</div><div>${a}</div>`:'';
+}
+function spGoalsBox(m){return `<div class="sp-goals" id="sp-hg">${spGoalsHtml(m)}</div>`;}
 function spRenderHero(){
   const el=document.getElementById('sp-hero');
   const days=spDays().map(d=>`<button class="sp-day${d.k===SP.date?' on':''}" onclick="spPickDay('${d.k}')"><b>${d.w}</b>${d.d}</button>`).join('');
@@ -2239,7 +2257,7 @@ function spRenderHero(){
     :`<div class="sp-score"><span id="sp-hs">${m.home.score==null?0:m.home.score}</span> – <span id="sp-as">${m.away.score==null?0:m.away.score}</span></div>${live?`<div class="sp-min"><i class="ti ti-clock" aria-hidden="true"></i> <span id="sp-hmin">${spEsc(m.detail||m.clock)}</span></div>`:`<div class="sp-evs">${spEsc(m.detail||'FT')}</div>`}`;
   el.innerHTML=`<div class="sp-hero-top">${pill}<div class="sp-days">${days}</div><div class="sp-hero-lg">${spEsc(m.leagueName)}</div></div>
   <div class="sp-hero-main"><div class="sp-team">${spCrest(m.home,'sp-fb')}<div class="nm">${spEsc(m.home.name)}</div></div><div class="sp-mid">${mid}</div><div class="sp-team">${spCrest(m.away,'sp-fb')}<div class="nm">${spEsc(m.away.name)}</div></div></div>
-  <div class="sp-hero-foot">${m.venue?'<i class="ti ti-map-pin" aria-hidden="true"></i> '+spEsc(m.venue)+' · ':''}${spTime(m.date)} EAT</div>${spActs(m)}`;
+  <div class="sp-hero-foot">${m.venue?'<i class="ti ti-map-pin" aria-hidden="true"></i> '+spEsc(m.venue)+' · ':''}${spTime(m.date)} EAT</div>${spGoalsBox(m)}`;
 }
 function spRenderLive(){
   const el=document.getElementById('sp-live'),v=spVisible(),anyLive=v.some(m=>m.state==='in');
@@ -2249,12 +2267,13 @@ function spRenderLive(){
     const live=m.state==='in',pre=m.state==='pre',pct=Math.min(100,Math.round(spMinutes(m)/90*100));
     const tag=live?'<span class="sp-pill-live">LIVE</span>':pre?`<span class="sp-pill">${spTime(m.date)}</span>`:'<span class="sp-pill ft">FT</span>';
     const sc=pre?'vs':`<b data-s="h">${m.home.score==null?0:m.home.score}</b> - <b data-s="a">${m.away.score==null?0:m.away.score}</b>`;
-    return `<div class="sp-m${m.id===SP.heroId?' sel':''}" id="spm-${spEsc(m.id)}" onclick="spSetHero('${spEsc(m.id)}')">
+    return `<div class="sp-m${m.id===SP.heroId?' sel':''}${SP.openIds.has(m.id)?' open':''}" id="spm-${spEsc(m.id)}" onclick="spSetHero('${spEsc(m.id)}')">
       <div class="sp-m-top">${tag}<span class="lgn">${spEsc(m.leagueName)}</span></div>
       <div class="sp-m-mid"><div class="t">${spCrest(m.home,'sp-fs')}${spEsc(m.home.name)}</div><div class="sp-m-sc">${sc}</div><div class="t">${spCrest(m.away,'sp-fs')}${spEsc(m.away.name)}</div></div>
       ${live?`<div class="sp-bar"><i style="width:${pct}%"></i></div><div class="sp-barlbl">${spEsc(m.detail||m.clock)}</div>`:''}
-      <div class="sp-det"><div><i class="ti ti-calendar" aria-hidden="true"></i> ${spEsc(spDateLong(m.date))} · ${spTime(m.date)} EAT</div>${m.venue?`<div><i class="ti ti-map-pin" aria-hidden="true"></i> ${spEsc(m.venue)}</div>`:''}<div><i class="ti ti-trophy" aria-hidden="true"></i> ${spEsc(m.leagueName)}</div></div>
-      <button class="sp-btn" onclick="spToggle(event,'${spEsc(m.id)}')">Match Details</button>${spActs(m)}</div>`;
+      <div class="sp-goals" data-g="${spEsc(m.id)}">${spGoalsHtml(m)}</div>
+      <button class="sp-btn" onclick="spToggle(event,'${spEsc(m.id)}')">Match Details</button>
+      <div class="sp-det" onclick="event.stopPropagation()"><div><i class="ti ti-calendar" aria-hidden="true"></i> ${spEsc(spDateLong(m.date))} · ${spTime(m.date)} EAT</div>${m.venue?`<div><i class="ti ti-map-pin" aria-hidden="true"></i> ${spEsc(m.venue)}</div>`:''}<div><i class="ti ti-trophy" aria-hidden="true"></i> ${spEsc(m.leagueName)}</div>${spActs(m)}</div></div>`;
   }).join('')+'</div>';
 }
 function spRenderTable(data){
@@ -2263,7 +2282,7 @@ function spRenderTable(data){
   const head=`<div class="sp-h"><span><i class="ti ti-trophy" aria-hidden="true"></i>League Table</span>${sel}</div>`;
   if(data===null){el.innerHTML=head+'<div class="sp-empty">Loading table…</div>';return;}
   const rows=(data.rows||[]).slice().sort((a,b)=>String(a.group).localeCompare(String(b.group))||a.rank-b.rank);
-  if(!rows.length){el.innerHTML=head+'<div class="sp-empty">No table available for this competition yet.</div>';return;}
+  if(!rows.length){const cup=/cup/i.test((SP_LEAGUES.find(x=>x[0]===SP.tLeague)||[])[1]||'');el.innerHTML=head+(cup?'<div class="sp-empty">This is a knockout cup, so it has no league table. Its matches are listed on the right.</div>':'<div class="sp-empty">No table available for this competition yet.</div>');return;}
   const groups={};rows.forEach(r=>{(groups[r.group]=groups[r.group]||[]).push(r);});
   const multi=Object.keys(groups).length>1,limit=SP.showAll||multi?999:8;
   let body='',n=0;
@@ -2286,7 +2305,7 @@ function spRenderAll(){
 function spIsAdmin(){return typeof isLoggedIn!=='undefined'&&!!isLoggedIn;}
 function spActs(m){
   const id=spEsc(m.id);
-  return `<div class="sp-acts"><button class="sp-act" onclick="spDownload(event,'${id}',this)"><i class="ti ti-download" aria-hidden="true"></i> <span>Download banner</span></button>${spIsAdmin()?`<button class="sp-act sp-act-p" onclick="spPost(event,'${id}',this)"><i class="ti ti-send" aria-hidden="true"></i> <span>Post to social</span></button>`:''}</div>`;
+  return `<div class="sp-acts"><button class="sp-act" onclick="spDownload(event,'${id}',this)"><i class="ti ti-download" aria-hidden="true"></i> <span>Download banner</span></button>${spIsAdmin()?`<button class="sp-act sp-act-p" onclick="spPost(event,'${id}',this)"><i class="ti ti-send" aria-hidden="true"></i> <span>Share to social media</span></button>`:''}</div>`;
 }
 const SP_IMG={};
 async function spLoadImg(url){
@@ -2311,7 +2330,7 @@ async function spBanner(m){
   const [hi,ai]=await Promise.all([spLoadImg(m.home.logo),spLoadImg(m.away.logo)]);
   const rr=(x,y,w,h,r)=>{g.beginPath();if(g.roundRect)g.roundRect(x,y,w,h,r);else g.rect(x,y,w,h);};
   const wrap=(text,maxW,maxLines)=>{const words=String(text).split(/\s+/),lines=[];let l='';for(const w of words){const t=l?l+' '+w:w;if(l&&g.measureText(t).width>maxW){lines.push(l);l=w;}else l=t;}if(l)lines.push(l);if(lines.length>maxLines){const k=lines.slice(0,maxLines);let last=k[maxLines-1];while(last.length&&g.measureText(last+'…').width>maxW)last=last.slice(0,-1);k[maxLines-1]=last.trimEnd()+'…';return k;}return lines;};
-  const topH=830;
+  const topH=900;
   // dark stadium-night top with a soft blue glow and a faint pitch circle
   let bg=g.createLinearGradient(0,0,0,topH);bg.addColorStop(0,'#0c1c45');bg.addColorStop(1,'#070d1f');g.fillStyle=bg;g.fillRect(0,0,W,H);
   let gl=g.createRadialGradient(540,470,20,540,470,560);gl.addColorStop(0,'rgba(47,123,255,.38)');gl.addColorStop(1,'rgba(47,123,255,0)');g.fillStyle=gl;g.fillRect(0,0,W,topH);
@@ -2350,12 +2369,19 @@ async function spBanner(m){
   // team names
   g.fillStyle='#fff';g.font=F(800,40);
   [[m.home.name,205],[m.away.name,875]].forEach(([n,cx])=>{wrap(n,400,2).forEach((ln,i)=>g.fillText(ln,cx,700+i*50));});
+  // goal scorers under each team
+  g.font=F(600,27);g.textAlign='center';
+  [['home',205],['away',875]].forEach(([side,cx])=>{
+    const L=spGoalList(m,side).map(x=>`${x.p} ${x.min}${x.tag}`);
+    const show=L.length>4?L.slice(0,3).concat(['+'+(L.length-3)+' zaidi']):L;
+    g.fillStyle='#cfe0ff';show.forEach((t,i)=>{let tx=t;while(g.measureText(tx).width>420&&tx.length>4)tx=tx.slice(0,-2);g.fillText(tx===t?t:tx+'…',cx,775+i*36);});
+  });
   // white lower panel like the site's news banner
   g.fillStyle='#fff';g.fillRect(0,topH,W,H-topH);g.fillStyle='#2065fe';g.fillRect(0,topH,W,8);
   g.textAlign='left';g.fillStyle='#1a1a1e';g.font=F(800,58);
-  const tl=wrap(spTitle(m).toUpperCase(),W-120,3);tl.forEach((ln,i)=>g.fillText(ln,60,topH+110+i*70));
+  const tl=wrap(spTitle(m).toUpperCase(),W-120,2);tl.forEach((ln,i)=>g.fillText(ln,60,topH+105+i*68));
   g.fillStyle='#6c757d';g.font=F(500,30);
-  const sub2=wrap(m.leagueName+(m.venue?' · Uwanja: '+m.venue:''),W-120,2);sub2.forEach((ln,i)=>g.fillText(ln,60,topH+110+tl.length*70+14+i*42));
+  const sub2=wrap(m.leagueName+(m.venue?' · Uwanja: '+m.venue:''),W-120,2);sub2.forEach((ln,i)=>g.fillText(ln,60,topH+105+tl.length*68+10+i*40));
   g.fillStyle='#e0e0e0';g.fillRect(60,H-110,W-120,2);
   g.fillStyle='#1a1a1e';g.font=F(700,30);g.fillText('Na Buza Media Sports',60,H-62);
   g.fillStyle='#6c757d';g.font=F(400,24);g.fillText(dtx,60,H-26);
@@ -2387,7 +2413,10 @@ async function spPost(ev,id,btn){
     const cv=await spBanner(m);
     const data=cv.toDataURL('image/jpeg',0.92);
     const lg=m.leagueName,ti=spTitle(m);
-    const lead=m.state==='pre'?`Mechi inakuja: ${ti} (${lg}) - saa ${spTime(m.date)} EAT`:m.state==='in'?`MOJA KWA MOJA: ${ti} (${lg}) ${m.detail||''}`.trim():`Matokeo: ${ti} (${lg})`;
+    const sc=side=>spGoalList(m,side).map(x=>`${x.p} ${x.min}${x.tag}`).join(', ');
+    const hs=sc('home'),as=sc('away');
+    const goalsTxt=m.state==='pre'?'':[hs&&`${m.home.name}: ${hs}`,as&&`${m.away.name}: ${as}`].filter(Boolean).join('\n');
+    const lead=(m.state==='pre'?`MECHI INAKUJA: ${ti} | ${lg} | Saa ${spTime(m.date)} EAT`:m.state==='in'?`MOJA KWA MOJA: ${ti} | ${lg} | ${m.detail||''}`.replace(/\s*\|\s*$/,''):`MATOKEO: ${ti} | ${lg} | Mechi imeisha`)+(goalsTxt?`\n\nWafungaji:\n${goalsTxt}`:'');
     const cap=`${lead}\n\nFuatilia matokeo ya moja kwa moja: ${typeof siteBaseUrl==='function'?siteBaseUrl():''}\n\n#BuzaMediaSports #Matokeo #Soka #BuzaMedia`;
     if(typeof showToast==='function')showToast('Posting to social media…');
     const r=await sb.functions.invoke('social-post-image',{body:{image_b64:data,caption:cap,audio:false}});
