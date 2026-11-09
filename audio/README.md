@@ -1,1 +1,0 @@
-Sound files for social posts (AAC, .aac). A post uses the file named in the site setting social_audio_default (and any rule in social_audio_rules); the picture then goes out as a video with this sound.
