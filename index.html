@@ -729,7 +729,9 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
                   <button type="button" class="btn btn-secondary" id="cb-reset"><i class="ti ti-refresh" aria-hidden="true"></i> Reset</button>
                   <button type="button" class="btn btn-primary full" id="cb-use"><i class="ti ti-photo-check" aria-hidden="true"></i> Use as cover photo</button>
                   <button type="button" class="btn btn-secondary full" id="cb-dl"><i class="ti ti-download" aria-hidden="true"></i> Download image</button>
+                  <label class="cb-note" style="display:flex;gap:.4rem;align-items:center;width:100%"><input type="checkbox" id="cb-audio" checked> Add sound (posts as a video with music, like a Reel)</label>
                   <button type="button" class="btn btn-primary full" id="cb-social"><i class="ti ti-send" aria-hidden="true"></i> <span>Post to social media</span></button>
+                  <div class="cb-note" id="cb-socst" style="width:100%"></div>
                   <button type="button" class="btn btn-secondary full" id="cb-clear"><i class="ti ti-trash" aria-hidden="true"></i> Clear photos &amp; start over</button>
                 </div>
               </div>
@@ -3540,12 +3542,27 @@ setInterval(function(){
     cap=(cap?cap+'\n\n':'')+'#BuzaMedia #HabariZaLeo #Tanzania';
     btn.dataset.busy='1';btn.disabled=true;if(lab)lab.textContent='Posting…';
     toast('Posting to social media… about 20 seconds.');
-    sb.functions.invoke('social-post-image',{body:{image_b64:data,caption:cap}}).then(function(r){
+    var withSound=!!(el('cb-audio')&&el('cb-audio').checked),st=el('cb-socst');if(st)st.textContent='';
+    sb.functions.invoke('social-post-image',{body:{image_b64:data,caption:cap,audio:withSound}}).then(async function(r){
       if(r.error)throw r.error;
       var d=r.data||{};
       if(d.error){toast('Could not post: '+String(d.error).slice(0,120),'error');return;}
       var ok=(d.results||[]).filter(function(x){return x.status==='published';}).map(function(x){return x.platform.charAt(0).toUpperCase()+x.platform.slice(1);});
-      var bad=(d.results||[]).filter(function(x){return x.status!=='published';});
+      var bad=(d.results||[]).filter(function(x){return x.status!=='published'&&x.status!=='processing';});
+      var wait=(d.results||[]).filter(function(x){return x.status==='processing';});
+      for(var w=0;w<wait.length;w++){ // Instagram needs a little longer to process the video: keep asking until it is ready
+        var x=wait[w],fin=false;
+        for(var k=0;k<100&&!fin;k++){
+          if(st)st.textContent='Instagram is processing the video… '+Math.round(k*6/6)/10+' min'+(ok.length?' (posted to '+ok.join(' & ')+' already)':'');
+          await new Promise(function(res){setTimeout(res,6000);});
+          var f=await sb.functions.invoke('social-post-video',{body:{action:'finish',container:x.container,account:x.account}});
+          var fd=f.data||{};
+          if(fd.status==='published'){ok.push('Instagram');fin=true;}
+          else if(fd.status==='failed'){bad.push({platform:'instagram',error:fd.error});fin=true;}
+        }
+        if(!fin)bad.push({platform:'instagram',error:'still processing after 10 minutes, check Instagram later'});
+      }
+      if(st)st.textContent=d.videoNote?('Note: '+d.videoNote):'';
       if(ok.length)toast('Posted to '+ok.join(' & ')+(bad.length?' — but '+bad.map(function(x){return x.platform;}).join(', ')+' failed: '+String(bad[0].error).slice(0,90):'.'),bad.length?'error':'success');
       else toast('Could not post: '+(bad[0]?String(bad[0].error).slice(0,120):'no social account is switched on.'),'error');
     }).catch(function(){toast('Could not post right now. Please try again.','error');})
