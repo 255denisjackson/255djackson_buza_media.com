@@ -472,6 +472,97 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
 .nf-it-info{font-size:.7rem;color:var(--muted);margin:.15rem 0 .4rem}
 .nf-it-btns{display:flex;gap:.4rem;flex-wrap:wrap}
 @media(max-width:560px){.nf-item img,.nf-noimg{width:76px;height:60px}}
+/* ===== Buza Media Sports (live scores) ===== */
+.sports-live-tab{display:inline-flex;align-items:center;gap:6px;color:#fff!important;font-weight:700!important}
+.sports-live-tab .lv-dot{width:8px;height:8px;border-radius:50%;background:#ff3b4a;box-shadow:0 0 0 0 rgba(255,59,74,.7);animation:lvPulse 1.6s infinite}
+@keyframes lvPulse{0%{box-shadow:0 0 0 0 rgba(255,59,74,.7)}70%{box-shadow:0 0 0 7px rgba(255,59,74,0)}100%{box-shadow:0 0 0 0 rgba(255,59,74,0)}}
+#view-sports{max-width:1240px;overflow-x:hidden;margin:1rem auto 2rem;padding:0 12px}
+.sp-app{background:radial-gradient(1200px 500px at 20% -10%,#12306b 0%,rgba(18,48,107,0) 60%),linear-gradient(180deg,#0a1530 0%,#070d1f 100%);border:1px solid rgba(90,140,255,.22);border-radius:24px;padding:16px;color:#e8eefc;box-shadow:0 20px 60px rgba(5,12,40,.35)}
+.sp-top{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.sp-brand{display:flex;align-items:center;gap:10px;background:rgba(20,40,90,.6);border:1px solid rgba(90,140,255,.25);border-radius:999px;padding:6px 16px 6px 6px;font-weight:800;font-size:1.05rem;letter-spacing:.2px;color:#fff;white-space:nowrap}
+.sp-brand .lg{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#2f7bff,#1747c9);display:grid;place-items:center;font-size:18px;box-shadow:0 0 14px rgba(47,123,255,.6)}
+.sp-brand b{color:#4f9bff}
+.sp-chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;flex:1;min-width:220px;background:rgba(15,30,70,.55);border:1px solid rgba(90,140,255,.2);border-radius:999px;padding:5px}
+.sp-chips::-webkit-scrollbar{display:none}
+.sp-chip{flex:0 0 auto;border:0;background:transparent;color:#aebbe0;font-size:.76rem;font-weight:600;padding:7px 14px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.sp-chip.on{background:linear-gradient(180deg,#4a93ff,#2468e8);color:#fff;box-shadow:0 4px 14px rgba(47,123,255,.45)}
+.sp-ico{width:38px;height:38px;border-radius:50%;border:1px solid rgba(90,140,255,.3);background:rgba(20,40,90,.55);color:#cfe0ff;display:grid;place-items:center;cursor:pointer;font-size:18px}
+.sp-ico.spin i{animation:spSpin .8s linear infinite}
+@keyframes spSpin{to{transform:rotate(360deg)}}
+.sp-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(300px,1fr);gap:14px}
+.sp-card{min-width:0;background:linear-gradient(180deg,rgba(24,44,92,.62),rgba(13,26,60,.72));border:1px solid rgba(90,140,255,.2);border-radius:20px;padding:16px;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+.sp-pill-live{display:inline-flex;align-items:center;gap:6px;background:#e11d2e;color:#fff;font-weight:800;font-size:.72rem;letter-spacing:.5px;padding:4px 12px;border-radius:999px;box-shadow:0 0 14px rgba(225,29,46,.55)}
+.sp-pill-live::before{content:"";width:7px;height:7px;border-radius:50%;background:#fff}
+.sp-pill{display:inline-block;background:rgba(80,120,220,.25);color:#cfe0ff;font-weight:700;font-size:.72rem;padding:4px 12px;border-radius:999px}
+.sp-pill.ft{background:rgba(120,130,150,.3);color:#d3dae8}
+.sp-days{display:flex;gap:4px;justify-content:center;flex:1;overflow-x:auto;scrollbar-width:none}
+.sp-days::-webkit-scrollbar{display:none}
+.sp-day{flex:0 0 auto;text-align:center;border:0;background:transparent;color:#8ea0cc;font-size:.68rem;padding:5px 9px;border-radius:12px;cursor:pointer;line-height:1.35}
+.sp-day b{display:block;font-size:.72rem;color:#aebbe0;font-weight:600}
+.sp-day.on{background:rgba(60,120,255,.22);color:#fff;box-shadow:inset 0 0 0 1px rgba(90,150,255,.45)}.sp-day.on b{color:#fff}
+.sp-hero-top{display:flex;align-items:center;gap:10px;min-height:34px}
+.sp-hero-lg{margin-left:auto;font-weight:800;font-size:.8rem;color:#e8eefc;letter-spacing:.4px;text-align:right}
+.sp-hero-main{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:18px 4px 10px;text-align:center}
+.sp-team{display:flex;flex-direction:column;align-items:center;gap:10px;min-width:0}
+.sp-team img,.sp-fb{width:88px;height:88px;object-fit:contain;filter:drop-shadow(0 6px 14px rgba(0,0,0,.45))}
+.sp-fb{display:grid;place-items:center;border-radius:50%;background:rgba(80,120,220,.25);font-weight:800;font-size:1.3rem;color:#cfe0ff;filter:none}
+.sp-team .nm{font-weight:800;font-size:1.05rem;color:#fff;overflow-wrap:anywhere}
+.sp-mid{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:150px}
+.sp-ev{font-size:.82rem;color:#c3d1f5;font-weight:700}.sp-evs{font-size:.68rem;color:#8ea0cc}
+.sp-score{font-size:3.2rem;font-weight:800;line-height:1;color:#fff;letter-spacing:2px;text-shadow:0 0 24px rgba(80,140,255,.55)}
+.sp-score.pill{font-size:1.5rem;padding:10px 26px;border-radius:16px;background:rgba(50,100,230,.25);border:1px solid rgba(90,150,255,.35);text-shadow:none}
+.sp-min{display:flex;align-items:center;gap:6px;color:#8fc0ff;font-weight:800;font-size:1.05rem}
+.sp-cd{display:flex;gap:10px;font-weight:800;font-size:1.25rem;color:#fff}
+.sp-cd span{display:flex;flex-direction:column;align-items:center;min-width:34px}
+.sp-cd small{font-size:.55rem;color:#7f93c4;font-weight:600;text-transform:uppercase}
+.sp-hero-foot{text-align:center;font-size:.74rem;color:#8ea0cc;padding-top:4px}
+.sp-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;font-weight:800;color:#fff;font-size:1rem}
+.sp-h i{color:#6aa8ff;margin-right:6px}
+.sp-sel{background:rgba(15,30,70,.8);color:#dfe8ff;border:1px solid rgba(90,140,255,.3);border-radius:10px;padding:7px 10px;font-size:.78rem;max-width:200px}
+.sp-tbl{width:100%;border-collapse:collapse;font-size:.82rem}
+.sp-tbl th{color:#8ea0cc;font-weight:600;text-align:center;padding:8px 5px;font-size:.72rem}
+.sp-tbl td{text-align:center;padding:9px 5px;border-top:1px solid rgba(90,140,255,.12);color:#dfe8ff}
+.sp-tbl th:nth-child(2),.sp-tbl td:nth-child(2){text-align:left}
+.sp-tbl .tm{display:flex;align-items:center;gap:9px;font-weight:600;color:#fff}
+.sp-tbl .tm img,.sp-tbl .tm .sp-fs{width:24px;height:24px;object-fit:contain;flex:0 0 24px}
+.sp-fs{border-radius:50%;background:rgba(80,120,220,.25);display:grid;place-items:center;font-size:.55rem;font-weight:800}
+.sp-pos{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:rgba(40,100,255,.9);font-weight:800;font-size:.72rem;color:#fff}
+.sp-tbl td.pts{font-weight:800;color:#fff}
+.sp-grp td{background:rgba(40,80,170,.18);text-align:left!important;font-weight:800;color:#9fc2ff;font-size:.74rem;border-top:0}
+.sp-more{display:block;margin:10px auto 0;background:transparent;border:1px solid rgba(90,140,255,.35);color:#9fc2ff;font-weight:700;font-size:.78rem;padding:7px 16px;border-radius:999px;cursor:pointer}
+.sp-list{display:flex;flex-direction:column;gap:12px}
+.sp-m{background:rgba(10,22,52,.55);border:1px solid rgba(90,140,255,.18);border-radius:16px;padding:12px;cursor:pointer}
+.sp-m.sel{border-color:rgba(90,150,255,.7);box-shadow:0 0 0 1px rgba(90,150,255,.35)}
+.sp-m-top{display:flex;align-items:center;gap:8px;font-size:.72rem;color:#9db0dd}
+.sp-m-top .lgn{flex:1;text-align:center;font-weight:600;color:#cfe0ff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sp-m-mid{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin:10px 0 6px}
+.sp-m-mid .t{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:.74rem;font-weight:700;color:#fff;text-align:center;min-width:0}
+.sp-m-mid .t img,.sp-m-mid .t .sp-fs{width:42px;height:42px;object-fit:contain;flex:0 0 42px}
+.sp-m-mid .t .sp-fs{font-size:.8rem}
+.sp-m-sc{background:rgba(50,100,230,.22);border:1px solid rgba(90,150,255,.3);border-radius:999px;padding:6px 16px;font-weight:800;font-size:1.05rem;color:#fff;white-space:nowrap}
+.sp-bar{height:4px;border-radius:4px;background:rgba(120,140,190,.35);margin:8px 6px 2px;position:relative}
+.sp-bar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:linear-gradient(90deg,#4a93ff,#7cb4ff)}
+.sp-bar i::after{content:"";position:absolute;right:-4px;top:-3px;width:10px;height:10px;border-radius:50%;background:#7cb4ff;box-shadow:0 0 8px #4a93ff}
+.sp-barlbl{text-align:center;font-size:.66rem;color:#9db0dd;margin-bottom:4px}
+.sp-det{display:none;margin-top:8px;padding-top:8px;border-top:1px dashed rgba(90,140,255,.25);font-size:.74rem;color:#b5c5ea;line-height:1.7}
+.sp-m.open .sp-det{display:block}
+.sp-btn{width:100%;margin-top:8px;border:0;border-radius:12px;padding:9px;font-weight:700;font-size:.78rem;color:#fff;background:linear-gradient(180deg,#4a93ff,#2468e8);cursor:pointer}
+.sp-empty{padding:26px 10px;text-align:center;color:#8ea0cc;font-size:.86rem}
+.sp-foot{text-align:center;color:#6f82b3;font-size:.68rem;margin-top:12px}
+@media(max-width:900px){
+  .sp-grid{grid-template-columns:minmax(0,1fr)}
+  .sp-grid>*,.sp-col-l>*{min-width:0}
+  .sp-hero-top{flex-wrap:wrap}.sp-days{order:3;flex:1 0 100%;justify-content:flex-start}
+  .sp-tbl{table-layout:fixed}.sp-tbl th:first-child,.sp-tbl td:first-child{width:34px}.sp-tbl th:nth-child(2){width:auto}.sp-tbl th:nth-child(n+3),.sp-tbl td:nth-child(n+3){width:30px;padding-left:2px;padding-right:2px}.sp-tbl th:last-child,.sp-tbl td:last-child{width:38px}.sp-tbl .tm{overflow:hidden}.sp-tbl .tm span.t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sp-col-r{order:2}.sp-col-l{display:contents}
+  .sp-hero{order:1}.sp-tables{order:3}
+  .sp-app{padding:12px;border-radius:20px}
+  .sp-brand{font-size:1rem}
+  .sp-chips{order:5;flex:1 0 100%}
+  .sp-ico{margin-left:auto}.sp-ico~.sp-ico{margin-left:0}
+  .sp-team img,.sp-fb{width:76px;height:76px}.sp-score{font-size:2.7rem}.sp-mid{min-width:100px}
+  .sp-tbl .gfga{display:none}
+}
 </style>
 </head>
 <body>
@@ -496,6 +587,7 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
       <button class="cat-tab" onclick="filterCategory(this,'Business')">Business</button>
       <button class="cat-tab" onclick="filterCategory(this,'Sports')">Sports</button>
       <button class="cat-tab" onclick="filterCategory(this,'Entertainment')">Entertainment</button>
+      <button class="cat-tab sports-live-tab" onclick="openSports(this)"><span class="lv-dot" aria-hidden="true"></span>Buza Media Sports</button>
     </div>
   </div>
 </nav>
@@ -515,6 +607,26 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
   <div id="featured-area"></div>
   <div class="section-label"><h2 id="latest-label">Latest updates</h2><div class="section-line"></div></div>
   <div class="cards-grid" id="latest-grid"></div>
+</div>
+
+<div id="view-sports" class="hidden">
+  <div class="sp-app">
+    <div class="sp-top">
+      <div class="sp-brand"><span class="lg"><i class="ti ti-ball-football" aria-hidden="true"></i></span><span>Buza Media <b>Sports</b></span></div>
+      <button class="sp-ico" id="sp-refresh" onclick="spLoad(true)" aria-label="Refresh scores" title="Refresh"><i class="ti ti-refresh" aria-hidden="true"></i></button>
+      <div class="sp-chips" id="sp-chips" role="tablist" aria-label="Leagues"></div>
+    </div>
+    <div class="sp-grid">
+      <div class="sp-col-l">
+        <div class="sp-card sp-hero" id="sp-hero"></div>
+        <div class="sp-card sp-tables" id="sp-tables" style="margin-top:14px"></div>
+      </div>
+      <div class="sp-col-r">
+        <div class="sp-card" id="sp-live"></div>
+      </div>
+    </div>
+    <div class="sp-foot" id="sp-foot">Buza Media Sports · Live scores refresh automatically</div>
+  </div>
 </div>
 
 <div id="view-article" class="hidden">
@@ -1965,7 +2077,165 @@ function applyTopStoryGradient(imgUrl){
   img.onerror=()=>{document.body.style.backgroundImage='';};
   img.src=imgUrl;
 }
+/* ===== Buza Media Sports (live scores) ===== */
+const SP_API='https://liingyivheqmuosuxwvd.supabase.co/functions/v1/live-scores';
+const SP_LEAGUES=[['all','All'],['eng.1','Premier League'],['esp.1','LaLiga'],['ger.1','Bundesliga'],['fra.1','Ligue 1'],['uefa.champions','Champions League'],['uefa.europa','Europa League'],['caf.champions','CAF CL'],['caf.confed','CAF Confed'],['eng.league_cup','Carabao Cup']];
+var SP={date:null,matches:[],league:'all',tLeague:'eng.1',heroId:null,stand:{},showAll:false,poll:null,tick:null,open:false,loaded:false,updated:null};
+function spEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function spTodayKey(){return new Date(Date.now()+3*3600e3).toISOString().slice(0,10);}
+function spAddDays(key,n){const [y,m,d]=key.split('-').map(Number);return new Date(Date.UTC(y,m-1,d+n)).toISOString().slice(0,10);}
+function spTime(iso){try{return new Date(iso).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'Africa/Dar_es_Salaam'});}catch(e){return '';}}
+function spDateLong(iso){try{return new Date(iso).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',timeZone:'Africa/Dar_es_Salaam'});}catch(e){return '';}}
+function spCrest(t,cls){const l=t&&t.logo;return l?`<img src="${spEsc(l)}" alt="${spEsc(t.name)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.outerHTML='<span class=&quot;${cls}&quot;>${spEsc((t.abbr||t.name||'?').slice(0,3))}</span>'">`:`<span class="${cls}">${spEsc((t&&(t.abbr||t.name)||'?').slice(0,3))}</span>`;}
+function spOrder(a,b){const r=m=>m.state==='in'?0:m.state==='pre'?1:2;return r(a)-r(b)||new Date(a.date)-new Date(b.date);}
+function spVisible(){return SP.matches.filter(m=>SP.league==='all'||m.league===SP.league).sort(spOrder);}
+function spPick(){const v=spVisible();if(!v.length)return null;return v.find(m=>m.id===SP.heroId)||v[0];}
+
+function openSports(btn){
+  document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  ['view-public','view-article','view-login','view-admin'].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.add('hidden');});
+  document.getElementById('view-sports').classList.remove('hidden');
+  try{document.title='Buza Media Sports | Live scores';}catch(e){}
+  SP.open=true;window.scrollTo(0,0);
+  spRenderChips();
+  if(!SP.loaded){spInit();}else{spRenderAll();spLoad(true);}
+  clearInterval(SP.poll);SP.poll=setInterval(()=>{if(SP.open&&!document.hidden)spLoad(false);},30000);
+  clearInterval(SP.tick);SP.tick=setInterval(spTick,1000);
+}
+function hideSports(){
+  if(!SP||!SP.open)return;
+  SP.open=false;clearInterval(SP.poll);clearInterval(SP.tick);
+  document.getElementById('view-sports').classList.add('hidden');
+  try{document.title='Buza Media';}catch(e){}
+  document.querySelectorAll('.cat-tab').forEach(t=>{t.classList.toggle('active',(t.getAttribute('onclick')||'').indexOf("'"+currentCat+"'")>-1);});
+}
+async function spFetch(date){
+  const r=await fetch(`${SP_API}?action=scores&date=${date.replace(/-/g,'')}`);
+  if(!r.ok)throw new Error('http '+r.status);
+  return await r.json();
+}
+async function spInit(){
+  document.getElementById('sp-hero').innerHTML='<div class="sp-empty">Loading live scores…</div>';
+  let day=spTodayKey(),res=null;
+  try{
+    for(let i=0;i<7;i++){
+      res=await spFetch(day);
+      if((res.matches||[]).length)break;
+      if(i<6)day=spAddDays(day,1);
+    }
+    if(!(res.matches||[]).length)day=spTodayKey();
+  }catch(e){}
+  SP.date=day;SP.matches=(res&&res.matches)||[];SP.updated=(res&&res.updated)||null;SP.loaded=true;
+  const first=spVisible()[0];if(first){SP.heroId=first.id;}
+  const lgWith=SP.matches.find(m=>m.state==='in')||SP.matches[0];
+  SP.tLeague=lgWith?lgWith.league:'eng.1';
+  spRenderAll();spLoadTable();
+}
+async function spLoad(manual){
+  const b=document.getElementById('sp-refresh');if(manual&&b)b.classList.add('spin');
+  try{const res=await spFetch(SP.date||spTodayKey());SP.matches=res.matches||[];SP.updated=res.updated;spRenderAll();}
+  catch(e){}
+  if(b)setTimeout(()=>b.classList.remove('spin'),500);
+}
+async function spPickDay(key){
+  SP.date=key;SP.heroId=null;
+  document.getElementById('sp-live').innerHTML='<div class="sp-empty">Loading…</div>';
+  try{const res=await spFetch(key);SP.matches=res.matches||[];}catch(e){SP.matches=[];}
+  const f=spVisible()[0];SP.heroId=f?f.id:null;spRenderAll();
+}
+function spSetLeague(l){SP.league=l;const f=spVisible()[0];SP.heroId=f?f.id:null;if(l!=='all'){SP.tLeague=l;spLoadTable();}spRenderChips();spRenderAll();}
+function spSetHero(id){SP.heroId=id;const m=SP.matches.find(x=>x.id===id);if(m&&m.league!==SP.tLeague){SP.tLeague=m.league;spLoadTable();}spRenderAll();if(window.innerWidth<=900)document.getElementById('sp-hero').scrollIntoView({behavior:'smooth',block:'start'});}
+function spToggle(ev,id){ev.stopPropagation();const el=document.getElementById('spm-'+id);if(el)el.classList.toggle('open');}
+async function spLoadTable(){
+  const lg=SP.tLeague;
+  if(!SP.stand[lg]){
+    spRenderTable(null);
+    try{const r=await fetch(`${SP_API}?action=standings&league=${encodeURIComponent(lg)}`);SP.stand[lg]=r.ok?await r.json():{rows:[]};}catch(e){SP.stand[lg]={rows:[]};}
+  }
+  if(lg===SP.tLeague)spRenderTable(SP.stand[lg]);
+}
+function spSetTableLeague(l){SP.tLeague=l;SP.showAll=false;spLoadTable();}
+
+function spRenderChips(){
+  document.getElementById('sp-chips').innerHTML=SP_LEAGUES.map(([k,n])=>`<button class="sp-chip${SP.league===k?' on':''}" onclick="spSetLeague('${k}')">${spEsc(n)}</button>`).join('');
+}
+function spDays(){
+  const t=spTodayKey(),out=[];
+  for(let i=-2;i<=4;i++){const k=spAddDays(t,i),d=new Date(k+'T12:00:00Z');
+    out.push({k,w:d.toLocaleDateString('en-GB',{weekday:'short',timeZone:'UTC'}),d:d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',timeZone:'UTC'})});}
+  return out;
+}
+function spCountdown(iso){
+  let s=Math.max(0,Math.floor((new Date(iso)-Date.now())/1000));
+  const d=Math.floor(s/86400);s-=d*86400;const h=Math.floor(s/3600);s-=h*3600;const m=Math.floor(s/60);s-=m*60;
+  const p=n=>String(n).padStart(2,'0');
+  return [['Days',p(d)],['Hours',p(h)],['Mins',p(m)],['Sec',p(s)]];
+}
+function spCdHtml(iso){return spCountdown(iso).map(([l,v])=>`<span>${v}<small>${l}</small></span>`).join('');}
+function spTick(){
+  const c=document.getElementById('sp-cd');if(!c)return;
+  const m=SP.matches.find(x=>x.id===SP.heroId);if(m&&m.state==='pre')c.innerHTML=spCdHtml(m.date);
+}
+function spMinutes(m){const n=parseInt(String(m.clock||m.detail||'').replace(/[^0-9]/g,''),10);return isNaN(n)?0:n;}
+function spRenderHero(){
+  const el=document.getElementById('sp-hero');
+  const days=spDays().map(d=>`<button class="sp-day${d.k===SP.date?' on':''}" onclick="spPickDay('${d.k}')"><b>${d.w}</b>${d.d}</button>`).join('');
+  const m=spPick();
+  if(!m){el.innerHTML=`<div class="sp-hero-top"><div class="sp-days">${days}</div></div><div class="sp-empty">No matches on this day${SP.league!=='all'?' in this league':''}. Pick another day above.</div>`;return;}
+  const live=m.state==='in',pre=m.state==='pre';
+  const pill=live?'<span class="sp-pill-live">LIVE</span>':pre?'<span class="sp-pill">UPCOMING</span>':'<span class="sp-pill ft">FULL TIME</span>';
+  const sc=(m.home.score==null?0:m.home.score)+' – '+(m.away.score==null?0:m.away.score);
+  const mid=pre
+    ?`<div class="sp-ev">${spEsc(m.leagueName)}</div><div class="sp-evs">${spEsc(spDateLong(m.date))} · ${spTime(m.date)}</div><div class="sp-cd" id="sp-cd">${spCdHtml(m.date)}</div><div class="sp-score pill">VS</div>`
+    :`<div class="sp-score">${sc}</div>${live?`<div class="sp-min"><i class="ti ti-clock" aria-hidden="true"></i> ${spEsc(m.detail||m.clock)}</div>`:`<div class="sp-evs">${spEsc(m.detail||'FT')}</div>`}`;
+  el.innerHTML=`<div class="sp-hero-top">${pill}<div class="sp-days">${days}</div><div class="sp-hero-lg">${spEsc(m.leagueName)}</div></div>
+  <div class="sp-hero-main"><div class="sp-team">${spCrest(m.home,'sp-fb')}<div class="nm">${spEsc(m.home.name)}</div></div><div class="sp-mid">${mid}</div><div class="sp-team">${spCrest(m.away,'sp-fb')}<div class="nm">${spEsc(m.away.name)}</div></div></div>
+  <div class="sp-hero-foot">${m.venue?'<i class="ti ti-map-pin" aria-hidden="true"></i> '+spEsc(m.venue)+' · ':''}${spTime(m.date)} EAT</div>`;
+}
+function spRenderLive(){
+  const el=document.getElementById('sp-live'),v=spVisible(),anyLive=v.some(m=>m.state==='in');
+  const title=anyLive?'Live Matches':'Matches';
+  if(!v.length){el.innerHTML=`<div class="sp-h"><span><i class="ti ti-broadcast" aria-hidden="true"></i>${title}</span></div><div class="sp-empty">No matches to show.</div>`;return;}
+  el.innerHTML=`<div class="sp-h"><span><i class="ti ti-broadcast" aria-hidden="true"></i>${title}</span><span class="sp-pill">${v.length}</span></div><div class="sp-list">`+v.map(m=>{
+    const live=m.state==='in',pre=m.state==='pre',pct=Math.min(100,Math.round(spMinutes(m)/90*100));
+    const tag=live?'<span class="sp-pill-live">LIVE</span>':pre?`<span class="sp-pill">${spTime(m.date)}</span>`:'<span class="sp-pill ft">FT</span>';
+    const sc=pre?'vs':(m.home.score==null?0:m.home.score)+' - '+(m.away.score==null?0:m.away.score);
+    return `<div class="sp-m${m.id===SP.heroId?' sel':''}" id="spm-${spEsc(m.id)}" onclick="spSetHero('${spEsc(m.id)}')">
+      <div class="sp-m-top">${tag}<span class="lgn">${spEsc(m.leagueName)}</span></div>
+      <div class="sp-m-mid"><div class="t">${spCrest(m.home,'sp-fs')}${spEsc(m.home.name)}</div><div class="sp-m-sc">${sc}</div><div class="t">${spCrest(m.away,'sp-fs')}${spEsc(m.away.name)}</div></div>
+      ${live?`<div class="sp-bar"><i style="width:${pct}%"></i></div><div class="sp-barlbl">${spEsc(m.detail||m.clock)}</div>`:''}
+      <div class="sp-det"><div><i class="ti ti-calendar" aria-hidden="true"></i> ${spEsc(spDateLong(m.date))} · ${spTime(m.date)} EAT</div>${m.venue?`<div><i class="ti ti-map-pin" aria-hidden="true"></i> ${spEsc(m.venue)}</div>`:''}<div><i class="ti ti-trophy" aria-hidden="true"></i> ${spEsc(m.leagueName)}</div></div>
+      <button class="sp-btn" onclick="spToggle(event,'${spEsc(m.id)}')">Match Details</button></div>`;
+  }).join('')+'</div>';
+}
+function spRenderTable(data){
+  const el=document.getElementById('sp-tables');
+  const sel=`<select class="sp-sel" onchange="spSetTableLeague(this.value)" aria-label="Choose league table">${SP_LEAGUES.filter(x=>x[0]!=='all').map(([k,n])=>`<option value="${k}"${k===SP.tLeague?' selected':''}>${spEsc(n)}</option>`).join('')}</select>`;
+  const head=`<div class="sp-h"><span><i class="ti ti-trophy" aria-hidden="true"></i>League Table</span>${sel}</div>`;
+  if(data===null){el.innerHTML=head+'<div class="sp-empty">Loading table…</div>';return;}
+  const rows=(data.rows||[]).slice().sort((a,b)=>String(a.group).localeCompare(String(b.group))||a.rank-b.rank);
+  if(!rows.length){el.innerHTML=head+'<div class="sp-empty">No table available for this competition yet.</div>';return;}
+  const groups={};rows.forEach(r=>{(groups[r.group]=groups[r.group]||[]).push(r);});
+  const multi=Object.keys(groups).length>1,limit=SP.showAll||multi?999:8;
+  let body='',n=0;
+  for(const g of Object.keys(groups)){
+    if(multi)body+=`<tr class="sp-grp"><td colspan="9">${spEsc(String(g).replace(/^\d{4}-\d{2,4}\s*/,''))}</td></tr>`;
+    for(const r of groups[g]){if(n++>=limit)break;
+      body+=`<tr><td><span class="sp-pos">${r.rank}</span></td><td><div class="tm">${r.logo?`<img src="${spEsc(r.logo)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:`<span class="sp-fs">${spEsc((r.team||'?').slice(0,2))}</span>`}<span class="t">${spEsc(r.team)}</span></div></td><td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td><td class="gfga">${r.gf}</td><td class="gfga">${r.ga}</td><td class="pts">${r.pts}</td></tr>`;}
+  }
+  const more=!multi&&rows.length>8?`<button class="sp-more" onclick="SP.showAll=!SP.showAll;spRenderTable(SP.stand[SP.tLeague])">${SP.showAll?'Show less':'View all '+rows.length+' teams'}</button>`:'';
+  el.innerHTML=head+`<table class="sp-tbl"><thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th class="gfga">GF</th><th class="gfga">GA</th><th>Pts</th></tr></thead><tbody>${body}</tbody></table>`+more;
+}
+function spRenderAll(){
+  spRenderHero();spRenderLive();
+  if(SP.stand[SP.tLeague])spRenderTable(SP.stand[SP.tLeague]);
+  const f=document.getElementById('sp-foot');
+  if(f&&SP.updated){try{f.textContent='Buza Media Sports · Updated '+new Date(SP.updated).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'Africa/Dar_es_Salaam'})+' EAT · refreshes every 30 seconds';}catch(e){}}
+}
+
 function filterCategory(btn,cat){
+  if(SP&&SP.open){hideSports();document.getElementById('view-public').classList.remove('hidden');}
   document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');currentCat=cat;
   document.getElementById('pub-section-title').textContent=cat==='all'?"Today's top stories":cat;
@@ -2048,6 +2318,7 @@ window.addEventListener('popstate',function(e){
   else{document.title='Buza Media';showFeedView();}
 });
 function showFeedView(){
+  hideSports();
   document.getElementById('view-article').classList.add('hidden');
   document.getElementById('view-public').classList.remove('hidden');
   // Land back on the exact same spot in the feed instead of the top —
@@ -2057,6 +2328,7 @@ function showFeedView(){
 }
 
 function goHome(){
+  hideSports();
   try{history.replaceState({},'',siteBaseUrl());document.title='Buza Media';}catch(e){}
   document.querySelectorAll('.nav-mode-tab').forEach(t=>t.classList.remove('active'));
   const tp=document.getElementById('tab-public');if(tp)tp.classList.add('active');
@@ -2068,6 +2340,7 @@ function goHome(){
 }
 
 function goToLoginScreen(){
+  hideSports();
   if(isLoggedIn){return;}
   document.querySelectorAll('.nav-mode-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('view-public').classList.add('hidden');
@@ -2138,6 +2411,7 @@ async function doLogout(){
 }
 
 function switchMode(btn,mode){
+  hideSports();
   document.querySelectorAll('.nav-mode-tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('view-public').classList.toggle('hidden',mode!=='public');
