@@ -491,6 +491,9 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
 @keyframes spSpin{to{transform:rotate(360deg)}}
 .sp-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(300px,1fr);gap:14px}
 .sp-vt,.sp-sc{display:flex;gap:6px;padding:0 14px 10px;flex-wrap:wrap}.sp-vt button,.sp-sc button{border:1px solid var(--border,#d9dee8);background:transparent;color:inherit;border-radius:999px;padding:5px 12px;font:600 12px Poppins,sans-serif;cursor:pointer}.sp-vt button.on,.sp-sc button.on{background:#2065fe;border-color:#2065fe;color:#fff}.sp-sub{display:block;font-size:11px;font-weight:400;opacity:.65}
+.sp-sc{flex-wrap:nowrap;gap:6px}.sp-sc button{flex:1 1 0;min-width:0;padding:7px 4px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:600px){.sp-vt,.sp-sc{padding:0 10px 10px}.sp-sc{gap:4px}.sp-sc button{font-size:11px;padding:7px 2px}}
+@media(max-width:380px){.sp-sc .sp-ic{display:none}.sp-sc{gap:3px}.sp-sc button{font-size:10px;padding:6px 1px;letter-spacing:-.2px}}
 .sp-card{min-width:0;background:linear-gradient(180deg,rgba(24,44,92,.62),rgba(13,26,60,.72));border:1px solid rgba(90,140,255,.2);border-radius:20px;padding:16px;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
 .sp-pill-live{display:inline-flex;align-items:center;gap:6px;background:#e11d2e;color:#fff;font-weight:800;font-size:.72rem;letter-spacing:.5px;padding:4px 12px;border-radius:999px;box-shadow:0 0 14px rgba(225,29,46,.55)}
 .sp-pill-live::before{content:"";width:7px;height:7px;border-radius:50%;background:#fff}
@@ -2274,7 +2277,7 @@ async function spLoadStats(){
 function spRenderStatsBody(el,head){
   const d=SP.stats[SP.tLeague];
   const cats=[['goals','Goals','⚽'],['assists','Assists','🎯'],['yellow','Yellow','🟨'],['red','Red','🟥']];
-  const sub=`<div class="sp-sc">${cats.map(([k,n,ic])=>`<button class="${SP.sCat===k?'on':''}" onclick="SP.sCat='${k}';spRenderTable(SP.stand[SP.tLeague]||null)">${ic} ${n}</button>`).join('')}</div>`;
+  const sub=`<div class="sp-sc">${cats.map(([k,n,ic])=>`<button class="${SP.sCat===k?'on':''}" onclick="SP.sCat='${k}';spRenderTable(SP.stand[SP.tLeague]||null)"><span class="sp-ic">${ic}</span> ${n}</button>`).join('')}</div>`;
   if(!d){el.innerHTML=head+sub+'<div class="sp-empty">Loading stats…</div>';spLoadStats();return;}
   const list=(d[SP.sCat]||[]);
   if(!list.length){el.innerHTML=head+sub+'<div class="sp-empty">No stats available for this competition yet.</div>';return;}
