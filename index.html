@@ -579,6 +579,33 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
 @media(max-width:900px){.sp-cuprow{grid-template-columns:1fr 26px auto 26px 1fr}.sp-cuprow>.sp-pill,.sp-cuprow>.sp-pill-live{display:none}}
 .sp-hr{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .sp-dlt{flex:0 0 auto!important;padding:6px 12px!important;font-size:.72rem!important}
+.bk{display:flex;gap:30px;overflow-x:auto;padding:6px 4px 14px;scroll-snap-type:x proximity;scrollbar-width:thin}
+.bk-c{flex:0 0 250px;scroll-snap-align:start;display:flex;flex-direction:column;gap:10px;position:relative}
+.bk-h{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border-radius:14px;background:rgba(40,80,170,.22);border:1px solid rgba(90,140,255,.2)}
+.bk-h b{color:#fff;font-size:.88rem}.bk-h small{color:#8ea0cc;font-size:.7rem}
+.bk-h span{display:flex;align-items:center;gap:8px;margin-top:2px}.bk-h em{font-style:normal;color:#9db0dd;font-size:.68rem}
+.bk-c.cur .bk-h{border-color:#4a93ff;box-shadow:0 0 0 1px rgba(74,147,255,.5),0 0 22px rgba(47,123,255,.35);background:rgba(47,100,230,.3)}
+.sp-pill.tbdp{background:rgba(255,200,60,.16);color:#ffd36a}
+.bk-l{display:flex;flex-direction:column;gap:12px;max-height:560px;overflow-y:auto;padding-right:4px;scrollbar-width:thin}
+.bk-m{position:relative;background:rgba(10,22,52,.65);border:1px solid rgba(90,140,255,.2);border-radius:14px;padding:8px 10px}
+.bk-m.live{border-color:#e11d2e;box-shadow:0 0 16px rgba(225,29,46,.3)}
+.bk-m.tbd{border-style:dashed;opacity:.7}
+.bk-c:not(:last-child) .bk-m::after{content:"";position:absolute;right:-31px;top:50%;width:30px;height:2px;background:linear-gradient(90deg,rgba(90,150,255,.55),rgba(90,150,255,.1))}
+.bk-c:not(:first-child) .bk-m::before{content:"";position:absolute;left:-31px;top:50%;width:30px;height:2px;background:linear-gradient(90deg,rgba(90,150,255,.1),rgba(90,150,255,.55))}
+.bk-t{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.8rem;color:#cdd9f5}
+.bk-t .sp-fs,.bk-t img{width:22px;height:22px;flex:0 0 22px;object-fit:contain;font-size:.55rem}
+.bk-t .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bk-t b{font-size:.86rem;color:#fff}.bk-t b i{font-style:normal;color:#9db0dd;font-weight:600;font-size:.7rem}.bk-t b.lv{color:#ff7b86}
+.bk-t.w .n,.bk-t.w b{color:#fff;font-weight:800}.bk-t.w .n::after{content:" ✓";color:#4ade80}
+.bk-t:not(.w) .n{opacity:.92}
+.bk-d{margin-top:4px;padding-top:5px;border-top:1px dashed rgba(90,140,255,.2);font-size:.66rem;color:#8ea0cc}
+.bk-live{color:#ff6b78;font-weight:800}
+.bk-more{text-align:center;font-size:.7rem;color:#8ea0cc;padding:4px}
+.bk-champ{margin-top:6px;text-align:center;padding:16px 10px;border-radius:16px;border:1px solid rgba(255,200,60,.45);background:radial-gradient(circle at 50% 0,rgba(255,200,60,.22),rgba(255,200,60,.03));color:#ffe29a;font-weight:800}
+.bk-champ>i{font-size:46px;display:block;color:#ffcb3d;filter:drop-shadow(0 0 14px rgba(255,200,60,.7))}
+.bk-champ .q{display:block;font-size:1.3rem;color:#fff;margin-top:4px;letter-spacing:2px}
+.bk-champ .cw{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px;color:#fff}.bk-champ .cw .sp-fs,.bk-champ .cw img{width:34px;height:34px;object-fit:contain}
+.bk-hint{text-align:center;font-size:.68rem;color:#6f82b3;margin-top:2px}
 .sp-acts{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
 .sp-hero .sp-acts{justify-content:center;margin-top:12px}
 .sp-act{flex:1 1 130px;display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid rgba(90,140,255,.4);background:rgba(20,40,90,.55);color:#cfe0ff;border-radius:12px;padding:9px 10px;font-weight:700;font-size:.76rem;cursor:pointer}
@@ -2161,6 +2188,7 @@ async function spInit(){
   spRenderAll();spLoadTable();spSave();
 }
 async function spLoad(){ // runs quietly in the background: nothing flashes, only changed numbers animate
+  if(SP_CUPS.includes(SP.tLeague)&&Date.now()-(SP.cupT||0)>60000){SP.cupT=Date.now();spLoadTable(true);}
   try{const res=await spFetch(SP.date||spTodayKey());SP.updated=res.updated;spApply(res.matches||[]);spSave();}catch(e){}
 }
 function spSig(list){return list.map(m=>m.id+':'+m.state).join('|');}
@@ -2216,11 +2244,12 @@ const SP_CUPS=['eng.fa','eng.league_cup'];
 SP.cup=SP.cup||{};
 async function spLoadTable(silent){
   const lg=SP.tLeague;
-  if(SP_CUPS.includes(lg)){ // knockout cups have no league table: show their matches instead
+  if(SP_CUPS.includes(lg)){ // knockout cups: draw the whole road to the final
+    if(Array.isArray(SP.cup[lg]))delete SP.cup[lg];
     if(!SP.cup[lg]||silent){
       if(!SP.cup[lg])spRenderTable(null);
-      const t=spTodayKey();
-      try{const r=await fetch(`${SP_API}?action=scores&league=${encodeURIComponent(lg)}&date=${spAddDays(t,-10)}&to=${spAddDays(t,21)}`);{const d=r.ok?(await r.json()).matches||[]:null;if(d||!SP.cup[lg])SP.cup[lg]=d||[];}}catch(e){if(!SP.cup[lg])SP.cup[lg]=[];}
+      try{const r=await fetch(`${SP_API}?action=bracket&league=${encodeURIComponent(lg)}`);const d=r.ok?await r.json():null;if(d&&d.rounds)SP.cup[lg]=d;}catch(e){}
+      if(!SP.cup[lg])SP.cup[lg]={rounds:[],currentKey:''};
     }
     if(lg===SP.tLeague)spRenderTable(null);
     spSave();return;
@@ -2297,24 +2326,50 @@ function spRenderLive(){
       <div class="sp-det" onclick="event.stopPropagation()"><div><i class="ti ti-calendar" aria-hidden="true"></i> ${spEsc(spDateLong(m.date))} · ${spTime(m.date)} EAT</div>${m.venue?`<div><i class="ti ti-map-pin" aria-hidden="true"></i> ${spEsc(m.venue)}</div>`:''}<div><i class="ti ti-trophy" aria-hidden="true"></i> ${spEsc(m.leagueName)}</div>${spActs(m)}</div></div>`;
   }).join('')+'</div>';
 }
+function spDShort(iso){try{return new Date(iso).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'Africa/Dar_es_Salaam'})+' · '+spTime(iso);}catch(e){return '';}}
+function spBkRow(t,m,win){
+  const live=m.state==='in',pre=m.state==='pre';
+  const sc=pre?'':(t.score==null?0:t.score)+(t.pens!=null&&m.state==='post'?` <i>(${t.pens})</i>`:'');
+  return `<div class="bk-t${win?' w':''}">${spCrest(t,'sp-fs')}<span class="n">${spEsc(t.name)}</span><b${live?' class="lv"':''}>${sc}</b></div>`;
+}
+function spBkWinner(m){
+  if(m.state!=='post')return '';
+  if(m.home.winner)return 'h';if(m.away.winner)return 'a';
+  const a=m.home.score||0,b=m.away.score||0;return a>b?'h':b>a?'a':'';
+}
+function spBkMatch(m){
+  const w=spBkWinner(m),live=m.state==='in',pre=m.state==='pre';
+  const foot=live?`<span class="bk-live">LIVE ${spEsc(m.detail||m.clock)}</span>`:pre?spEsc(spDShort(m.date)):spEsc(/pen/i.test(m.detail||'')?'Full time · Pens':/aet/i.test(m.detail||'')?'Full time · AET':'Full time');
+  return `<div class="bk-m${live?' live':''}">${spBkRow(m.home,m,w==='h')}${spBkRow(m.away,m,w==='a')}<div class="bk-d">${foot}</div></div>`;
+}
+function spBkTbd(){return `<div class="bk-m tbd"><div class="bk-t"><span class="sp-fs">?</span><span class="n">TBD</span></div><div class="bk-t"><span class="sp-fs">?</span><span class="n">TBD</span></div><div class="bk-d">To be decided</div></div>`;}
 function spRenderCup(){
   const el=document.getElementById('sp-tables'),lg=SP.tLeague,name=(SP_LEAGUES.find(x=>x[0]===lg)||[])[1]||'';
   const sel=`<select class="sp-sel" onchange="spSetTableLeague(this.value)" aria-label="Choose competition">${SP_LEAGUES.filter(x=>x[0]!=='all').map(([k,n])=>`<option value="${k}"${k===lg?' selected':''}>${spEsc(n)}</option>`).join('')}</select>`;
-  const head=`<div class="sp-h"><span><i class="ti ti-ball-football" aria-hidden="true"></i>${spEsc(name)} matches</span><span class="sp-hr">${spIsAdmin()&&SP.cup[lg]&&SP.cup[lg].length?'<button class="sp-act sp-dlt" onclick="spDownloadTable(this)"><i class="ti ti-download" aria-hidden="true"></i> <span>Download matches</span></button>':''}${sel}</span></div>`;
-  const list=SP.cup[lg];
-  if(!list){el.innerHTML=head+'<div class="sp-empty">Loading matches…</div>';return;}
-  if(!list.length){el.innerHTML=head+'<div class="sp-empty">No matches scheduled in the coming weeks.</div>';return;}
-  const byDay={};list.slice().sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(m=>{const k=new Date(m.date).toLocaleDateString('en-CA',{timeZone:'Africa/Dar_es_Salaam'});(byDay[k]=byDay[k]||[]).push(m);});
-  const today=spTodayKey();
-  el.innerHTML=head+Object.keys(byDay).map(k=>{
-    const d=new Date(k+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'});
-    return `<div class="sp-cupday">${spEsc(d)}${k===today?' · Today':''}</div>`+byDay[k].map(m=>{
-      const pre=m.state==='pre',live=m.state==='in';
-      const mid=pre?`<span class="sp-cupsc">${spTime(m.date)}</span>`:`<span class="sp-cupsc${live?' lv':''}">${m.home.score==null?0:m.home.score} - ${m.away.score==null?0:m.away.score}</span>`;
-      const tag=live?'<span class="sp-pill-live">LIVE</span>':pre?'':'<span class="sp-pill ft">FT</span>';
-      return `<div class="sp-cuprow"><span class="h">${spEsc(m.home.name)}</span>${spCrest(m.home,'sp-fs')}${mid}${spCrest(m.away,'sp-fs')}<span class="a">${spEsc(m.away.name)}</span>${tag}</div>`;
-    }).join('');
+  const data=SP.cup[lg],ok=data&&data.rounds&&data.rounds.length;
+  const head=`<div class="sp-h"><span><i class="ti ti-trophy" aria-hidden="true"></i>${spEsc(name)} · Road to the final</span><span class="sp-hr">${spIsAdmin()&&ok?'<button class="sp-act sp-dlt" onclick="spDownloadTable(this)"><i class="ti ti-download" aria-hidden="true"></i> <span>Download round</span></button>':''}${sel}</span></div>`;
+  if(!data){el.innerHTML=head+'<div class="sp-empty">Loading the draw…</div>';return;}
+  if(!ok){el.innerHTML=head+'<div class="sp-empty">The draw for this competition is not available yet.</div>';return;}
+  const old=el.querySelector('.bk'),keep=old&&el.dataset.bk===lg?old.scrollLeft:null;
+  const R=data.rounds,last=R.length-1;
+  const cols=R.map((r,i)=>{
+    const cur=r.key===data.currentKey,ms=r.matches||[],tbd=Math.max(0,(r.expected||0)-ms.length);
+    const done=ms.length&&ms.every(m=>m.state==='post'),anyLive=ms.some(m=>m.state==='in');
+    const chip=anyLive?'<span class="sp-pill-live">LIVE</span>':done?'<span class="sp-pill ft">Completed</span>':ms.length?'<span class="sp-pill">Upcoming</span>':'<span class="sp-pill tbdp">TBD</span>';
+    let body=ms.map(spBkMatch).join('');
+    if(tbd){const show=Math.min(tbd,ms.length?2:3);body+=Array(show).fill(0).map(spBkTbd).join('')+(tbd>show?`<div class="bk-more">+ ${tbd-show} more ties to be decided</div>`:'');}
+    if(!ms.length&&!tbd)body+=spBkTbd();
+    let champ='';
+    if(i===last){
+      const f=ms[0],wn=f&&spBkWinner(f)?(spBkWinner(f)==='h'?f.home:f.away):null;
+      champ=`<div class="bk-champ"><i class="ti ti-trophy" aria-hidden="true"></i><div>Champions</div>${wn?`<div class="cw">${spCrest(wn,'sp-fs')}<b>${spEsc(wn.name)}</b></div>`:'<b class="q">TBD</b>'}</div>`;
+    }
+    return `<div class="bk-c${cur?' cur':''}" data-k="${spEsc(r.key)}"><div class="bk-h"><b>${spEsc(r.label)}</b><small>${spEsc(r.detail||'')}</small><span>${chip}<em>${r.expected||ms.length} ${((r.expected||ms.length)===1)?'tie':'ties'}</em></span></div><div class="bk-l">${body}</div>${champ}</div>`;
   }).join('');
+  el.innerHTML=head+`<div class="bk">${cols}</div><div class="bk-hint">Swipe sideways: earlier rounds are on the left, the final is on the right</div>`;
+  el.dataset.bk=lg;
+  const bk=el.querySelector('.bk');
+  if(keep!=null)bk.scrollLeft=keep;else{const c=bk.querySelector('.bk-c.cur');if(c)bk.scrollLeft=Math.max(0,c.offsetLeft-bk.offsetLeft-12);}
 }
 function spRenderTable(data){
   if(SP_CUPS.includes(SP.tLeague)){spRenderCup();return;}
@@ -2447,8 +2502,9 @@ async function spBanner(m){
 }
 /* ---- remember the last view so the page opens instantly (refreshes quietly behind it) ---- */
 const SP_KEY='buza_sports_v1';
+function spSlimCup(){const o={};for(const k in SP.cup){const d=SP.cup[k];if(!d||!d.rounds)continue;o[k]={...d,rounds:d.rounds.map(r=>({...r,matches:r.matches.map(m=>({...m,goals:[]}))}))};}return o;}
 function spSave(){
-  try{localStorage.setItem(SP_KEY,JSON.stringify({ts:Date.now(),date:SP.date,league:SP.league,tLeague:SP.tLeague,heroId:SP.heroId,matches:SP.matches,updated:SP.updated,stand:SP.stand,cup:SP.cup}));}catch(e){}
+  try{localStorage.setItem(SP_KEY,JSON.stringify({ts:Date.now(),date:SP.date,league:SP.league,tLeague:SP.tLeague,heroId:SP.heroId,matches:SP.matches,updated:SP.updated,stand:SP.stand,cup:spSlimCup()}));}catch(e){}
 }
 function spHydrate(){
   try{
@@ -2464,9 +2520,11 @@ async function spTableImage(){
   await spFontReady();
   const lg=SP.tLeague,cup=SP_CUPS.includes(lg),lname=(SP_LEAGUES.find(x=>x[0]===lg)||[])[1]||'';
   const full=(cup?lname:(SP.stand[lg]&&SP.stand[lg].name)||lname);
-  const items=[];
+  const items=[];let cupRound='';
   if(cup){
-    const list=(SP.cup[lg]||[]).slice().sort((a,b)=>new Date(a.date)-new Date(b.date)),byDay={};
+    const bd=SP.cup[lg]||{rounds:[]},cr=bd.rounds.find(r=>r.key===bd.currentKey)||bd.rounds[0]||{matches:[],label:''};
+    cupRound=cr.label;
+    const list=(cr.matches||[]).slice().sort((a,b)=>new Date(a.date)-new Date(b.date)),byDay={};
     list.forEach(m=>{const k=new Date(m.date).toLocaleDateString('en-CA',{timeZone:'Africa/Dar_es_Salaam'});(byDay[k]=byDay[k]||[]).push(m);});
     Object.keys(byDay).forEach(k=>{items.push({t:'grp',text:new Date(k+'T12:00:00Z').toLocaleDateString('sw-TZ',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'}).toUpperCase()});byDay[k].forEach(m=>items.push({t:'m',m}));});
   }else{
@@ -2491,7 +2549,7 @@ async function spTableImage(){
   }
   g.textBaseline='alphabetic';g.textAlign='right';g.fillStyle='#9fc2ff';g.font=F(800,28);g.fillText('BUZA MEDIA SPORTS',W-60,92);
   g.textAlign='left';g.fillStyle='#fff';g.font=F(800,cup?54:58);
-  let t=(cup?'MECHI ZA ':'MSIMAMO · ')+full.toUpperCase();while(g.measureText(t).width>W-120&&t.length>8)t=t.slice(0,-1);
+  let t=(cup?(cupRound?cupRound.toUpperCase()+' · ':'')+full.toUpperCase():'MSIMAMO · '+full.toUpperCase());while(g.measureText(t).width>W-120&&t.length>8)t=t.slice(0,-1);
   g.fillText(t,60,262);
   let dt='';try{dt=new Date().toLocaleDateString('sw-TZ',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Africa/Dar_es_Salaam'});}catch(e){}
   g.fillStyle='#8ea0cc';g.font=F(600,26);g.fillText(dt,60,306);
