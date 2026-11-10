@@ -490,7 +490,12 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
 .sp-ico.spin i{animation:spSpin .8s linear infinite}
 @keyframes spSpin{to{transform:rotate(360deg)}}
 .sp-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(300px,1fr);gap:14px}
-.sp-vt,.sp-sc{display:flex;gap:6px;padding:0 14px 10px;flex-wrap:wrap}.sp-vt button,.sp-sc button{border:1px solid var(--border,#d9dee8);background:transparent;color:inherit;border-radius:999px;padding:5px 12px;font:600 12px Poppins,sans-serif;cursor:pointer}.sp-vt button.on,.sp-sc button.on{background:#2065fe;border-color:#2065fe;color:#fff}.sp-sub{display:block;font-size:11px;font-weight:400;opacity:.65}
+.sp-vt,.sp-sc{display:flex;gap:6px;padding:0 14px 10px;flex-wrap:wrap}.sp-vt button,.sp-sc button{border:1px solid var(--border,#d9dee8);background:transparent;color:inherit;border-radius:999px;padding:5px 12px;font:600 12px Poppins,sans-serif;cursor:pointer}.sp-vt button.on,.sp-sc button.on{background:#2065fe;border-color:#2065fe;color:#fff}.sp-mv{position:fixed;inset:0;background:rgba(3,8,24,.82);z-index:9999;display:none;align-items:center;justify-content:center;padding:12px}.sp-mv.on{display:flex}
+.sp-mvb{background:#0c1530;border:1px solid rgba(120,150,255,.25);border-radius:16px;max-width:1100px;width:100%;max-height:96vh;display:flex;flex-direction:column;overflow:hidden}
+.sp-mvh{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;color:#fff;font:700 14px Poppins,Inter,sans-serif;flex-wrap:wrap}.sp-mvh>span{display:flex;gap:8px}
+.sp-mvc{overflow:auto;padding:0 12px 14px;-webkit-overflow-scrolling:touch;flex:1}.sp-mvi{display:block;width:100%;height:auto;border-radius:10px;margin:0 auto;max-width:560px}.sp-mvi.wide{max-width:none;min-width:880px}
+@media(max-width:600px){.sp-mvi.wide{min-width:980px}.sp-mvh b{font-size:12px;flex:1 1 100%}}
+.sp-sub{display:block;font-size:11px;font-weight:400;opacity:.65}
 .sp-sc{flex-wrap:nowrap;gap:6px}.sp-sc button{flex:1 1 0;min-width:0;padding:7px 4px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media(max-width:600px){.sp-vt,.sp-sc{padding:0 10px 10px}.sp-sc{gap:4px}.sp-sc button{font-size:11px;padding:7px 2px}}
 @media(max-width:380px){.sp-sc .sp-ic{display:none}.sp-sc{gap:3px}.sp-sc button{font-size:10px;padding:6px 1px;letter-spacing:-.2px}}
@@ -2443,9 +2448,190 @@ async function spUseInBanner(ev,id,btn){
   }catch(e){if(typeof showToast==='function')showToast('Could not open the banner tool: '+(e.message||e),'error');}
   spBusy(btn,false);
 }
+/* ---- line-ups + match statistics (picture view + download) ---- */
+const SP_MATCH_API=SP_API.replace('live-scores','live-match');
+SP.md=SP.md||{};
+function spFindMatch(id){return SP.matches.find(x=>x.id===id)||Object.values(SP.cup||{}).flatMap(d=>(d&&d.rounds||[]).flatMap(r=>r.matches)).find(x=>x.id===id);}
+async function spMatchData(m){
+  const c=SP.md[m.id];if(c&&Date.now()-c.t<30000)return c.d;
+  const r=await fetch(`${SP_MATCH_API}?league=${encodeURIComponent(m.league)}&id=${encodeURIComponent(m.id)}`);
+  const d=r.ok?await r.json():null;if(!d||d.error)throw new Error('details are not available yet');
+  SP.md[m.id]={t:Date.now(),d};return d;
+}
+const spHex=h=>{h=String(h||'#2065fe').replace('#','');if(h.length===3)h=h.split('').map(x=>x+x).join('');const n=parseInt(h,16)||0;return[(n>>16)&255,(n>>8)&255,n&255];};
+const spRgb=c=>`rgb(${c.map(x=>Math.round(x)).join(',')})`;
+const spLum=c=>(0.2126*c[0]+0.7152*c[1]+0.0722*c[2])/255;
+const spMix=(c,t,k)=>c.map((x,i)=>x+(t[i]-x)*k);
+function spTeamColors(d){
+  let h=spHex(d.home.color),a=spHex(d.away.color);
+  if(Math.hypot(h[0]-a[0],h[1]-a[1],h[2]-a[2])<110)a=spLum(h)>0.6?[216,35,42]:[245,245,245];
+  return[h,a];
+}
+function spDepth(ab){const a=String(ab||'').toUpperCase();if(a==='G'||a==='GK')return 0;if(/^(CD|CB|LB|RB|SW|LWB|RWB|WB|D)/.test(a))return 1;if(/^(DM|CDM)/.test(a))return 2;if(/^(CM|M$|M-|LM|RM)/.test(a))return 3;if(/^(AM|CAM|LW|RW|W)/.test(a))return 4;return 5;}
+function spSide(ab){const a=String(ab||'').toUpperCase();if(/-L$/.test(a)||['LB','LWB','LM','LW','LF','L'].includes(a))return-1;if(/-R$/.test(a)||['RB','RWB','RM','RW','RF','R'].includes(a))return 1;return 0;}
+/* places the 11 starters on their half: returns [{p,x:0..1 (left→right as the team attacks),y:0..1 (own goal → centre line)}] */
+function spLayout(starters,formation){
+  const gk=starters.find(p=>spDepth(p.pos)===0)||starters[0];
+  const rest=starters.filter(p=>p!==gk).sort((a,b)=>spDepth(a.pos)-spDepth(b.pos)||(a.place-b.place));
+  let rows=String(formation||'').split('-').map(Number).filter(n=>n>0);
+  if(rows.reduce((s,n)=>s+n,0)!==rest.length){const n=rest.length,d=Math.min(5,Math.max(3,Math.round(n*0.4))),f=Math.max(1,Math.min(3,Math.round(n*0.2)));rows=[d,Math.max(1,n-d-f),f];}
+  const out=[{p:gk,x:.5,y:.10}];let k=0;
+  rows.forEach((cnt,ri)=>{
+    const grp=rest.slice(k,k+cnt);k+=cnt;
+    grp.sort((a,b)=>spSide(a.pos)-spSide(b.pos));
+    grp.forEach((p,i)=>out.push({p,x:grp.length>1?.13+.74*i/(grp.length-1):.5,y:.30+(rows.length>1?.58*ri/(rows.length-1):0)}));
+  });
+  return out;
+}
+function spShirt(g,cx,cy,s,fill,num,txt){
+  const w=s,h=s*.92,x=cx-w/2,y=cy-h/2;
+  g.save();g.beginPath();
+  g.moveTo(x+w*.30,y);g.lineTo(x+w*.40,y+h*.08);g.quadraticCurveTo(cx,y+h*.2,x+w*.60,y+h*.08);g.lineTo(x+w*.70,y);
+  g.lineTo(x+w,y+h*.22);g.lineTo(x+w*.86,y+h*.42);g.lineTo(x+w*.74,y+h*.34);g.lineTo(x+w*.74,y+h);g.lineTo(x+w*.26,y+h);g.lineTo(x+w*.26,y+h*.34);
+  g.lineTo(x+w*.14,y+h*.42);g.lineTo(x,y+h*.22);g.closePath();
+  g.shadowColor='rgba(0,0,0,.45)';g.shadowBlur=8;g.shadowOffsetY=3;g.fillStyle=fill;g.fill();g.shadowColor='transparent';
+  g.lineWidth=2;g.strokeStyle='rgba(255,255,255,.85)';g.stroke();g.restore();
+  g.fillStyle=txt;g.textAlign='center';g.font=`800 ${Math.round(s*.4)}px Poppins,Inter,Arial,sans-serif`;g.fillText(String(num||''),cx,cy+s*.2);
+}
+function spFit(g,t,maxW){t=String(t||'');while(g.measureText(t).width>maxW&&t.length>3)t=t.slice(0,-2).trimEnd()+'…';return t;}
+async function spLineupImage(m,d){
+  await spFontReady();
+  const W=1920,H=1440,PX=580,PW=760,PY=215,PH=1140;
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');
+  const F=(w,px)=>`${w} ${px}px Poppins,Inter,"Segoe UI",Arial,sans-serif`;
+  const [pitch,logo,hl,al]=await Promise.all([spAsset('pitch.jpg'),spAsset('logo-white.png'),spLoadImg(d.home.logo||m.home.logo),spLoadImg(d.away.logo||m.away.logo)]);
+  const [hc,ac]=spTeamColors(d);
+  let bg=g.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#0a2aa8');bg.addColorStop(.5,'#101a86');bg.addColorStop(1,'#0a1259');g.fillStyle=bg;g.fillRect(0,0,W,H);
+  g.fillStyle='rgba(0,0,10,.22)';g.fillRect(0,PY-20,PX-20,H-PY+20);g.fillRect(PX+PW+20,PY-20,W-PX-PW-20,H-PY+20);
+  if(logo){const bw=900,bh=bw*logo.naturalHeight/logo.naturalWidth;g.save();g.globalAlpha=.05;g.drawImage(logo,(W-bw)/2,(H-bh)/2,bw,bh);g.restore();}
+  // header
+  if(logo){const lw=230,lh=lw*logo.naturalHeight/logo.naturalWidth;g.save();g.shadowColor='rgba(0,0,0,.4)';g.shadowBlur=12;g.drawImage(logo,46,40,lw,lh);g.restore();}
+  g.textAlign='center';g.fillStyle='#fff';g.font=F(800,104);g.fillText('STARTING XI',W/2,138);
+  let dt='';try{dt=new Date(m.date).toLocaleDateString('sw-TZ',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Africa/Dar_es_Salaam'});}catch(e){}
+  g.fillStyle='#b9ccff';g.font=F(600,28);g.fillText(spFit(g,[m.leagueName,dt,d.venue].filter(Boolean).join('  ·  '),1300),W/2,186);
+  g.textAlign='right';g.fillStyle='#9fc2ff';g.font=F(800,28);g.fillText('BUZA MEDIA SPORTS',W-50,84);
+  // pitch
+  g.save();g.shadowColor='rgba(0,0,0,.5)';g.shadowBlur=30;g.fillStyle='#14641c';g.fillRect(PX,PY,PW,PH);g.restore();
+  if(pitch){g.imageSmoothingQuality='high';g.drawImage(pitch,PX,PY,PW,PH);}else{g.fillStyle='#1d7a27';g.fillRect(PX,PY,PW,PH);}
+  g.strokeStyle='rgba(255,255,255,.55)';g.lineWidth=3;g.strokeRect(PX+1,PY+1,PW-2,PH-2);
+  if(logo){const bw=300,bh=bw*logo.naturalHeight/logo.naturalWidth;g.save();g.globalAlpha=.16;g.drawImage(logo,PX+(PW-bw)/2,PY+(PH-bh)/2,bw,bh);g.restore();}
+  const half=PH/2-8;
+  const drawSide=(tm,col,top)=>{
+    const lay=spLayout(tm.starters,tm.formation),SS=lay.length>9&&lay.some(o=>o.y>.8)&&new Set(lay.map(o=>o.y)).size>=6?56:64,gkc=spLum(col)>.55&&spLum(col)<.95&&col[0]>180&&col[1]>150?[30,150,80]:[255,212,0];
+    lay.forEach(({p,x,y})=>{
+      const cx=PX+(top?(1-x):x)*PW,cy=top?PY+8+y*half:PY+PH-8-y*half;
+      const isGk=p===lay[0].p,fill=spRgb(isGk?gkc:col),tc=spLum(isGk?gkc:col)>.6?'#10163a':'#fff';
+      spShirt(g,cx,cy,SS,fill,p.n,tc);
+      g.fillStyle='#fff';g.font=F(800,21);g.textAlign='center';g.save();g.shadowColor='rgba(0,0,0,.85)';g.shadowBlur=5;g.shadowOffsetY=1;g.fillText(spFit(g,String(p.name||'').toUpperCase(),150),cx,cy+SS*.78+10);g.restore();
+      let bx=cx+34;
+      if(p.yc&&!p.rc){g.fillStyle='#ffd400';g.fillRect(bx,cy-36,15,21);bx+=19;}
+      if(p.rc||p.yc>1){g.fillStyle='#e11d2e';g.fillRect(bx,cy-36,15,21);bx+=19;}
+      if(p.g){g.font=F(700,22);g.textAlign='left';g.fillText('⚽'+(p.g>1?'×'+p.g:''),cx+30,cy+22);}
+      if(p.out){g.fillStyle='#ff6b78';g.font=F(800,22);g.textAlign='right';g.fillText('↓',cx-32,cy-16);}
+    });
+  };
+  if(d.home.starters.length)drawSide(d.home,hc,true);
+  if(d.away.starters.length)drawSide(d.away,ac,false);
+  // side lists
+  const list=(tm,col,img,x0)=>{
+    const lx=x0+40,rw=PX-20-80;
+    if(img){const k=Math.min(112/img.width,112/img.height);g.drawImage(img,lx,PY+4+(112-img.height*k)/2,img.width*k,img.height*k);}
+    g.textAlign='left';g.fillStyle='#fff';g.font=F(800,40);g.fillText(spFit(g,String(tm.name||'').toUpperCase(),rw-140),lx+136,PY+54);
+    g.fillStyle=spRgb(spMix(col,[255,255,255],.35));g.font=F(700,30);g.fillText(tm.formation?('Formation  '+tm.formation):'',lx+136,PY+100);
+    let y=PY+190;
+    if(!tm.starters.length){g.fillStyle='#b9ccff';g.font=F(600,28);g.fillText('Line-up not announced yet',lx,y);return;}
+    g.fillStyle='#9fc2ff';g.font=F(800,28);g.fillText('STARTING XI',lx,y);y+=18;
+    const lay=spLayout(tm.starters,tm.formation).map(o=>o.p);
+    const icons=(p,xr,yy)=>{g.textAlign='right';let x=xr;
+      if(p.rc||p.yc>1){g.fillStyle='#e11d2e';g.fillRect(x-14,yy-22,14,20);x-=22;}else if(p.yc){g.fillStyle='#ffd400';g.fillRect(x-14,yy-22,14,20);x-=22;}
+      if(p.g){g.fillStyle='#fff';g.font=F(700,24);g.fillText('⚽'+(p.g>1?'×'+p.g:''),x,yy);x-=p.g>1?64:38;}
+      if(p.out){g.fillStyle='#ff6b78';g.font=F(800,24);g.fillText('↓',x,yy);}};
+    lay.forEach(p=>{y+=48;g.fillStyle='rgba(255,255,255,.12)';g.fillRect(lx,y+12,rw,1.5);
+      g.textAlign='left';g.fillStyle=spRgb(spMix(col,[255,255,255],.4));g.font=F(800,28);g.fillText(String(p.n||''),lx,y);
+      g.fillStyle='#fff';g.font=F(700,28);g.fillText(spFit(g,String(p.full||p.name).toUpperCase(),rw-190),lx+62,y);icons(p,lx+rw,y);});
+    y+=64;g.fillStyle='#9fc2ff';g.font=F(800,28);g.textAlign='left';g.fillText('SUBS',lx,y);y+=4;
+    tm.subs.slice(0,9).forEach(p=>{y+=36;g.textAlign='left';g.fillStyle='#aebfe6';g.font=F(700,23);g.fillText(String(p.n||''),lx,y);
+      g.fillStyle='#e6edff';g.font=F(600,23);g.fillText(spFit(g,String(p.full||p.name).toUpperCase(),rw-180),lx+62,y);
+      if(p.in){g.fillStyle='#5be08a';g.font=F(800,22);g.textAlign='right';let xr=lx+rw;if(p.yc){g.fillStyle='#ffd400';g.fillRect(xr-14,y-20,14,19);xr-=24;g.fillStyle='#5be08a';}g.fillText('↑',xr,y);}});
+  };
+  list(d.home,hc,hl,0);list(d.away,ac,al,PX+PW+20);
+  // footer
+  g.fillStyle='rgba(159,194,255,.3)';g.fillRect(40,H-70,W-80,2);
+  g.textAlign='left';g.fillStyle='#fff';g.font=F(700,28);g.fillText('Powered by Denis Jackson',50,H-26);
+  g.textAlign='center';g.fillStyle='#b9ccff';g.font=F(600,24);g.fillText(`${m.home.name}  ${m.state==='pre'?'vs':(d.score.home??m.home.score??0)+' - '+(d.score.away??m.away.score??0)}  ${m.away.name}`,W/2,H-26);
+  g.textAlign='right';g.fillStyle='#4f9bff';g.font=F(800,30);g.fillText('buzamedia.com',W-50,H-26);
+  return cv;
+}
+async function spStatsImage(m,d){
+  await spFontReady();
+  const rows=d.stats||[];if(!rows.length)throw new Error('statistics are not available yet');
+  const W=1080,HEAD=470,RH=104,FOOT=170,H=HEAD+rows.length*RH+FOOT;
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');
+  const F=(w,px)=>`${w} ${px}px Poppins,Inter,"Segoe UI",Arial,sans-serif`;
+  const [logo,hl,al]=await Promise.all([spAsset('logo-white.png'),spLoadImg(d.home.logo||m.home.logo),spLoadImg(d.away.logo||m.away.logo)]);
+  let [hc,ac]=spTeamColors(d);[hc,ac]=[hc,ac].map(c=>spLum(c)<.3?spMix(c,[255,255,255],.45):c);
+  let bg=g.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#0c1c45');bg.addColorStop(1,'#060b1b');g.fillStyle=bg;g.fillRect(0,0,W,H);
+  let gl=g.createRadialGradient(540,200,20,540,200,900);gl.addColorStop(0,'rgba(47,123,255,.35)');gl.addColorStop(1,'rgba(47,123,255,0)');g.fillStyle=gl;g.fillRect(0,0,W,H);
+  if(logo){const bw=760,bh=bw*logo.naturalHeight/logo.naturalWidth;g.save();g.globalAlpha=.06;g.drawImage(logo,(W-bw)/2,HEAD+(H-HEAD-FOOT-bh)/2,bw,bh);g.restore();
+    const lw=210,lh=lw*logo.naturalHeight/logo.naturalWidth;g.save();g.globalAlpha=.95;g.shadowColor='rgba(0,0,0,.4)';g.shadowBlur=12;g.drawImage(logo,50,44,lw,lh);g.restore();}
+  g.textAlign='right';g.fillStyle='#9fc2ff';g.font=F(800,28);g.fillText('BUZA MEDIA SPORTS',W-60,92);
+  g.textAlign='center';g.fillStyle='#fff';g.font=F(800,50);g.fillText('MATCH STATISTICS',W/2,196);
+  [[hl,150,d.home],[al,930,d.away]].forEach(([im,cx,t])=>{
+    if(im){const k=Math.min(130/im.width,130/im.height);g.drawImage(im,cx-im.width*k/2,240+(130-im.height*k)/2,im.width*k,im.height*k);}
+    g.fillStyle='#fff';g.font=F(700,26);g.textAlign='center';g.fillText(spFit(g,t.name,250),cx,408);
+  });
+  const sc=(x)=>x==null?0:x;
+  g.fillStyle='#fff';g.font=F(800,100);g.textAlign='center';g.fillText(m.state==='pre'?'VS':`${sc(d.score.home??m.home.score)} - ${sc(d.score.away??m.away.score)}`,W/2,350);
+  const stt=spStatus(m);g.fillStyle=stt.c==='#566074'?'#8ea0cc':stt.c;g.font=F(700,24);g.fillText(stt.t,W/2,396);
+  let dt='';try{dt=new Date(m.date).toLocaleDateString('sw-TZ',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Africa/Dar_es_Salaam'});}catch(e){}
+  g.fillStyle='#8ea0cc';g.font=F(600,24);g.fillText(spFit(g,[m.leagueName,dt].filter(Boolean).join('  ·  '),900),W/2,446);
+  let y=HEAD;
+  rows.forEach(r=>{
+    const cy=y+RH/2,tot=(r.home+r.away)||1;
+    g.textAlign='left';g.fillStyle='#fff';g.font=F(800,34);g.fillText((Math.round(r.home*10)/10)+r.unit,70,cy-4);
+    g.textAlign='right';g.fillText((Math.round(r.away*10)/10)+r.unit,W-70,cy-4);
+    g.textAlign='center';g.fillStyle='#b9ccff';g.font=F(600,28);g.fillText(r.label,W/2,cy-4);
+    const bx=70,bw=W-140,by=cy+16,bh=14,gap=8,hw=Math.max(0,(bw-gap)*r.home/tot),aw=Math.max(0,(bw-gap)*r.away/tot);
+    g.fillStyle='rgba(120,140,190,.2)';g.fillRect(bx,by,bw,bh);
+    g.fillStyle=spRgb(hc);g.fillRect(bx,by,hw,bh);g.fillStyle=spRgb(ac);g.fillRect(bx+bw-aw,by,aw,bh);
+    y+=RH;
+  });
+  y=H-FOOT+30;g.fillStyle='rgba(90,140,255,.3)';g.fillRect(60,y,W-120,2);
+  g.textAlign='left';g.fillStyle='#fff';g.font=F(700,30);g.fillText('Powered by Denis Jackson',60,y+62);
+  g.fillStyle='#8ea0cc';g.font=F(500,24);g.fillText('Buza Media Sports',60,y+104);
+  g.textAlign='right';g.fillStyle='#4f9bff';g.font=F(800,32);g.fillText('buzamedia.com',W-60,y+62);
+  return cv;
+}
+/* popup that shows the picture and lets anybody download it */
+async function spMatchView(ev,id,kind,btn){
+  if(ev)ev.stopPropagation();
+  const m=spFindMatch(id);if(!m)return;
+  let ov=document.getElementById('sp-mv');
+  if(!ov){ov=document.createElement('div');ov.id='sp-mv';ov.className='sp-mv';ov.innerHTML='<div class="sp-mvb" role="dialog" aria-modal="true"><div class="sp-mvh"><b id="sp-mvt"></b><span><button class="sp-act sp-act-p" id="sp-mvd"><i class="ti ti-download" aria-hidden="true"></i> <span>Download</span></button><button class="sp-act" id="sp-mvx" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i> <span>Close</span></button></span></div><div class="sp-mvc" id="sp-mvc"></div></div>';document.body.appendChild(ov);
+    ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('on');});ov.querySelector('#sp-mvx').onclick=()=>ov.classList.remove('on');}
+  const box=ov.querySelector('#sp-mvc'),dl=ov.querySelector('#sp-mvd');
+  ov.querySelector('#sp-mvt').textContent=(kind==='lineup'?'Lineups · ':'Statistics · ')+spHeadline(m);
+  box.innerHTML='<div class="sp-empty">Loading…</div>';dl.disabled=true;ov.classList.add('on');
+  let cv=null;
+  try{
+    const d=await spMatchData(m);
+    if(kind==='lineup'&&!(d.home.starters.length||d.away.starters.length)){box.innerHTML='<div class="sp-empty">Line-ups are not announced yet. Please check again closer to kick-off.</div>';return;}
+    if(kind!=='lineup'&&!(d.stats||[]).length){box.innerHTML='<div class="sp-empty">Statistics are not available yet. They appear once the match starts.</div>';return;}
+    cv=kind==='lineup'?await spLineupImage(m,d):await spStatsImage(m,d);
+    const img=new Image();img.alt=kind==='lineup'?'Lineups':'Statistics';img.src=cv.toDataURL('image/jpeg',0.92);img.className=kind==='lineup'?'sp-mvi wide':'sp-mvi';
+    box.innerHTML='';box.appendChild(img);
+    dl.disabled=false;
+    dl.onclick=async()=>{
+      spBusy(dl,true,'Preparing…');
+      try{const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',0.93));const name='buza-media-'+(kind==='lineup'?'lineups':'statistics')+'-'+(m.home.abbr||'h')+'-'+(m.away.abbr||'a')+'.jpg';
+        if(typeof saveBlob==='function')saveBlob(blob,name);else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);}
+        if(typeof showToast==='function')showToast('Picture saved!','success');}catch(e){if(typeof showToast==='function')showToast('Could not save: '+(e.message||e),'error');}
+      spBusy(dl,false);};
+  }catch(e){box.innerHTML='<div class="sp-empty">'+spEsc(e.message||'Could not load')+'</div>';}
+}
 function spActs(m){
   const id=spEsc(m.id);
-  return `<div class="sp-acts"><button class="sp-act" onclick="spDownload(event,'${id}',this)"><i class="ti ti-download" aria-hidden="true"></i> <span>Download banner</span></button>${spIsAdmin()?`<button class="sp-act sp-act-p" onclick="spPost(event,'${id}',this)"><i class="ti ti-send" aria-hidden="true"></i> <span>Share to social media</span></button><button class="sp-act" onclick="spUseInBanner(event,'${id}',this)"><i class="ti ti-photo-edit" aria-hidden="true"></i> <span>Use in Buza Media banner</span></button>`:''}</div>`;
+  return `<div class="sp-acts"><button class="sp-act" onclick="spMatchView(event,'${id}','lineup',this)"><i class="ti ti-layout-board" aria-hidden="true"></i> <span>Lineups</span></button><button class="sp-act" onclick="spMatchView(event,'${id}','stats',this)"><i class="ti ti-chart-bar" aria-hidden="true"></i> <span>Statistics</span></button><button class="sp-act" onclick="spDownload(event,'${id}',this)"><i class="ti ti-download" aria-hidden="true"></i> <span>Download banner</span></button>${spIsAdmin()?`<button class="sp-act sp-act-p" onclick="spPost(event,'${id}',this)"><i class="ti ti-send" aria-hidden="true"></i> <span>Share to social media</span></button><button class="sp-act" onclick="spUseInBanner(event,'${id}',this)"><i class="ti ti-photo-edit" aria-hidden="true"></i> <span>Use in Buza Media banner</span></button>`:''}</div>`;
 }
 const SP_IMG={};
 async function spLoadImg(url){
