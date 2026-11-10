@@ -494,7 +494,7 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
 .sp-mvb{background:#0c1530;border:1px solid rgba(120,150,255,.25);border-radius:16px;max-width:1100px;width:100%;max-height:96vh;display:flex;flex-direction:column;overflow:hidden}
 .sp-mvh{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;color:#fff;font:700 14px Poppins,Inter,sans-serif;flex-wrap:wrap}.sp-mvh>span{display:flex;gap:8px}
 .sp-mvc{overflow:auto;padding:0 12px 14px;-webkit-overflow-scrolling:touch;flex:1}.sp-mvi{display:block;width:100%;height:auto;border-radius:10px;margin:0 auto;max-width:560px}.sp-mvi.wide{max-width:none;min-width:880px}
-@media(max-width:600px){.sp-mvi.wide{min-width:980px}.sp-mvh b{font-size:12px;flex:1 1 100%}}
+@media(max-width:600px){.sp-mvi.wide{min-width:0}.sp-mvh b{font-size:12px;flex:1 1 100%}}
 .sp-sub{display:block;font-size:11px;font-weight:400;opacity:.65}
 .sp-sc{flex-wrap:nowrap;gap:6px}.sp-sc button{flex:1 1 0;min-width:0;padding:7px 4px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media(max-width:600px){.sp-vt,.sp-sc{padding:0 10px 10px}.sp-sc{gap:4px}.sp-sc button{font-size:11px;padding:7px 2px}}
@@ -2562,6 +2562,59 @@ async function spLineupImage(m,d){
   g.textAlign='right';g.fillStyle='#4f9bff';g.font=F(800,30);g.fillText('buzamedia.com',W-50,H-26);
   return cv;
 }
+async function spLineupMobile(m,d){
+  await spFontReady();
+  const W=1080,COL=480,LX=[50,W/2+30],NR=11,RH=62,SH=48,HEAD=300,TOP=HEAD+190,subN=Math.min(9,Math.max(d.home.subs.length,d.away.subs.length));
+  const H=TOP+60+NR*RH+90+subN*SH+170;
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');
+  const F=(w,px)=>`${w} ${px}px Poppins,Inter,"Segoe UI",Arial,sans-serif`;
+  const [logo,hl,al]=await Promise.all([spAsset('logo-white.png'),spLoadImg(d.home.logo||m.home.logo),spLoadImg(d.away.logo||m.away.logo)]);
+  const [hc,ac]=spTeamColors(d);
+  let bg=g.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#0a2aa8');bg.addColorStop(.55,'#101a86');bg.addColorStop(1,'#0a1259');g.fillStyle=bg;g.fillRect(0,0,W,H);
+  if(logo){const bw=760,bh=bw*logo.naturalHeight/logo.naturalWidth;g.save();g.globalAlpha=.05;g.drawImage(logo,(W-bw)/2,(H-bh)/2,bw,bh);g.restore();
+    const lw=210,lh=lw*logo.naturalHeight/logo.naturalWidth;g.save();g.shadowColor='rgba(0,0,0,.4)';g.shadowBlur=12;g.drawImage(logo,46,36,lw,lh);g.restore();}
+  g.textAlign='right';g.fillStyle='#9fc2ff';g.font=F(800,26);g.fillText('BUZA MEDIA SPORTS',W-50,84);
+  g.textAlign='center';g.fillStyle='#fff';g.font=F(800,84);g.fillText('STARTING XI',W/2,226);
+  let dt='';try{dt=new Date(m.date).toLocaleDateString('sw-TZ',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Africa/Dar_es_Salaam'});}catch(e){}
+  g.fillStyle='#b9ccff';g.font=F(600,24);g.fillText(spFit(g,[m.leagueName,dt].filter(Boolean).join('  ·  '),980),W/2,272);
+  g.fillStyle='rgba(0,0,10,.22)';g.fillRect(0,HEAD,W,H-HEAD);
+  g.fillStyle='rgba(159,194,255,.25)';g.fillRect(W/2-1,HEAD+30,2,H-HEAD-200);
+  [[d.home,hc,hl,0],[d.away,ac,al,1]].forEach(([tm,col,img,i])=>{
+    const x0=LX[i];
+    if(img){const k=Math.min(96/img.width,96/img.height);g.drawImage(img,x0,HEAD+34+(96-img.height*k)/2,img.width*k,img.height*k);}
+    g.textAlign='left';g.fillStyle='#fff';g.font=F(800,34);g.fillText(spFit(g,String(tm.name||'').toUpperCase(),COL-116),x0+112,HEAD+80);
+    g.fillStyle=spRgb(spMix(col,[255,255,255],.35));g.font=F(700,26);g.fillText(tm.formation||'',x0+112,HEAD+118);
+    let y=TOP;
+    if(!tm.starters.length){g.fillStyle='#b9ccff';g.font=F(600,26);g.fillText('Not announced yet',x0,y+30);return;}
+    g.fillStyle='#9fc2ff';g.font=F(800,26);g.fillText('STARTING XI',x0,y);y+=14;
+    const lay=spLayout(tm.starters,tm.formation).map(o=>o.p),tx=spLum(col)>.6?'#10163a':'#fff';
+    lay.forEach((p,idx)=>{
+      const cy=y+RH/2;
+      g.fillStyle='rgba(255,255,255,.1)';g.fillRect(x0,y+RH-1,COL,1.5);
+      g.fillStyle=idx===0?'#ffd400':spRgb(col);g.beginPath();g.arc(x0+25,cy,24,0,Math.PI*2);g.fill();g.lineWidth=2;g.strokeStyle='rgba(255,255,255,.8)';g.stroke();
+      g.fillStyle=idx===0?'#10163a':tx;g.font=F(800,24);g.textAlign='center';g.fillText(String(p.n||''),x0+25,cy+9);
+      let xr=x0+COL;g.textAlign='right';
+      if(p.rc||p.yc>1){g.fillStyle='#e11d2e';g.fillRect(xr-14,cy-12,14,20);xr-=22;}else if(p.yc){g.fillStyle='#ffd400';g.fillRect(xr-14,cy-12,14,20);xr-=22;}
+      if(p.g){g.fillStyle='#fff';g.font=F(700,24);g.fillText('⚽'+(p.g>1?'×'+p.g:''),xr,cy+9);xr-=p.g>1?64:38;}
+      if(p.out){g.fillStyle='#ff6b78';g.font=F(800,24);g.fillText('↓',xr,cy+9);xr-=26;}
+      g.textAlign='left';g.fillStyle='#fff';g.font=F(700,27);g.fillText(spFit(g,String(p.full||p.name).toUpperCase(),xr-(x0+62)-8),x0+62,cy+10);
+      y+=RH;
+    });
+    y+=56;g.fillStyle='#9fc2ff';g.font=F(800,26);g.textAlign='left';g.fillText('SUBS',x0,y);y+=8;
+    tm.subs.slice(0,9).forEach(p=>{
+      const cy=y+SH/2;g.textAlign='left';g.fillStyle='#aebfe6';g.font=F(700,22);g.fillText(String(p.n||''),x0,cy+8);
+      let xr=x0+COL;g.textAlign='right';
+      if(p.in){g.fillStyle='#5be08a';g.font=F(800,22);if(p.yc){g.fillStyle='#ffd400';g.fillRect(xr-14,cy-12,14,19);xr-=24;g.fillStyle='#5be08a';}g.fillText('↑',xr,cy+8);xr-=26;}
+      g.textAlign='left';g.fillStyle='#e6edff';g.font=F(600,22);g.fillText(spFit(g,String(p.full||p.name).toUpperCase(),xr-(x0+56)-6),x0+56,cy+8);
+      y+=SH;
+    });
+  });
+  g.fillStyle='rgba(159,194,255,.3)';g.fillRect(50,H-120,W-100,2);
+  g.textAlign='left';g.fillStyle='#fff';g.font=F(700,28);g.fillText('Powered by Denis Jackson',50,H-62);
+  g.fillStyle='#b9ccff';g.font=F(600,22);g.fillText(`${m.home.name}  ${m.state==='pre'?'vs':(d.score.home??m.home.score??0)+' - '+(d.score.away??m.away.score??0)}  ${m.away.name}`,50,H-26);
+  g.textAlign='right';g.fillStyle='#4f9bff';g.font=F(800,30);g.fillText('buzamedia.com',W-50,H-62);
+  return cv;
+}
 async function spStatsImage(m,d){
   await spFontReady();
   const rows=d.stats||[];if(!rows.length)throw new Error('statistics are not available yet');
@@ -2617,8 +2670,8 @@ async function spMatchView(ev,id,kind,btn){
     const d=await spMatchData(m);
     if(kind==='lineup'&&!(d.home.starters.length||d.away.starters.length)){box.innerHTML='<div class="sp-empty">Line-ups are not announced yet. Please check again closer to kick-off.</div>';return;}
     if(kind!=='lineup'&&!(d.stats||[]).length){box.innerHTML='<div class="sp-empty">Statistics are not available yet. They appear once the match starts.</div>';return;}
-    cv=kind==='lineup'?await spLineupImage(m,d):await spStatsImage(m,d);
-    const img=new Image();img.alt=kind==='lineup'?'Lineups':'Statistics';img.src=cv.toDataURL('image/jpeg',0.92);img.className=kind==='lineup'?'sp-mvi wide':'sp-mvi';
+    const phone=window.innerWidth<=700;cv=kind==='lineup'?(phone?await spLineupMobile(m,d):await spLineupImage(m,d)):await spStatsImage(m,d);
+    const img=new Image();img.alt=kind==='lineup'?'Lineups':'Statistics';img.src=cv.toDataURL('image/jpeg',0.92);img.className=kind==='lineup'&&!phone?'sp-mvi wide':'sp-mvi';
     box.innerHTML='';box.appendChild(img);
     dl.disabled=false;
     dl.onclick=async()=>{
