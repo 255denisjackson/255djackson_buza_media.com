@@ -717,6 +717,7 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
     <button class="engage-btn" id="like-btn" onclick="toggleLike()"><i class="ti ti-heart" aria-hidden="true"></i> <span id="like-count">0</span> Like</button>
     <button class="engage-btn" onclick="downloadPostCard()"><i class="ti ti-download" aria-hidden="true"></i> Download banner</button>
     <button class="engage-btn hidden" id="push-social-btn" onclick="pushToSocial(currentArticleId,this)"><i class="ti ti-send" aria-hidden="true"></i> <span>Post to social</span></button>
+    <button class="engage-btn hidden" id="use-banner-btn" onclick="useArticleInBanner(this)"><i class="ti ti-photo-edit" aria-hidden="true"></i> <span>Use in banner</span></button>
     <button class="engage-btn hidden" id="download-video-btn" onclick="downloadVideo()"><i class="ti ti-video" aria-hidden="true"></i> Download video</button>
     <div class="share-wrap">
       <button class="engage-btn" onclick="toggleShareMenu()"><i class="ti ti-share-3" aria-hidden="true"></i> Share</button>
@@ -2300,7 +2301,7 @@ function spRenderStatsBody(el,head){
 function spSetTableLeague(l){SP.tLeague=l;SP.showAll=false;spLoadTable();spSave();}
 
 function spRenderChips(){
-  document.getElementById('sp-chips').innerHTML=SP_LEAGUES.map(([k,n])=>`<button class="sp-chip${SP.league===k?' on':''}" onclick="spSetLeague('${k}')">${spEsc(n)}</button>`).join('')+(spIsAdmin()?'<button class="sp-chip sp-chip-dl" onclick="spDownloadDay(this)"><i class="ti ti-download" aria-hidden="true"></i> <span>Download day picture</span></button><button class="sp-chip sp-chip-dl" onclick="spUseDayInBanner(this)"><i class="ti ti-photo-edit" aria-hidden="true"></i> <span>Use day picture in banner</span></button>':'');
+  document.getElementById('sp-chips').innerHTML=SP_LEAGUES.map(([k,n])=>`<button class="sp-chip${SP.league===k?' on':''}" onclick="spSetLeague('${k}')">${spEsc(n)}</button>`).join('')+(spIsAdmin()?'<button class="sp-chip sp-chip-dl" onclick="spDownloadDay(this)"><i class="ti ti-download" aria-hidden="true"></i> <span>Download day picture</span></button>':'');
 }
 function spDays(){
   const t=spTodayKey(),out=[];
@@ -2353,7 +2354,7 @@ function spRenderLive(){
   const el=document.getElementById('sp-live'),v=spVisible(),anyLive=v.some(m=>m.state==='in');
   const title=anyLive?'Live Matches':'Matches';
   if(!v.length){el.innerHTML=`<div class="sp-h"><span><i class="ti ti-broadcast" aria-hidden="true"></i>${title}</span></div><div class="sp-empty">No matches to show.</div>`;return;}
-  el.innerHTML=`<div class="sp-h"><span><i class="ti ti-broadcast" aria-hidden="true"></i>${title}</span><span class="sp-hr">${spIsAdmin()?'<button class="sp-act sp-dlt" onclick="spDownloadDay(this)"><i class="ti ti-download" aria-hidden="true"></i> <span>Download all matches</span></button><button class="sp-act sp-dlt" onclick="spUseDayInBanner(this)"><i class="ti ti-photo-edit" aria-hidden="true"></i> <span>Use in Buza Media banner</span></button>':''}<span class="sp-pill">${v.length}</span></span></div><div class="sp-list">`+v.map(m=>{
+  el.innerHTML=`<div class="sp-h"><span><i class="ti ti-broadcast" aria-hidden="true"></i>${title}</span><span class="sp-hr">${spIsAdmin()?'<button class="sp-act sp-dlt" onclick="spDownloadDay(this)"><i class="ti ti-download" aria-hidden="true"></i> <span>Download all matches</span></button>':''}<span class="sp-pill">${v.length}</span></span></div><div class="sp-list">`+v.map(m=>{
     const live=m.state==='in',pre=m.state==='pre',pct=Math.min(100,Math.round(spMinutes(m)/90*100));
     const tag=live?'<span class="sp-pill-live">LIVE</span>':spLate(m)?'<span class="sp-pill-live">STARTED</span>':pre?`<span class="sp-pill">${spTime(m.date)}</span>`:'<span class="sp-pill ft">FT</span>';
     const sc=pre?'vs':`<b data-s="h">${m.home.score==null?0:m.home.score}</b> - <b data-s="a">${m.away.score==null?0:m.away.score}</b>`;
@@ -3012,23 +3013,6 @@ async function spDayImage(){
   g.textAlign='right';g.fillStyle='#4f9bff';g.font=F(800,32);g.fillText('buzamedia.com',W-60,y+62);
   return cv;
 }
-async function spUseDayInBanner(btn){
-  if(!spIsAdmin())return;
-  spBusy(btn,true,'Preparing…');
-  try{
-    const cv=await spDayImage();
-    const src=cv.toDataURL('image/jpeg',0.95);
-    const isToday=SP.date===spTodayKey();
-    hideSports();
-    switchMode(document.getElementById('tab-admin')||document.createElement('button'),'admin');
-    const first=document.querySelector('.sidebar-item');if(typeof adminNav==='function')adminNav(first,'compose');
-    const box=document.getElementById('cb-box');if(box)box.open=true;
-    if(typeof window.buzaBannerWithPhoto==='function')window.buzaBannerWithPhoto(src,'matches-'+(SP.date||spTodayKey())+'.jpg',isToday?'MECHI ZA LEO':'MECHI ZA SIKU');
-    setTimeout(()=>{(document.getElementById('cb-head')||box||document.body).scrollIntoView({behavior:'smooth',block:'center'});},300);
-    if(typeof showToast==='function')showToast('Matches picture added to the Buza Media banner.','success');
-  }catch(e){if(typeof showToast==='function')showToast('Could not open the banner tool: '+(e.message||e),'error');}
-  spBusy(btn,false);
-}
 async function spDownloadDay(btn){
   if(!spIsAdmin())return;
   spBusy(btn,true,'Preparing…');
@@ -3145,6 +3129,7 @@ function openArticle(id,asEntry){
   document.getElementById('article-hero').classList.toggle('portrait',p.orientation==='portrait');
   document.getElementById('download-video-btn').classList.toggle('hidden',!(p.mediaType==='video'&&p.video)||!!ytId);
   document.getElementById('push-social-btn').classList.toggle('hidden',!(isLoggedIn&&p.status==='published'));
+  {const ub=document.getElementById('use-banner-btn');if(ub)ub.classList.toggle('hidden',!(isLoggedIn&&p.photo));}
   renderArticleText(id);
   document.getElementById('view-public').classList.add('hidden');
   document.getElementById('view-login').classList.add('hidden');
@@ -3270,6 +3255,7 @@ async function doLogout(){
   try{await sb.auth.signOut();}catch(e){}
   isLoggedIn=false;
   const psb=document.getElementById('push-social-btn');if(psb)psb.classList.add('hidden');
+  {const ub=document.getElementById('use-banner-btn');if(ub)ub.classList.add('hidden');}
   renderNavLoggedOut();
   goHome();
   await loadPosts(true); // drop drafts from memory
@@ -4115,6 +4101,26 @@ async function downloadVideo(){
   }
 }
 
+// admin only: send this article's photo + headline into the Buza Media photo banner (Compose) so it can be edited
+async function useArticleInBanner(btn){
+  if(!isLoggedIn)return;
+  const p=posts.find(x=>x.id===currentArticleId);if(!p||!p.photo){showToast('This article has no photo.','error');return;}
+  const lab=btn&&btn.querySelector('span'),old=lab?lab.textContent:'';
+  if(btn){btn.disabled=true;if(lab)lab.textContent='Preparing…';}
+  try{
+    let src=p.photo;
+    try{const b=await (await fetch(p.photo,{mode:'cors'})).blob();src=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=rej;fr.readAsDataURL(b);});}catch(e){/* keep the link */}
+    let title=p.title||'';try{const T=await cardTextFor(p);if(T&&T.title)title=T.title;}catch(e){}
+    try{hideSports();}catch(e){}
+    switchMode(document.getElementById('tab-admin')||document.createElement('button'),'admin');
+    const first=document.querySelector('.sidebar-item');if(typeof adminNav==='function')adminNav(first,'compose');
+    const box=document.getElementById('cb-box');if(box)box.open=true;
+    if(typeof window.buzaBannerWithPhoto==='function')window.buzaBannerWithPhoto(src,'article-photo.jpg',String(title).toUpperCase());
+    setTimeout(()=>{(document.getElementById('cb-head')||box||document.body).scrollIntoView({behavior:'smooth',block:'center'});},300);
+    showToast('Photo and headline added to the Buza Media banner. Edit and save.','success');
+  }catch(e){showToast('Could not open the banner tool: '+(e.message||e),'error');}
+  if(btn){btn.disabled=false;if(lab)lab.textContent=old;}
+}
 async function downloadPostCard(){
   const p=posts.find(x=>x.id===currentArticleId);if(!p)return;
   if(displayLang!=='original'&&!directText(p,displayLang)&&!translationCache[displayLang+'::post::'+p.id])showToast(displayLang==='sw'?'Inaandaa bango kwa Kiswahili…':'Preparing the banner in English…','success');
