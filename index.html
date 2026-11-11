@@ -2300,7 +2300,7 @@ function spRenderStatsBody(el,head){
 function spSetTableLeague(l){SP.tLeague=l;SP.showAll=false;spLoadTable();spSave();}
 
 function spRenderChips(){
-  document.getElementById('sp-chips').innerHTML=SP_LEAGUES.map(([k,n])=>`<button class="sp-chip${SP.league===k?' on':''}" onclick="spSetLeague('${k}')">${spEsc(n)}</button>`).join('')+(spIsAdmin()?'<button class="sp-chip sp-chip-dl" onclick="spDownloadDay(this)"><i class="ti ti-download" aria-hidden="true"></i> <span>Download day picture</span></button>':'');
+  document.getElementById('sp-chips').innerHTML=SP_LEAGUES.map(([k,n])=>`<button class="sp-chip${SP.league===k?' on':''}" onclick="spSetLeague('${k}')">${spEsc(n)}</button>`).join('')+(spIsAdmin()?'<button class="sp-chip sp-chip-dl" onclick="spDownloadDay(this)"><i class="ti ti-download" aria-hidden="true"></i> <span>Download day picture</span></button><button class="sp-chip sp-chip-dl" onclick="spUseDayInBanner(this)"><i class="ti ti-photo-edit" aria-hidden="true"></i> <span>Use day picture in banner</span></button>':'');
 }
 function spDays(){
   const t=spTodayKey(),out=[];
@@ -2353,7 +2353,7 @@ function spRenderLive(){
   const el=document.getElementById('sp-live'),v=spVisible(),anyLive=v.some(m=>m.state==='in');
   const title=anyLive?'Live Matches':'Matches';
   if(!v.length){el.innerHTML=`<div class="sp-h"><span><i class="ti ti-broadcast" aria-hidden="true"></i>${title}</span></div><div class="sp-empty">No matches to show.</div>`;return;}
-  el.innerHTML=`<div class="sp-h"><span><i class="ti ti-broadcast" aria-hidden="true"></i>${title}</span><span class="sp-hr">${spIsAdmin()?'<button class="sp-act sp-dlt" onclick="spDownloadDay(this)"><i class="ti ti-download" aria-hidden="true"></i> <span>Download all matches</span></button>':''}<span class="sp-pill">${v.length}</span></span></div><div class="sp-list">`+v.map(m=>{
+  el.innerHTML=`<div class="sp-h"><span><i class="ti ti-broadcast" aria-hidden="true"></i>${title}</span><span class="sp-hr">${spIsAdmin()?'<button class="sp-act sp-dlt" onclick="spDownloadDay(this)"><i class="ti ti-download" aria-hidden="true"></i> <span>Download all matches</span></button><button class="sp-act sp-dlt" onclick="spUseDayInBanner(this)"><i class="ti ti-photo-edit" aria-hidden="true"></i> <span>Use in Buza Media banner</span></button>':''}<span class="sp-pill">${v.length}</span></span></div><div class="sp-list">`+v.map(m=>{
     const live=m.state==='in',pre=m.state==='pre',pct=Math.min(100,Math.round(spMinutes(m)/90*100));
     const tag=live?'<span class="sp-pill-live">LIVE</span>':spLate(m)?'<span class="sp-pill-live">STARTED</span>':pre?`<span class="sp-pill">${spTime(m.date)}</span>`:'<span class="sp-pill ft">FT</span>';
     const sc=pre?'vs':`<b data-s="h">${m.home.score==null?0:m.home.score}</b> - <b data-s="a">${m.away.score==null?0:m.away.score}</b>`;
@@ -2779,59 +2779,6 @@ async function spLoadHighlights(){
     todo.forEach(m=>{const v=d[m.id];if(v&&v.v){SP.hl[m.id]=v;n++;}});
     if(n)spRenderAll();}catch(e){}
 }
-async function spDayImage(){
-  await spFontReady();
-  const list=spVisible().slice(0,40);if(!list.length)throw new Error('There are no matches on this day to put in a picture.');
-  const groups=[];list.forEach(m=>{let g=groups.find(x=>x.k===m.league);if(!g){g={k:m.league,n:m.leagueName,items:[]};groups.push(g);}g.items.push(m);});
-  const W=1080,HEAD=330,GH=76,RH=92,FOOT=170;
-  const H=HEAD+groups.reduce((a,g)=>a+GH+g.items.length*RH+20,0)+FOOT;
-  const cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');
-  const F=(w,px)=>`${w} ${px}px Poppins,Inter,"Segoe UI",Arial,sans-serif`;
-  const logo=await spAsset('logo-white.png');
-  const imgs=new Map();await Promise.all(list.flatMap(m=>[m.home,m.away]).map(async t=>{if(t.logo&&!imgs.has(t.logo))imgs.set(t.logo,await spLoadImg(t.logo));}));
-  let bg=g.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#0c1c45');bg.addColorStop(1,'#060b1b');g.fillStyle=bg;g.fillRect(0,0,W,H);
-  let gl=g.createRadialGradient(540,160,20,540,160,900);gl.addColorStop(0,'rgba(47,123,255,.35)');gl.addColorStop(1,'rgba(47,123,255,0)');g.fillStyle=gl;g.fillRect(0,0,W,H);
-  if(logo){const bw=760,bh=bw*logo.naturalHeight/logo.naturalWidth;g.save();g.globalAlpha=.05;g.drawImage(logo,(W-bw)/2,(H-bh)/2,bw,bh);g.restore();
-    const lw=210,lh=lw*logo.naturalHeight/logo.naturalWidth;g.save();g.shadowColor='rgba(0,0,0,.4)';g.shadowBlur=12;g.drawImage(logo,50,44,lw,lh);g.restore();}
-  g.textAlign='right';g.fillStyle='#9fc2ff';g.font=F(800,28);g.fillText('BUZA MEDIA SPORTS',W-60,92);
-  g.textAlign='center';g.fillStyle='#fff';g.font=F(800,66);g.fillText('MATCHES OF THE DAY',W/2,222);
-  let dt='';try{const [y,mo,d]=(SP.date||spTodayKey()).split('-').map(Number);dt=new Date(Date.UTC(y,mo-1,d,12)).toLocaleDateString('sw-TZ',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'UTC'});}catch(e){}
-  g.fillStyle='#b9ccff';g.font=F(600,30);g.fillText(dt,W/2,274);
-  let y=HEAD;
-  groups.forEach(gr=>{
-    g.fillStyle='rgba(32,101,254,.25)';g.fillRect(50,y,W-100,GH-14);g.fillStyle='#fff';g.font=F(800,30);g.textAlign='left';g.fillText(spFit(g,String(gr.n).toUpperCase(),W-160),74,y+(GH-14)/2+10);y+=GH;
-    gr.items.forEach(m=>{
-      const cy=y+RH/2,live=m.state==='in',pre=m.state==='pre';
-      g.fillStyle='rgba(255,255,255,.08)';g.fillRect(50,y+RH-1,W-100,1.5);
-      const crest=(t,cx)=>{const im=imgs.get(t.logo);if(im){const k=Math.min(52/im.width,52/im.height);g.drawImage(im,cx-im.width*k/2,cy-im.height*k/2,im.width*k,im.height*k);}else{g.fillStyle='rgba(255,255,255,.14)';g.beginPath();g.arc(cx,cy,24,0,Math.PI*2);g.fill();g.fillStyle='#fff';g.font=F(700,16);g.textAlign='center';g.fillText(String(t.abbr||t.name||'?').slice(0,3),cx,cy+6);}};
-      g.font=F(700,30);g.fillStyle='#fff';g.textAlign='right';g.fillText(spFit(g,m.home.name,310),400,cy+10);
-      g.textAlign='left';g.fillText(spFit(g,m.away.name,310),680,cy+10);
-      crest(m.home,440);crest(m.away,640);
-      g.textAlign='center';
-      if(pre){g.fillStyle='#8fb4ff';g.font=F(800,34);g.fillText(spTime(m.date),540,cy+12);}
-      else{g.fillStyle=live?'#ff5a68':'#fff';g.font=F(800,40);g.fillText((m.home.score==null?0:m.home.score)+' - '+(m.away.score==null?0:m.away.score),540,cy+8);if(live){g.fillStyle='#ff5a68';g.font=F(700,16);g.fillText(String(m.detail||'LIVE'),540,cy+30);}}
-      y+=RH;
-    });
-    y+=20;
-  });
-  y=H-FOOT+30;g.fillStyle='rgba(90,140,255,.3)';g.fillRect(60,y,W-120,2);
-  g.textAlign='left';g.fillStyle='#fff';g.font=F(700,30);g.fillText('Powered by Denis Jackson',60,y+62);
-  g.fillStyle='#8ea0cc';g.font=F(500,24);g.fillText('Buza Media Sports  ·  Times are EAT',60,y+104);
-  g.textAlign='right';g.fillStyle='#4f9bff';g.font=F(800,32);g.fillText('buzamedia.com',W-60,y+62);
-  return cv;
-}
-async function spDownloadDay(btn){
-  if(!spIsAdmin())return;
-  spBusy(btn,true,'Preparing…');
-  try{
-    const cv=await spDayImage();
-    const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',0.93));
-    const name='buza-media-matches-'+(SP.date||spTodayKey())+'.jpg';
-    if(typeof saveBlob==='function')saveBlob(blob,name);else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);}
-    if(typeof showToast==='function')showToast('Picture saved!','success');
-  }catch(e){if(typeof showToast==='function')showToast(e.message||'Could not make the picture','error');}
-  spBusy(btn,false);
-}
 function spActs(m){
   const id=spEsc(m.id);
   const hasH=SP.hl[m.id]&&SP.hl[m.id].v,eligible=SP_STREAM_LG.includes(m.league),hasS=eligible&&SP.streams[m.id]&&spStreamKind(SP.streams[m.id].url);
@@ -3064,6 +3011,23 @@ async function spDayImage(){
   g.fillStyle='#8ea0cc';g.font=F(500,24);g.fillText('Buza Media Sports · '+dt,60,y+104);
   g.textAlign='right';g.fillStyle='#4f9bff';g.font=F(800,32);g.fillText('buzamedia.com',W-60,y+62);
   return cv;
+}
+async function spUseDayInBanner(btn){
+  if(!spIsAdmin())return;
+  spBusy(btn,true,'Preparing…');
+  try{
+    const cv=await spDayImage();
+    const src=cv.toDataURL('image/jpeg',0.95);
+    const isToday=SP.date===spTodayKey();
+    hideSports();
+    switchMode(document.getElementById('tab-admin')||document.createElement('button'),'admin');
+    const first=document.querySelector('.sidebar-item');if(typeof adminNav==='function')adminNav(first,'compose');
+    const box=document.getElementById('cb-box');if(box)box.open=true;
+    if(typeof window.buzaBannerWithPhoto==='function')window.buzaBannerWithPhoto(src,'matches-'+(SP.date||spTodayKey())+'.jpg',isToday?'MECHI ZA LEO':'MECHI ZA SIKU');
+    setTimeout(()=>{(document.getElementById('cb-head')||box||document.body).scrollIntoView({behavior:'smooth',block:'center'});},300);
+    if(typeof showToast==='function')showToast('Matches picture added to the Buza Media banner.','success');
+  }catch(e){if(typeof showToast==='function')showToast('Could not open the banner tool: '+(e.message||e),'error');}
+  spBusy(btn,false);
 }
 async function spDownloadDay(btn){
   if(!spIsAdmin())return;
