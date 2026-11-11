@@ -1136,6 +1136,7 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
         <div class="admin-section">
           <div class="admin-section-title"><i class="ti ti-world" aria-hidden="true"></i> Auto-post trending news</div>
           <div class="admin-section-sub">Every 3 hours the server collects stories from the sources saved in your Supabase database (table <code>news_sources</code>: Sky Sports, Fox Sports, ESPN, SuperSport, Global Publishers, BBC and targeted searches for Tanzanian clubs, Miss Grand and Bongo Flava artists), and saves each one as an article with its photo, a short teaser and a clear source credit + link. A story whose source link is already in the database is never added twice. This runs on the server, so no keys or tokens are ever stored in this page.</div>
+          <div class="ap-ctl" id="ap-ctl" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 1rem;padding:12px 14px;border-radius:12px;border:1px solid rgba(120,140,200,.35)"><span id="ap-state" style="font-weight:600">Checking auto-post…</span><button class="btn btn-primary" id="ap-btn" onclick="toggleAutoPost()" disabled>…</button></div>
           <button class="btn btn-primary" onclick="fetchTrendingNow()"><i class="ti ti-refresh" aria-hidden="true"></i> Find trending news now</button>
           <div class="admin-section-sub" style="margin-top:1.1rem"><strong>Social posting:</strong> one designed 1080×1350 card (photo, category, Swahili headline and teaser) is posted automatically to Instagram and Facebook every hour. Stories about Simba, Yanga, Azam, Miss Grand Tanzania and the Bongo Flava stars (Diamond, Harmonize, Rayvanny, Alikiba) go first. Stories not posted within 24 hours are dropped. Progress and errors are recorded per post in the <code>social_posts</code> table, and access tokens live in the private <code>social_credentials</code> table, never in this page.</div>
         </div>
@@ -2299,7 +2300,7 @@ function spRenderStatsBody(el,head){
 function spSetTableLeague(l){SP.tLeague=l;SP.showAll=false;spLoadTable();spSave();}
 
 function spRenderChips(){
-  document.getElementById('sp-chips').innerHTML=SP_LEAGUES.map(([k,n])=>`<button class="sp-chip${SP.league===k?' on':''}" onclick="spSetLeague('${k}')">${spEsc(n)}</button>`).join('');
+  document.getElementById('sp-chips').innerHTML=SP_LEAGUES.map(([k,n])=>`<button class="sp-chip${SP.league===k?' on':''}" onclick="spSetLeague('${k}')">${spEsc(n)}</button>`).join('')+(spIsAdmin()?'<button class="sp-chip sp-chip-dl" onclick="spDownloadDay(this)"><i class="ti ti-download" aria-hidden="true"></i> <span>Download day picture</span></button>':'');
 }
 function spDays(){
   const t=spTodayKey(),out=[];
@@ -2348,7 +2349,7 @@ function spRenderLive(){
   const el=document.getElementById('sp-live'),v=spVisible(),anyLive=v.some(m=>m.state==='in');
   const title=anyLive?'Live Matches':'Matches';
   if(!v.length){el.innerHTML=`<div class="sp-h"><span><i class="ti ti-broadcast" aria-hidden="true"></i>${title}</span></div><div class="sp-empty">No matches to show.</div>`;return;}
-  el.innerHTML=`<div class="sp-h"><span><i class="ti ti-broadcast" aria-hidden="true"></i>${title}</span><span class="sp-pill">${v.length}</span></div><div class="sp-list">`+v.map(m=>{
+  el.innerHTML=`<div class="sp-h"><span><i class="ti ti-broadcast" aria-hidden="true"></i>${title}</span><span class="sp-hr">${spIsAdmin()?'<button class="sp-act sp-dlt" onclick="spDownloadDay(this)"><i class="ti ti-download" aria-hidden="true"></i> <span>Download all matches</span></button>':''}<span class="sp-pill">${v.length}</span></span></div><div class="sp-list">`+v.map(m=>{
     const live=m.state==='in',pre=m.state==='pre',pct=Math.min(100,Math.round(spMinutes(m)/90*100));
     const tag=live?'<span class="sp-pill-live">LIVE</span>':pre?`<span class="sp-pill">${spTime(m.date)}</span>`:'<span class="sp-pill ft">FT</span>';
     const sc=pre?'vs':`<b data-s="h">${m.home.score==null?0:m.home.score}</b> - <b data-s="a">${m.away.score==null?0:m.away.score}</b>`;
@@ -2774,6 +2775,59 @@ async function spLoadHighlights(){
     todo.forEach(m=>{const v=d[m.id];if(v&&v.v){SP.hl[m.id]=v;n++;}});
     if(n)spRenderAll();}catch(e){}
 }
+async function spDayImage(){
+  await spFontReady();
+  const list=spVisible().slice(0,40);if(!list.length)throw new Error('There are no matches on this day to put in a picture.');
+  const groups=[];list.forEach(m=>{let g=groups.find(x=>x.k===m.league);if(!g){g={k:m.league,n:m.leagueName,items:[]};groups.push(g);}g.items.push(m);});
+  const W=1080,HEAD=330,GH=76,RH=92,FOOT=170;
+  const H=HEAD+groups.reduce((a,g)=>a+GH+g.items.length*RH+20,0)+FOOT;
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');
+  const F=(w,px)=>`${w} ${px}px Poppins,Inter,"Segoe UI",Arial,sans-serif`;
+  const logo=await spAsset('logo-white.png');
+  const imgs=new Map();await Promise.all(list.flatMap(m=>[m.home,m.away]).map(async t=>{if(t.logo&&!imgs.has(t.logo))imgs.set(t.logo,await spLoadImg(t.logo));}));
+  let bg=g.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#0c1c45');bg.addColorStop(1,'#060b1b');g.fillStyle=bg;g.fillRect(0,0,W,H);
+  let gl=g.createRadialGradient(540,160,20,540,160,900);gl.addColorStop(0,'rgba(47,123,255,.35)');gl.addColorStop(1,'rgba(47,123,255,0)');g.fillStyle=gl;g.fillRect(0,0,W,H);
+  if(logo){const bw=760,bh=bw*logo.naturalHeight/logo.naturalWidth;g.save();g.globalAlpha=.05;g.drawImage(logo,(W-bw)/2,(H-bh)/2,bw,bh);g.restore();
+    const lw=210,lh=lw*logo.naturalHeight/logo.naturalWidth;g.save();g.shadowColor='rgba(0,0,0,.4)';g.shadowBlur=12;g.drawImage(logo,50,44,lw,lh);g.restore();}
+  g.textAlign='right';g.fillStyle='#9fc2ff';g.font=F(800,28);g.fillText('BUZA MEDIA SPORTS',W-60,92);
+  g.textAlign='center';g.fillStyle='#fff';g.font=F(800,66);g.fillText('MATCHES OF THE DAY',W/2,222);
+  let dt='';try{const [y,mo,d]=(SP.date||spTodayKey()).split('-').map(Number);dt=new Date(Date.UTC(y,mo-1,d,12)).toLocaleDateString('sw-TZ',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'UTC'});}catch(e){}
+  g.fillStyle='#b9ccff';g.font=F(600,30);g.fillText(dt,W/2,274);
+  let y=HEAD;
+  groups.forEach(gr=>{
+    g.fillStyle='rgba(32,101,254,.25)';g.fillRect(50,y,W-100,GH-14);g.fillStyle='#fff';g.font=F(800,30);g.textAlign='left';g.fillText(spFit(g,String(gr.n).toUpperCase(),W-160),74,y+(GH-14)/2+10);y+=GH;
+    gr.items.forEach(m=>{
+      const cy=y+RH/2,live=m.state==='in',pre=m.state==='pre';
+      g.fillStyle='rgba(255,255,255,.08)';g.fillRect(50,y+RH-1,W-100,1.5);
+      const crest=(t,cx)=>{const im=imgs.get(t.logo);if(im){const k=Math.min(52/im.width,52/im.height);g.drawImage(im,cx-im.width*k/2,cy-im.height*k/2,im.width*k,im.height*k);}else{g.fillStyle='rgba(255,255,255,.14)';g.beginPath();g.arc(cx,cy,24,0,Math.PI*2);g.fill();g.fillStyle='#fff';g.font=F(700,16);g.textAlign='center';g.fillText(String(t.abbr||t.name||'?').slice(0,3),cx,cy+6);}};
+      g.font=F(700,30);g.fillStyle='#fff';g.textAlign='right';g.fillText(spFit(g,m.home.name,310),400,cy+10);
+      g.textAlign='left';g.fillText(spFit(g,m.away.name,310),680,cy+10);
+      crest(m.home,440);crest(m.away,640);
+      g.textAlign='center';
+      if(pre){g.fillStyle='#8fb4ff';g.font=F(800,34);g.fillText(spTime(m.date),540,cy+12);}
+      else{g.fillStyle=live?'#ff5a68':'#fff';g.font=F(800,40);g.fillText((m.home.score==null?0:m.home.score)+' - '+(m.away.score==null?0:m.away.score),540,cy+8);if(live){g.fillStyle='#ff5a68';g.font=F(700,16);g.fillText(String(m.detail||'LIVE'),540,cy+30);}}
+      y+=RH;
+    });
+    y+=20;
+  });
+  y=H-FOOT+30;g.fillStyle='rgba(90,140,255,.3)';g.fillRect(60,y,W-120,2);
+  g.textAlign='left';g.fillStyle='#fff';g.font=F(700,30);g.fillText('Powered by Denis Jackson',60,y+62);
+  g.fillStyle='#8ea0cc';g.font=F(500,24);g.fillText('Buza Media Sports  ·  Times are EAT',60,y+104);
+  g.textAlign='right';g.fillStyle='#4f9bff';g.font=F(800,32);g.fillText('buzamedia.com',W-60,y+62);
+  return cv;
+}
+async function spDownloadDay(btn){
+  if(!spIsAdmin())return;
+  spBusy(btn,true,'Preparing…');
+  try{
+    const cv=await spDayImage();
+    const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',0.93));
+    const name='buza-media-matches-'+(SP.date||spTodayKey())+'.jpg';
+    if(typeof saveBlob==='function')saveBlob(blob,name);else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);}
+    if(typeof showToast==='function')showToast('Picture saved!','success');
+  }catch(e){if(typeof showToast==='function')showToast(e.message||'Could not make the picture','error');}
+  spBusy(btn,false);
+}
 function spActs(m){
   const id=spEsc(m.id);
   const hasH=SP.hl[m.id]&&SP.hl[m.id].v,eligible=SP_STREAM_LG.includes(m.league),hasS=eligible&&SP.streams[m.id]&&spStreamKind(SP.streams[m.id].url);
@@ -2963,6 +3017,62 @@ async function spTableImage(){
   g.fillStyle='#8ea0cc';g.font=F(500,24);g.fillText('Buza Media Sports · '+dt,60,y+104);
   g.textAlign='right';g.fillStyle='#4f9bff';g.font=F(800,32);g.fillText('buzamedia.com',W-60,y+62);
   return cv;
+}
+/* ---- admin only: one picture with ALL matches of the day on screen ---- */
+async function spDayImage(){
+  await spFontReady();
+  const list=spVisible().slice(0,60);
+  if(!list.length)throw new Error('no matches to download');
+  const byLg=new Map();list.forEach(m=>{if(!byLg.has(m.league))byLg.set(m.league,[]);byLg.get(m.league).push(m);});
+  const items=[];byLg.forEach((arr,lg)=>{items.push({t:'grp',text:String(arr[0].leagueName||lg).toUpperCase()});arr.sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(m=>items.push({t:'m',m}));});
+  const crests={};
+  await Promise.all(list.flatMap(m=>[m.home.logo,m.away.logo]).map(async u=>{if(u&&!(u in crests))crests[u]=await spLoadImg(u);}));
+  const logo=await spAsset('logo-white.png');
+  const W=1080,HEAD=330,RH=84,GH=70,FOOT=190,H=HEAD+items.reduce((n,it)=>n+(it.t==='grp'?GH:RH),0)+FOOT;
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');
+  const F=(w,px)=>`${w} ${px}px Poppins,Inter,"Segoe UI",Arial,sans-serif`;
+  let bg=g.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#0c1c45');bg.addColorStop(1,'#060b1b');g.fillStyle=bg;g.fillRect(0,0,W,H);
+  let gl=g.createRadialGradient(540,200,20,540,200,900);gl.addColorStop(0,'rgba(47,123,255,.35)');gl.addColorStop(1,'rgba(47,123,255,0)');g.fillStyle=gl;g.fillRect(0,0,W,H);
+  if(logo){const bw=760,bh=bw*logo.naturalHeight/logo.naturalWidth;g.save();g.globalAlpha=.06;g.drawImage(logo,(W-bw)/2,HEAD+(H-HEAD-FOOT-bh)/2,bw,bh);g.restore();
+    const lw=210,lh=lw*logo.naturalHeight/logo.naturalWidth;g.save();g.globalAlpha=.95;g.shadowColor='rgba(0,0,0,.4)';g.shadowBlur=12;g.drawImage(logo,50,44,lw,lh);g.restore();}
+  g.textBaseline='alphabetic';g.textAlign='right';g.fillStyle='#9fc2ff';g.font=F(800,28);g.fillText('BUZA MEDIA SPORTS',W-60,92);
+  const isToday=SP.date===spTodayKey();
+  let dt='';try{const [y,mo,d]=String(SP.date||spTodayKey()).split('-').map(Number);dt=new Date(Date.UTC(y,mo-1,d,12)).toLocaleDateString('sw-TZ',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'UTC'});}catch(e){}
+  g.textAlign='left';g.fillStyle='#fff';g.font=F(800,58);g.fillText(isToday?'MECHI ZA LEO':'MECHI ZA SIKU',60,262);
+  g.fillStyle='#8ea0cc';g.font=F(600,26);g.fillText(dt,60,306);
+  let y=HEAD;const sc=x=>x==null?0:x;
+  items.forEach(it=>{
+    if(it.t==='grp'){g.fillStyle='rgba(40,80,170,.28)';g.fillRect(40,y+10,W-80,GH-24);g.fillStyle='#9fc2ff';g.font=F(800,26);g.textAlign='left';g.fillText(it.text,64,y+GH-26);y+=GH;return;}
+    g.fillStyle='rgba(90,140,255,.14)';g.fillRect(50,y+RH-1,W-100,1.5);
+    const m=it.m,cy=y+RH/2,pre=m.state==='pre';
+    [[m.home,'r',440],[m.away,'l',640]].forEach(([tm,al,x])=>{
+      g.font=F(700,27);g.fillStyle='#fff';let n=tm.name;while(g.measureText(n).width>290&&n.length>3)n=n.slice(0,-1);g.textAlign=al==='r'?'right':'left';g.fillText(n,al==='r'?x-52:x+52,cy+9);
+      const im=crests[tm.logo],cx=al==='r'?x-26:x+26;
+      if(im){const k=Math.min(44/im.width,44/im.height);g.drawImage(im,cx-im.width*k/2,cy-im.height*k/2,im.width*k,im.height*k);}else{g.fillStyle='rgba(80,120,220,.3)';g.beginPath();g.arc(cx,cy,20,0,Math.PI*2);g.fill();}
+    });
+    g.fillStyle='rgba(50,100,230,.28)';g.beginPath();if(g.roundRect)g.roundRect(470,cy-24,140,48,24);else g.rect(470,cy-24,140,48);g.fill();
+    g.fillStyle='#fff';g.font=F(800,26);g.textAlign='center';g.fillText(pre?spTime(m.date):`${sc(m.home.score)} - ${sc(m.away.score)}`,540,cy+9);
+    g.textAlign='right';g.fillStyle=m.state==='in'?'#ff6b78':'#8ea0cc';g.font=F(700,20);g.fillText(m.state==='in'?'LIVE':pre?'':'FT',1020,cy+7);
+    y+=RH;
+  });
+  y=H-FOOT+30;g.fillStyle='rgba(90,140,255,.3)';g.fillRect(60,y,W-120,2);
+  g.textAlign='left';g.fillStyle='#fff';g.font=F(700,30);g.fillText('Powered by Denis Jackson',60,y+62);
+  g.fillStyle='#8ea0cc';g.font=F(500,24);g.fillText('Buza Media Sports · '+dt,60,y+104);
+  g.textAlign='right';g.fillStyle='#4f9bff';g.font=F(800,32);g.fillText('buzamedia.com',W-60,y+62);
+  return cv;
+}
+async function spDownloadDay(btn){
+  if(!spIsAdmin())return;
+  spBusy(btn,true,'Preparing…');
+  try{
+    const cv=await spDayImage();
+    const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',0.93));
+    const name='buza-media-matches-'+(SP.date||spTodayKey())+'.jpg';
+    if(typeof saveBlob==='function')saveBlob(blob,name);
+    else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);}
+    if(typeof showToast==='function')showToast('Picture saved!','success');
+  }catch(e){if(typeof showToast==='function')showToast('Could not make the picture: '+(e.message||e),'error');}
+  spBusy(btn,false);
 }
 async function spDownloadTable(btn){
   spBusy(btn,true,'Preparing…');
@@ -3395,6 +3505,30 @@ function updateStats(){
   document.getElementById('mob-stat-pub').textContent=pub;
 }
 
+/* ---- admin: stop / allow automatic posting to Facebook + Instagram (YouTube is not affected) ---- */
+let AP_STOPPED=false;
+async function loadAutoPostState(){
+  const st=document.getElementById('ap-state'),bt=document.getElementById('ap-btn');if(!st||!bt)return;
+  try{
+    const {data,error}=await sb.from('site_settings').select('key,value').in('key',['social_auto_paused','social_rest_until']);if(error)throw error;
+    const m={};(data||[]).forEach(r=>{m[r.key]=r.value;});
+    const paused=m.social_auto_paused===true||m.social_auto_paused==='true';
+    const until=m.social_rest_until?new Date(m.social_rest_until):null,resting=until&&until.getTime()>Date.now();
+    AP_STOPPED=paused||!!resting;
+    if(paused){st.innerHTML='<i class="ti ti-player-pause" aria-hidden="true"></i> Auto-posting to Facebook &amp; Instagram is <b>STOPPED</b>';}
+    else if(resting){st.innerHTML='<i class="ti ti-moon" aria-hidden="true"></i> Auto-posting is <b>resting</b> until '+until.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'Africa/Dar_es_Salaam'})+' (EAT)';}
+    else{st.innerHTML='<i class="ti ti-player-play" aria-hidden="true"></i> Auto-posting to Facebook &amp; Instagram is <b>ON</b>';}
+    bt.disabled=false;bt.innerHTML=AP_STOPPED?'<i class="ti ti-player-play" aria-hidden="true"></i> Allow posting to social media':'<i class="ti ti-player-pause" aria-hidden="true"></i> Stop posting to social media';
+  }catch(e){st.textContent='Could not read the auto-post setting.';}
+}
+async function toggleAutoPost(){
+  const bt=document.getElementById('ap-btn');if(bt)bt.disabled=true;
+  const rows=AP_STOPPED?[{key:'social_auto_paused',value:false,is_public:false},{key:'social_rest_until',value:'1970-01-01T00:00:00Z',is_public:false}]:[{key:'social_auto_paused',value:true,is_public:false}];
+  const {error}=await sb.from('site_settings').upsert(rows);
+  if(error){if(typeof showToast==='function')showToast('Could not save: '+error.message,'error');}
+  else if(typeof showToast==='function')showToast(AP_STOPPED?'Auto-posting is ON again.':'Auto-posting is stopped. YouTube keeps posting.','success');
+  await loadAutoPostState();
+}
 function adminNav(btn,panel){
   document.querySelectorAll('.sidebar-item,.mob-nav-btn').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll(`[onclick*="adminNav"][onclick*="'${panel}'"]`).forEach(b=>b.classList.add('active'));
@@ -3403,6 +3537,7 @@ function adminNav(btn,panel){
   if(panel==='trending')renderTrending();
   if(panel==='insights')renderInsights();
   if(panel==='social')loadSocialFormFields();
+  if(panel==='autopost')loadAutoPostState();
 }
 
 function loadSocialFormFields(){
