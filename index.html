@@ -2146,7 +2146,8 @@ function applyTopStoryGradient(imgUrl){
 }
 /* ===== Buza Media Sports (live scores) ===== */
 const SP_API='https://liingyivheqmuosuxwvd.supabase.co/functions/v1/live-scores';
-const SP_LEAGUES=[['all','All'],['eng.1','Premier League'],['esp.1','LaLiga'],['ger.1','Bundesliga'],['fra.1','Ligue 1'],['uefa.champions','Champions League'],['uefa.europa','Europa League'],['caf.champions','CAF CL'],['caf.confed','CAF Confed'],['eng.league_cup','Carabao Cup'],['eng.fa','FA Cup']];
+const SP_LEAGUES=[['all','All'],['eng.1','Premier League'],['esp.1','LaLiga'],['ger.1','Bundesliga'],['fra.1','Ligue 1'],['uefa.champions','Champions League'],['uefa.europa','Europa League'],['caf.champions','CAF CL'],['caf.confed','CAF Confed'],['eng.league_cup','Carabao Cup'],['eng.fa','FA Cup'],['uefa.nations','Nations League'],['caf.nations_qual','AFCON Qualifiers'],['fifa.friendly','Friendlies']];
+const SP_NOTABLE=['fifa.friendly'];
 const SP={date:null,matches:[],league:'all',tLeague:'eng.1',heroId:null,stand:{},showAll:false,poll:null,tick:null,open:false,loaded:false,updated:null};
 function spEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function spTodayKey(){return new Date(Date.now()+3*3600e3).toISOString().slice(0,10);}
@@ -2197,7 +2198,7 @@ async function spInit(){
   SP.date=day;SP.matches=(res&&res.matches)||[];SP.updated=(res&&res.updated)||null;SP.loaded=true;
   const first=spVisible()[0];if(first){SP.heroId=first.id;}
   const lgWith=SP.matches.find(m=>m.state==='in')||SP.matches[0];
-  SP.tLeague=lgWith?lgWith.league:'eng.1';
+  SP.tLeague=lgWith&&!SP_NOTABLE.includes(lgWith.league)?lgWith.league:'eng.1';
   spRenderAll();spLoadTable();spLoadStreams();spLoadHighlights();spSave();
 }
 async function spLoad(){ // runs quietly in the background: nothing flashes, only changed numbers animate
@@ -2379,7 +2380,7 @@ function spBkMatch(m){
 function spBkTbd(){return `<div class="bk-m tbd"><div class="bk-t"><span class="sp-fs">?</span><span class="n">TBD</span></div><div class="bk-t"><span class="sp-fs">?</span><span class="n">TBD</span></div><div class="bk-d">To be decided</div></div>`;}
 function spRenderCup(){
   const el=document.getElementById('sp-tables'),lg=SP.tLeague,name=(SP_LEAGUES.find(x=>x[0]===lg)||[])[1]||'';
-  const sel=`<select class="sp-sel" onchange="spSetTableLeague(this.value)" aria-label="Choose competition">${SP_LEAGUES.filter(x=>x[0]!=='all').map(([k,n])=>`<option value="${k}"${k===lg?' selected':''}>${spEsc(n)}</option>`).join('')}</select>`;
+  const sel=`<select class="sp-sel" onchange="spSetTableLeague(this.value)" aria-label="Choose competition">${SP_LEAGUES.filter(x=>x[0]!=='all'&&!SP_NOTABLE.includes(x[0])).map(([k,n])=>`<option value="${k}"${k===lg?' selected':''}>${spEsc(n)}</option>`).join('')}</select>`;
   const data=SP.cup[lg],ok=data&&data.rounds&&data.rounds.length;
   const head=`<div class="sp-h"><span><i class="ti ti-trophy" aria-hidden="true"></i>${spEsc(name)} · Road to the final</span><span class="sp-hr">${spIsAdmin()&&ok?'<button class="sp-act sp-dlt" onclick="spDownloadTable(this)"><i class="ti ti-download" aria-hidden="true"></i> <span>Download round</span></button>':''}${sel}</span></div>`;
   if(!data){el.innerHTML=head+'<div class="sp-empty">Loading the draw…</div>';return;}
@@ -2408,7 +2409,7 @@ function spRenderCup(){
 function spRenderTable(data){
   if(SP_CUPS.includes(SP.tLeague)){spRenderCup();return;}
   const el=document.getElementById('sp-tables');
-  const sel=`<select class="sp-sel" onchange="spSetTableLeague(this.value)" aria-label="Choose league table">${SP_LEAGUES.filter(x=>x[0]!=='all').map(([k,n])=>`<option value="${k}"${k===SP.tLeague?' selected':''}>${spEsc(n)}</option>`).join('')}</select>`;
+  const sel=`<select class="sp-sel" onchange="spSetTableLeague(this.value)" aria-label="Choose league table">${SP_LEAGUES.filter(x=>x[0]!=='all'&&!SP_NOTABLE.includes(x[0])).map(([k,n])=>`<option value="${k}"${k===SP.tLeague?' selected':''}>${spEsc(n)}</option>`).join('')}</select>`;
   const stView=SP.tView==='stats';
   const tabs=`<div class="sp-vt"><button class="${stView?'':'on'}" onclick="spSetView('table')">Table</button><button class="${stView?'on':''}" onclick="spSetView('stats')">Stats</button></div>`;
   const head=`<div class="sp-h"><span><i class="ti ti-trophy" aria-hidden="true"></i>${stView?'Player Stats':'League Table'}</span><span class="sp-hr">${!stView&&spIsAdmin()?'<button class="sp-act sp-dlt" onclick="spDownloadTable(this)"><i class="ti ti-download" aria-hidden="true"></i> <span>Download table</span></button>':''}${sel}</span></div>${tabs}`;
