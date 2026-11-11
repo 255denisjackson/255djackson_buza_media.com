@@ -2198,12 +2198,13 @@ async function spInit(){
   const first=spVisible()[0];if(first){SP.heroId=first.id;}
   const lgWith=SP.matches.find(m=>m.state==='in')||SP.matches[0];
   SP.tLeague=lgWith?lgWith.league:'eng.1';
-  spRenderAll();spLoadTable();spLoadStreams();spSave();
+  spRenderAll();spLoadTable();spLoadStreams();spLoadHighlights();spSave();
 }
 async function spLoad(){ // runs quietly in the background: nothing flashes, only changed numbers animate
   if(SP_CUPS.includes(SP.tLeague)&&Date.now()-(SP.cupT||0)>60000){SP.cupT=Date.now();spLoadTable(true);}
   spLoadStreams();
   try{const res=await spFetch(SP.date||spTodayKey());SP.updated=res.updated;spApply(res.matches||[]);spSave();}catch(e){}
+  spLoadHighlights();
 }
 function spSig(list){return list.map(m=>m.id+':'+m.state).join('|');}
 function spApply(next){
@@ -2711,13 +2712,13 @@ function spStreamKind(raw){
 }
 let SP_HLS=null;
 function spLoadHls(){return new Promise(res=>{if(window.Hls)return res(window.Hls);const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js';s.onload=()=>res(window.Hls);s.onerror=()=>res(null);document.head.appendChild(s);});}
-async function spWatch(ev,id){
+async function spWatch(ev,id,hl){
   if(ev)ev.stopPropagation();
-  const m=spFindMatch(id),st=SP.streams[id];if(!m||!st)return;
+  const m=spFindMatch(id),st=hl?(SP.hl[id]&&SP.hl[id].v?{url:'https://www.youtube.com/watch?v='+SP.hl[id].v}:null):SP.streams[id];if(!m||!st)return;
   const k=spStreamKind(st.url);const box=document.getElementById('sp-player');if(!k||!box)return;
   spStopPlayer();
   box.hidden=false;
-  box.innerHTML=`<div class="sp-ph"><span><span class="lv">LIVE</span>${spEsc(spHeadline(m))}</span><button class="sp-act" onclick="spStopPlayer(true)"><i class="ti ti-x" aria-hidden="true"></i> <span>Close</span></button></div><div class="sp-pv" id="sp-pv"></div>`;
+  box.innerHTML=`<div class="sp-ph"><span><span class="lv">${hl?'HIGHLIGHTS':'LIVE'}</span>${spEsc(spHeadline(m))}</span><button class="sp-act" onclick="spStopPlayer(true)"><i class="ti ti-x" aria-hidden="true"></i> <span>Close</span></button></div><div class="sp-pv" id="sp-pv"></div>`;
   const pv=document.getElementById('sp-pv');
   if(k.kind==='hls'||k.kind==='file'){
     const v=document.createElement('video');v.controls=true;v.autoplay=true;v.playsInline=true;v.setAttribute('playsinline','');pv.appendChild(v);
@@ -2759,10 +2760,23 @@ function spStreamForm(ev,id,btn){
   if(del)del.onclick=async()=>{const {error}=await sb.from('match_streams').delete().eq('match_id',id);if(error){if(typeof showToast==='function')showToast('Could not remove: '+error.message,'error');return;}delete SP.streams[id];if(typeof showToast==='function')showToast('Stream link removed.','success');spRenderAll();};
   acts.appendChild(f);f.querySelector('input').focus();
 }
+/* ---- official highlights (league YouTube channels) for finished matches ---- */
+const SP_HL_LG=['eng.1','esp.1','uefa.champions','uefa.europa','caf.champions','caf.confed','ger.1'];
+SP.hl=SP.hl||{};SP.hlT=SP.hlT||{};
+async function spLoadHighlights(){
+  const now=Date.now();
+  const todo=SP.matches.filter(m=>m.state==='post'&&SP_HL_LG.includes(m.league)&&!(SP.hl[m.id]&&SP.hl[m.id].v)&&now-(SP.hlT[m.id]||0)>10*60000).slice(0,8);
+  if(!todo.length)return;
+  todo.forEach(m=>{SP.hlT[m.id]=now;});
+  const q=todo.map(m=>'m='+encodeURIComponent([m.id,m.league,m.home.full||m.home.name,m.away.full||m.away.name,m.date].join('|'))).join('&');
+  try{const r=await fetch(`${SP_API.replace('live-scores','live-highlights')}?${q}`);if(!r.ok)return;const d=await r.json();let n=0;
+    todo.forEach(m=>{const v=d[m.id];if(v&&v.v){SP.hl[m.id]=v;n++;}});
+    if(n)spRenderAll();}catch(e){}
+}
 function spActs(m){
   const id=spEsc(m.id);
-  const eligible=SP_STREAM_LG.includes(m.league),hasS=eligible&&SP.streams[m.id]&&spStreamKind(SP.streams[m.id].url);
-  return `<div class="sp-acts">${hasS?`<button class="sp-act sp-watch" onclick="spWatch(event,'${id}')"><i class="ti ti-player-play-filled" aria-hidden="true"></i> <span>Watch Live</span></button>`:''}${eligible&&spIsAdmin()?`<button class="sp-act" onclick="spStreamForm(event,'${id}',this)"><i class="ti ti-link" aria-hidden="true"></i> <span>${hasS?'Edit stream link':'Add stream link'}</span></button>`:''}<button class="sp-act" onclick="spMatchView(event,'${id}','lineup',this)"><i class="ti ti-layout-board" aria-hidden="true"></i> <span>Lineups</span></button><button class="sp-act" onclick="spMatchView(event,'${id}','stats',this)"><i class="ti ti-chart-bar" aria-hidden="true"></i> <span>Statistics</span></button><button class="sp-act" onclick="spDownload(event,'${id}',this)"><i class="ti ti-download" aria-hidden="true"></i> <span>Download banner</span></button>${spIsAdmin()?`<button class="sp-act sp-act-p" onclick="spPost(event,'${id}',this)"><i class="ti ti-send" aria-hidden="true"></i> <span>Share to social media</span></button><button class="sp-act" onclick="spUseInBanner(event,'${id}',this)"><i class="ti ti-photo-edit" aria-hidden="true"></i> <span>Use in Buza Media banner</span></button>`:''}</div>`;
+  const hasH=SP.hl[m.id]&&SP.hl[m.id].v,eligible=SP_STREAM_LG.includes(m.league),hasS=eligible&&SP.streams[m.id]&&spStreamKind(SP.streams[m.id].url);
+  return `<div class="sp-acts">${hasH?`<button class="sp-act sp-act-p" onclick="spWatch(event,'${id}',true)"><i class="ti ti-player-play" aria-hidden="true"></i> <span>Watch Highlights</span></button>`:''}${hasS?`<button class="sp-act sp-watch" onclick="spWatch(event,'${id}')"><i class="ti ti-player-play-filled" aria-hidden="true"></i> <span>Watch Live</span></button>`:''}${eligible&&spIsAdmin()?`<button class="sp-act" onclick="spStreamForm(event,'${id}',this)"><i class="ti ti-link" aria-hidden="true"></i> <span>${hasS?'Edit stream link':'Add stream link'}</span></button>`:''}<button class="sp-act" onclick="spMatchView(event,'${id}','lineup',this)"><i class="ti ti-layout-board" aria-hidden="true"></i> <span>Lineups</span></button><button class="sp-act" onclick="spMatchView(event,'${id}','stats',this)"><i class="ti ti-chart-bar" aria-hidden="true"></i> <span>Statistics</span></button><button class="sp-act" onclick="spDownload(event,'${id}',this)"><i class="ti ti-download" aria-hidden="true"></i> <span>Download banner</span></button>${spIsAdmin()?`<button class="sp-act sp-act-p" onclick="spPost(event,'${id}',this)"><i class="ti ti-send" aria-hidden="true"></i> <span>Share to social media</span></button><button class="sp-act" onclick="spUseInBanner(event,'${id}',this)"><i class="ti ti-photo-edit" aria-hidden="true"></i> <span>Use in Buza Media banner</span></button>`:''}</div>`;
 }
 const SP_IMG={};
 async function spLoadImg(url){
