@@ -917,6 +917,20 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
               </div>
             </div>
           </details>
+          <details class="cb-box" id="pv-box">
+            <summary><i class="ti ti-upload" aria-hidden="true"></i> Post a video as it is <i class="ti ti-chevron-down cb-chev" aria-hidden="true"></i></summary>
+            <div class="cb-sub">Choose a finished video (MP4) and post it to Facebook and Instagram exactly as it is. Nothing is added to the video: no banner, no logo, no text.</div>
+            <div class="cb-grid"><div>
+              <div class="cb-slot"><div class="cb-pick" id="pv-pick"><strong>Video</strong><span id="pv-name">Choose a video (MP4)</span><input type="file" id="pv-file" accept="video/mp4,video/quicktime,video/*"></div></div>
+              <video id="pv-prev" controls playsinline style="display:none;width:100%;max-height:50vh;margin-top:.5rem;border-radius:10px;background:#000"></video>
+              <label class="cb-note" for="pv-credit" style="display:block;margin-top:.6rem">Video from (optional, e.g. Wasafi Media)</label>
+              <input type="text" id="pv-credit" maxlength="80" placeholder="Wasafi Media" style="width:100%;padding:.55rem .7rem;border:1px solid #cfd4dc;border-radius:8px;font:inherit">
+              <label class="cb-note" for="pv-cap" style="display:block;margin-top:.6rem">Caption</label>
+              <textarea id="pv-cap" rows="3" maxlength="1800" placeholder="Write the caption here" style="width:100%;padding:.55rem .7rem;border:1px solid #cfd4dc;border-radius:8px;font:inherit"></textarea>
+              <div class="cb-btns" style="margin-top:.6rem"><button type="button" class="btn btn-primary full" id="pv-post" disabled><i class="ti ti-send" aria-hidden="true"></i> <span>Post to social media</span></button></div>
+              <div class="cb-note" id="pv-st" style="margin-top:.4rem"></div>
+            </div></div>
+          </details>
           <details class="cb-box" id="vb-box">
             <summary><i class="ti ti-video" aria-hidden="true"></i> Video banner (portrait) <i class="ti ti-chevron-down cb-chev" aria-hidden="true"></i></summary>
             <div class="cb-sub">Make a Buza Media banner video. Choose a portrait video (or a photo and a video side by side), crop the area you want shown, trim the length, type the headline, then press Create. The finished video is attached to the post for you.</div>
@@ -5343,6 +5357,64 @@ setInterval(function(){
     io.observe(cv);
   }else boot();
   box.addEventListener('toggle',function(){if(box.open)boot();});
+})();
+</script>
+<script>
+/* Post a finished video exactly as it is (no banner added) */
+(function(){
+  var el=function(id){return document.getElementById(id);},file=null;
+  function T(m,t){if(typeof showToast==='function')showToast(m,t||'success');}
+  var inp=el('pv-file');if(!inp)return;
+  inp.addEventListener('change',function(e){
+    var f=e.target.files&&e.target.files[0];e.target.value='';
+    if(!f)return;
+    if(!/^video\//.test(f.type)&&!/\.(mp4|mov|m4v)$/i.test(f.name)){T('Choose a video file.','error');return;}
+    if(f.size>100*1024*1024){T('The video is over 100MB. Please use a shorter or smaller video.','error');return;}
+    file=f;el('pv-name').textContent=f.name+' · '+(f.size/1048576).toFixed(1)+' MB';
+    var v=el('pv-prev');try{v.src=URL.createObjectURL(f);v.style.display='';}catch(x){}
+    el('pv-post').disabled=false;el('pv-st').textContent='';
+  });
+  el('pv-post').addEventListener('click',async function(){
+    var btn=this,lab=btn.querySelector('span'),st=el('pv-st'),say=function(t){st.textContent=t;};
+    if(btn.dataset.busy||!file)return;
+    if(typeof isLoggedIn!=='undefined'&&!isLoggedIn){T('Log in as admin first.','error');return;}
+    btn.dataset.busy='1';btn.disabled=true;if(lab)lab.textContent='Posting…';
+    var credit=el('pv-credit').value.replace(/\s+/g,' ').trim(),cap=el('pv-cap').value.trim();
+    if(credit)cap=(cap?cap+'\n\n':'')+'Video kutoka '+credit;
+    var done=[],failed=[],name=function(p){return p.charAt(0).toUpperCase()+p.slice(1);};
+    try{
+      say('Uploading the video… keep this tab open');
+      var pr=await sb.functions.invoke('social-post-video',{body:{action:'prepare'}});
+      if(pr.error||!pr.data||pr.data.error)throw new Error('prepare');
+      var up=await sb.storage.from('social-videos').uploadToSignedUrl(pr.data.path,pr.data.token,file,{contentType:'video/mp4'});
+      if(up.error)throw new Error('upload');
+      say('Sending to social media…');
+      var sr=await sb.functions.invoke('social-post-video',{body:{action:'start',path:pr.data.path,caption:cap}});
+      if(sr.error||!sr.data||sr.data.error)throw new Error('start');
+      var wait=[];
+      (sr.data.results||[]).forEach(function(r){
+        if(r.status==='published')done.push(name(r.platform));
+        else if(r.status==='processing')wait.push(r);
+        else failed.push(name(r.platform)+': '+String(r.error||'failed').slice(0,110));
+      });
+      for(var w=0;w<wait.length;w++){
+        var r=wait[w],ok=false;
+        for(var k=0;k<200&&!ok;k++){
+          say('Instagram is processing the video… '+Math.round((k*6)/60*10)/10+' min'+(done.length?' (posted to '+done.join(' & ')+' already)':''));
+          await new Promise(function(res){setTimeout(res,6000);});
+          var f=await sb.functions.invoke('social-post-video',{body:{action:'finish',container:r.container,account:r.account}});
+          var d=f.data||{};
+          if(d.status==='published'){done.push(name(r.platform));ok=true;}
+          else if(d.status==='failed'){failed.push(name(r.platform)+': '+String(d.error||'failed').slice(0,110));ok=true;}
+        }
+        if(!ok)failed.push(name(r.platform)+': still processing after 20 minutes. Check Instagram later.');
+      }
+      var msg=(done.length?'Posted to '+done.join(' & ')+'.':'')+(failed.length?(done.length?' ':'')+'Not posted: '+failed.join(' | '):'');
+      say(msg||'Nothing to post: no social account is switched on.');
+      T(done.length?('Posted to '+done.join(' & ')+(failed.length?' (some failed)':'')+'.'):'Could not post the video.',done.length&&!failed.length?'success':'error');
+    }catch(e){say('Could not post the video right now. Please try again.');T('Could not post the video right now.','error');}
+    delete btn.dataset.busy;btn.disabled=false;if(lab)lab.textContent='Post to social media';
+  });
 })();
 </script>
 </body>
