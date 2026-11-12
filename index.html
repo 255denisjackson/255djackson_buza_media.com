@@ -631,6 +631,7 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
 @keyframes spFlash{0%,35%{box-shadow:0 0 0 2px rgba(110,170,255,.9),0 0 28px rgba(74,147,255,.6)}100%{box-shadow:0 0 0 0 rgba(110,170,255,0)}}
 .sp-bar i{transition:width 1.2s ease}
 </style>
+<style>#vb-box,#pv-box{display:none!important}</style>
 </head>
 <body>
 <noscript><h1>Buza Media — Habari za Tanzania</h1><p>Habari za michezo, burudani na matukio ya kila siku kwa Kiswahili. Washa JavaScript kusoma habari zote, au fungua <a href="feed.xml">feed.xml</a>.</p></noscript>
@@ -916,6 +917,11 @@ nav{background:var(--primary);color:#fff;position:sticky;top:0;z-index:100;width
                 </div>
               </div>
             </div>
+          </details>
+          <details class="cb-box" id="vs-box">
+            <summary><i class="ti ti-movie" aria-hidden="true"></i> Video Studio <i class="ti ti-chevron-down cb-chev" aria-hidden="true"></i></summary>
+            <div class="cb-sub">Edit a video here: add the Buza Media logo, text, photos, or another video on top (picture in picture), remove a solid background, then post it to social media.</div>
+            <div id="vs-root" style="padding:.3rem .2rem"></div>
           </details>
           <details class="cb-box" id="pv-box">
             <summary><i class="ti ti-upload" aria-hidden="true"></i> Post a video as it is <i class="ti ti-chevron-down cb-chev" aria-hidden="true"></i></summary>
@@ -5359,6 +5365,7 @@ setInterval(function(){
   box.addEventListener('toggle',function(){if(box.open)boot();});
 })();
 </script>
+<script src="video-studio.js" defer></script>
 <script>
 /* Post a finished video exactly as it is (no banner added) */
 (function(){
