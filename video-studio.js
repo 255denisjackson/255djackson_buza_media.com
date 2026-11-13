@@ -121,7 +121,7 @@
     var s=document.createElement('style');s.textContent=CSS;document.head.appendChild(s);
     ov=document.createElement('div');ov.id='vs-ov';ov.style.display='none';
     ov.innerHTML=
-     '<div class="top"><button class="ib" id="vs-x" aria-label="Close">✕</button><div style="flex:1"></div><button class="pill" id="vs-fmt">Banner</button><button class="exp" id="vs-exp">Export</button></div>'+
+     '<div class="top"><button class="ib" id="vs-x" aria-label="Close">✕</button><div style="flex:1"></div><button class="pill" id="vs-q">Queue</button><button class="pill" id="vs-fmt" style="margin-left:.4rem">Banner</button><button class="exp" id="vs-exp">Export</button></div>'+
      '<div class="stage" id="vs-stage"><canvas id="vs-cv"></canvas><div class="empty" id="vs-empty"><div style="color:#9aa1ad">Start with your video</div><button id="vs-first">＋ Add video</button></div></div>'+
      '<div class="tp"><span id="vs-time">00:00.0 / 00:00.0</span><div class="mid"><button class="ib play" id="vs-play" aria-label="Play">▶</button></div><span><button class="ib" id="vs-zo" aria-label="Zoom timeline out" style="font-size:1.3rem">−</button><button class="ib" id="vs-zi" aria-label="Zoom timeline in" style="font-size:1.3rem">+</button></span></div>'+
      '<div class="tlw"><div class="tls" id="vs-tls"><div class="tli" id="vs-tli"></div></div><div class="ph"></div></div>'+
@@ -416,6 +416,7 @@
     $('vs-zi').onclick=function(){st.pps=clamp(st.pps*1.5,15,300);renderTL();setScroll();};
     $('vs-zo').onclick=function(){st.pps=clamp(st.pps/1.5,15,300);renderTL();setScroll();};
     $('vs-exp').onclick=function(){make(0);};
+    $('vs-q').onclick=showQueue;
     $('vs-fv').onchange=function(e){loadBase(e.target.files[0]);e.target.value='';};
     $('vs-fi').onchange=function(e){var f=e.target.files[0];e.target.value='';if(!f)return;if(!/^image\//.test(f.type)){toast('Choose an image file.','error');return;}
       var im=new Image();im.onload=function(){addLayer({type:'img',el:im,w:40,y:.3,t1:Math.min(B.dur,T+4)});};im.onerror=function(){toast('That photo could not be opened.','error');};im.src=URL.createObjectURL(f);};
@@ -628,12 +629,48 @@
       '<video controls playsinline src="'+result.url+'"></video><div style="color:#9aa1ad;font-size:.8rem">'+(blob.size/1048576).toFixed(1)+' MB · MP4'+(acodec==='opus'?' · sound in Opus format (Instagram may not play it; use Chrome on a phone for AAC)':'')+'</div>'+
       '<label style="display:block;margin-top:.7rem;color:#9aa1ad;font-size:.8rem">Video from (optional, e.g. Wasafi Media)</label><input type="text" id="vs-credit" maxlength="80" placeholder="Wasafi Media">'+
       '<label style="display:block;color:#9aa1ad;font-size:.8rem">Caption</label><textarea id="vs-cap" rows="3" maxlength="1800" placeholder="Write the caption here"></textarea>'+
-      '<div><button class="btn2" id="vs-dl">⬇ Save to phone</button><button class="btn2 p" id="vs-post"><i class="ti ti-send"></i> <span>Post to social media</span></button></div><div id="vs-st" style="color:#c5cad3;font-size:.85rem;margin-top:.4rem"></div></div>';
+      '<div><button class="btn2" id="vs-dl">⬇ Save to phone</button><button class="btn2 p" id="vs-post"><i class="ti ti-send"></i> <span>Post now</span></button><button class="btn2" id="vs-sch">🕒 Schedule (1 per hour)</button></div><div id="vs-st" style="color:#c5cad3;font-size:.85rem;margin-top:.4rem"></div></div>';
     ov.appendChild(r);
     $('vs-rb').onclick=function(){r.remove();};
     $('vs-dl').onclick=function(){dlNow();toast('Saved to your phone (check Downloads).','success');};
     if(navigator.canShare&&navigator.share){try{var ff=new File([blob],name,{type:'video/mp4'});if(navigator.canShare({files:[ff]})){var gb=document.createElement('button');gb.className='btn2';gb.textContent='Save to gallery';gb.onclick=function(){navigator.share({files:[ff]}).catch(function(){});};$('vs-dl').parentNode.insertBefore(gb,$('vs-dl').nextSibling);}}catch(e){}}
     $('vs-post').onclick=function(){post(this);};
+    $('vs-sch').onclick=function(){schedule(this);};
+  }
+  function fmtT(iso){return new Date(iso).toLocaleString('en-GB',{timeZone:'Africa/Dar_es_Salaam',weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});}
+  async function schedule(btn){
+    var stt=$('vs-st'),say=function(t){stt.textContent=t;};
+    if(btn.dataset.busy||!result)return;
+    if(typeof isLoggedIn!=='undefined'&&!isLoggedIn){toast('Log in as admin first.','error');return;}
+    btn.dataset.busy='1';btn.disabled=true;var old=btn.textContent;btn.textContent='Scheduling…';
+    var credit=$('vs-credit').value.replace(/\s+/g,' ').trim(),cap=$('vs-cap').value.trim();
+    if(credit)cap=(cap?cap+'\n\n':'')+'Video kutoka '+credit;
+    try{
+      try{dlNow();}catch(e){}
+      say('Uploading the video… keep this tab open');
+      var pr=await sb.functions.invoke('social-post-video',{body:{action:'prepare'}});
+      if(pr.error||!pr.data||pr.data.error)throw new Error('prepare');
+      var up=await sb.storage.from('social-videos').uploadToSignedUrl(pr.data.path,pr.data.token,result.blob,{contentType:'video/mp4'});
+      if(up.error)throw new Error('upload');
+      var rs=await sb.rpc('schedule_video',{p_path:pr.data.path,p_caption:cap});
+      if(rs.error)throw new Error('schedule');
+      say('✅ Scheduled for '+fmtT(rs.data)+' (Tanzania time). It posts to Facebook & Instagram by itself. You can close this and make the next video.');
+      btn.textContent='Scheduled ✓';
+    }catch(e){say('Could not schedule. Check your internet and try again.');btn.disabled=false;btn.textContent=old;delete btn.dataset.busy;}
+  }
+  async function showQueue(){
+    var q=$('vs-qp');if(q)q.remove();q=document.createElement('div');q.id='vs-qp';q.className='scr';
+    q.innerHTML='<div class="card"><div style="display:flex;align-items:center;justify-content:space-between"><b style="font-size:1.1rem">Scheduled videos</b><button class="ib" id="vs-qx" aria-label="Close">✕</button></div><div id="vs-ql" style="margin-top:.6rem;color:#9aa1ad">Loading…</div></div>';
+    ov.appendChild(q);$('vs-qx').onclick=function(){q.remove();};
+    var r=await sb.from('video_queue').select('id,caption,scheduled_at,status,results').order('scheduled_at',{ascending:false}).limit(30);
+    var el=$('vs-ql');if(!el)return;
+    if(r.error){el.textContent='Log in as admin to see the queue.';return;}
+    if(!r.data.length){el.textContent='Nothing scheduled yet.';return;}
+    var lab={queued:'Waiting',posting:'Posting…',processing:'Instagram processing',done:'Posted ✓',failed:'Failed'};
+    el.innerHTML=r.data.map(function(it){var cap=String(it.caption||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').slice(0,60);
+      var err=(it.status==='failed'?(it.results||[]).filter(function(x){return x.status==='failed';}).map(function(x){return x.platform+': '+String(x.error||'').slice(0,80);}).join(' · '):'');
+      return '<div style="padding:.5rem 0;border-top:1px solid #272b33"><div style="color:#fff">'+fmtT(it.scheduled_at)+' · <b>'+lab[it.status]+'</b></div><div style="font-size:.8rem">'+(cap||'(no caption)')+'</div>'+(err?'<div style="font-size:.75rem;color:#ff8a8a">'+err.replace(/</g,'&lt;')+'</div>':'')+(it.status==='queued'?'<button class="btn2" data-del="'+it.id+'">Cancel</button>':'')+'</div>';}).join('');
+    el.onclick=async function(e){var b=e.target.closest('button[data-del]');if(!b)return;b.disabled=true;await sb.from('video_queue').delete().eq('id',b.getAttribute('data-del')).eq('status','queued');showQueue();};
   }
   function dlNow(){if(!result)return;var a=document.createElement('a');a.href=result.url;a.download=result.name;document.body.appendChild(a);a.click();a.remove();}
   async function post(btn){
