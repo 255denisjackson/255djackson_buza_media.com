@@ -663,16 +663,16 @@
     r.innerHTML='<div class="card"><div style="display:flex;align-items:center;justify-content:space-between"><b style="font-size:1.1rem">Your video is ready</b><button class="ib" id="vs-rb" aria-label="Back to editing">✕</button></div>'+
       '<video controls playsinline src="'+result.url+'"></video><div style="color:#9aa1ad;font-size:.8rem">'+(blob.size/1048576).toFixed(1)+' MB · MP4'+(acodec==='opus'?' · sound in Opus format (Instagram may not play it; use Chrome on a phone for AAC)':'')+'</div>'+
       '<label style="display:block;margin-top:.7rem;color:#9aa1ad;font-size:.8rem">Video from (optional, e.g. Wasafi Media)</label><input type="text" id="vs-credit" maxlength="80" placeholder="Wasafi Media">'+
+      '<label style="display:block;color:#9aa1ad;font-size:.8rem">YouTube title (optional)</label><input type="text" id="vs-ytt" maxlength="90" placeholder="Uses the first line of the caption if empty">'+
       '<label style="display:block;color:#9aa1ad;font-size:.8rem">Caption</label><textarea id="vs-cap" rows="3" maxlength="1800" placeholder="Write the caption here"></textarea>'+
-      '<div><button class="btn2" id="vs-dl">⬇ Save to phone</button><button class="btn2 p" id="vs-post"><i class="ti ti-send"></i> <span>Post now</span></button><button class="btn2" id="vs-sch">🕒 Schedule (1 per hour)</button></div><div id="vs-st" style="color:#c5cad3;font-size:.85rem;margin-top:.4rem"></div></div>';
+      '<div><button class="btn2" id="vs-dl">⬇ Save to phone</button><button class="btn2 p" id="vs-post"><i class="ti ti-send"></i> <span>Post now</span></button><button class="btn2" id="vs-yt">▶ Schedule for YouTube</button><button class="btn2" id="vs-sch">🕒 Schedule (1 per hour)</button></div><div id="vs-st" style="color:#c5cad3;font-size:.85rem;margin-top:.4rem"></div></div>';
     ov.appendChild(r);
     $('vs-rb').onclick=function(){r.remove();};
     $('vs-dl').onclick=function(){dlNow();toast('Saved to your phone (check Downloads).','success');};
     if(navigator.canShare&&navigator.share){try{var ff=new File([blob],name,{type:'video/mp4'});if(navigator.canShare({files:[ff]})){var gb=document.createElement('button');gb.className='btn2';gb.textContent='Save to gallery';gb.onclick=function(){navigator.share({files:[ff]}).catch(function(){});};$('vs-dl').parentNode.insertBefore(gb,$('vs-dl').nextSibling);}}catch(e){}}
-    if(hook){var tb=document.createElement('button');tb.className='btn2 p';tb.id='vs-tt';tb.textContent='Send to TikTok queue';$('vs-dl').parentNode.insertBefore(tb,$('vs-dl'));
-      tb.onclick=function(){tb.disabled=true;tb.textContent='Sending…';Promise.resolve(hook.onResult(result.blob,$('vs-cap').value.trim(),$('vs-credit').value.trim())).then(function(ok){if(ok){tb.textContent='Sent ✓';toast('Added to the TikTok queue. Approve it there.','success');}else{tb.disabled=false;tb.textContent='Send to TikTok queue';}}).catch(function(){tb.disabled=false;tb.textContent='Send to TikTok queue';});};}
     $('vs-post').onclick=function(){post(this);};
     $('vs-sch').onclick=function(){schedule(this);};
+    $('vs-yt').onclick=function(){scheduleYT(this);};
   }
   function fmtT(iso){return new Date(iso).toLocaleString('en-GB',{timeZone:'Africa/Dar_es_Salaam',weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});}
   async function schedule(btn){
@@ -694,6 +694,28 @@
       say('✅ Scheduled for '+fmtT(rs.data)+' (Tanzania time). It posts to Facebook & Instagram by itself. You can close this and make the next video.');
       btn.textContent='Scheduled ✓';
     }catch(e){say('Could not schedule. Check your internet and try again.');btn.disabled=false;btn.textContent=old;delete btn.dataset.busy;}
+  }
+  async function scheduleYT(btn){
+    var stt=$('vs-st'),say=function(t){stt.textContent=t;};
+    if(btn.dataset.busy||!result)return;
+    if(typeof isLoggedIn!=='undefined'&&!isLoggedIn){toast('Log in as admin first.','error');return;}
+    btn.dataset.busy='1';btn.disabled=true;var old=btn.textContent;btn.textContent='Scheduling…';
+    var credit=$('vs-credit').value.replace(/\s+/g,' ').trim(),cap=$('vs-cap').value.trim();
+    var title=$('vs-ytt').value.trim()||cap.split('\n')[0].trim()||'Buza Media';
+    var desc=cap+(credit?'\n\nVideo kutoka '+credit:'');
+    if(B.el&&B.h>=B.w&&B.dur<=180)desc+=(desc?'\n\n':'')+'#Shorts';
+    try{
+      try{dlNow();}catch(e){}
+      say('Uploading the video… keep this tab open');
+      var pr=await sb.functions.invoke('social-post-video',{body:{action:'prepare'}});
+      if(pr.error||!pr.data||pr.data.error)throw new Error('prepare');
+      var up=await sb.storage.from('social-videos').uploadToSignedUrl(pr.data.path,pr.data.token,result.blob,{contentType:'video/mp4'});
+      if(up.error)throw new Error('upload');
+      var rs=await sb.rpc('schedule_youtube',{p_path:pr.data.path,p_title:title,p_desc:desc});
+      if(rs.error)throw new Error('schedule');
+      say('✅ YouTube: scheduled for '+fmtT(rs.data)+' (Tanzania time). Max 5 videos a day; when a day is full it moves to the next day. See the YouTube schedule in admin.');
+      btn.textContent='Scheduled ✓';
+    }catch(e){say('Could not schedule for YouTube. Check your internet and try again.');btn.disabled=false;btn.textContent=old;delete btn.dataset.busy;}
   }
   async function showQueue(){
     var q=$('vs-qp');if(q)q.remove();q=document.createElement('div');q.id='vs-qp';q.className='scr';
@@ -751,9 +773,7 @@
     }catch(e){say('Could not post the video right now. Please try again.');toast('Could not post the video right now.','error');}
     delete btn.dataset.busy;btn.disabled=false;if(lab)lab.textContent='Post to social media';
   }
-  var hook=null;
-  window.__vsOpen=function(){hook=null;open();};
-  window.__vsOpenWith=function(file,opts){opts=opts||{};hook=opts.onResult?opts:null;build();st.fmt=opts.branding===false?'9:16':'banner';$('vs-fmt').textContent=FLAB[st.fmt];if(opts.branding===false)st.fit='fit';open();toolbar();sizeCv();loadBase(file);};
+  window.__vsOpen=open;
   window.__vs={st:st,B:function(){return B;},L:function(){return L;},make:make,addLayer:addLayer,result:function(){return result;},seek:seek,toggleKf:toggleKf,sel:function(i){sel=i;},setProp:setProp,T:function(){return T;},evalL:evalL};
   var ob=document.getElementById('vs-open');if(ob)ob.addEventListener('click',open);
 })();

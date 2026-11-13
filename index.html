@@ -774,7 +774,7 @@ nav{background:var(--primary);color:#fff;position:-webkit-sticky;position:sticky
     <button class="mob-nav-btn" onclick="adminNav(this,'autopost')"><i class="ti ti-world" aria-hidden="true"></i> Auto-post</button>
     <button class="mob-nav-btn" onclick="adminNav(this,'insights')"><i class="ti ti-chart-bar" aria-hidden="true"></i> Insights</button>
     <button class="mob-nav-btn" onclick="adminNav(this,'social')"><i class="ti ti-share" aria-hidden="true"></i> Social links</button>
-    <button class="mob-nav-btn" onclick="adminNav(this,'tiktok')"><i class="ti ti-brand-tiktok" aria-hidden="true"></i> TikTok</button>
+    <button class="mob-nav-btn" onclick="adminNav(this,'ytsched')"><i class="ti ti-brand-youtube" aria-hidden="true"></i> YouTube schedule</button>
     <div style="flex:1"></div>
     <div style="background:var(--tag-bg);border-radius:8px;padding:6px 10px;font-size:.74rem;color:#3730a3;white-space:nowrap;display:flex;gap:.5rem;align-items:center">
       <span>Posts: <strong id="mob-stat-total">0</strong></span><span>·</span><span>Live: <strong id="mob-stat-pub">0</strong></span>
@@ -790,7 +790,7 @@ nav{background:var(--primary);color:#fff;position:-webkit-sticky;position:sticky
       <button class="sidebar-item" onclick="adminNav(this,'autopost')"><i class="ti ti-world" aria-hidden="true"></i> Auto-post</button>
       <button class="sidebar-item" onclick="adminNav(this,'insights')"><i class="ti ti-chart-bar" aria-hidden="true"></i> Insights</button>
       <button class="sidebar-item" onclick="adminNav(this,'social')"><i class="ti ti-share" aria-hidden="true"></i> Social links</button>
-      <button class="sidebar-item" onclick="adminNav(this,'tiktok')"><i class="ti ti-brand-tiktok" aria-hidden="true"></i> TikTok</button>
+      <button class="sidebar-item" onclick="adminNav(this,'ytsched')"><i class="ti ti-brand-youtube" aria-hidden="true"></i> YouTube schedule</button>
       <div class="sidebar-stats">
         <div class="stat-row">Total posts <strong id="stat-total">0</strong></div>
         <div class="stat-row">Published <strong id="stat-pub">0</strong></div>
@@ -1176,7 +1176,7 @@ nav{background:var(--primary);color:#fff;position:-webkit-sticky;position:sticky
         </div>
       </div>
 
-      <div id="panel-tiktok" class="hidden"></div>
+      <div id="panel-ytsched" class="hidden"></div>
 
       <div id="panel-social" class="hidden">
         <div class="admin-section">
@@ -3512,12 +3512,12 @@ async function toggleAutoPost(){
 function adminNav(btn,panel){
   document.querySelectorAll('.sidebar-item,.mob-nav-btn').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll(`[onclick*="adminNav"][onclick*="'${panel}'"]`).forEach(b=>b.classList.add('active'));
-  ['compose','posts','trending','autopost','insights','social','tiktok'].forEach(p=>document.getElementById('panel-'+p).classList.toggle('hidden',p!==panel));
+  ['compose','posts','trending','autopost','insights','social','ytsched'].forEach(p=>document.getElementById('panel-'+p).classList.toggle('hidden',p!==panel));
   if(panel==='posts')renderPostsTable();
   if(panel==='trending')renderTrending();
   if(panel==='insights')renderInsights();
   if(panel==='social')loadSocialFormFields();
-  if(panel==='tiktok'&&window.TTMod)window.TTMod.show();
+  if(panel==='ytsched'&&window.YTSched)window.YTSched.show();
   if(panel==='autopost')loadAutoPostState();
 }
 
@@ -5373,7 +5373,7 @@ setInterval(function(){
 })();
 </script>
 <script src="video-studio.js" defer></script>
-<script src="tiktok-studio.js" defer></script>
+<script src="youtube-schedule.js" defer></script>
 <script>
 /* Post a finished video exactly as it is (no banner added) */
 (function(){
