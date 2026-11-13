@@ -272,7 +272,7 @@
     if(on&&!B.el){toast('Add your video first.','error');return;}
     playing=on;var b=$('vs-play');if(b)b.textContent=on?'❚❚':'▶';
     if(!B.el)return;
-    if(on){B.el.muted=true;if(T<B.start||T>=B.end-0.05)T=B.start;B.el.currentTime=T;var p=B.el.play();if(p&&p.catch)p.catch(function(){});if(!raf)raf=requestAnimationFrame(loop);}
+    if(on){B.el.muted=!st.snd;B.el.volume=1;if(T<B.start||T>=B.end-0.05)T=B.start;B.el.currentTime=T;var p=B.el.play();if(p&&p.catch)p.catch(function(){if(!B.el.muted){B.el.muted=true;var p2=B.el.play();if(p2&&p2.catch)p2.catch(function(){});toast('Sound was blocked by the browser. Tap Play again.','error');}});if(!raf)raf=requestAnimationFrame(loop);}
     else{B.el.pause();pausePips();syncPips(T,false);}
   }
   function seek(t){T=clamp(t,0,B.dur||0);if(B.el)try{B.el.currentTime=T;}catch(e){}syncPips(T,false);draw();updTime();setScroll();toolbar();}
@@ -437,7 +437,7 @@
       else if(id==='tb-ban'){st.fmt=st.fmt==='banner'?'9:16':'banner';$('vs-fmt').textContent=FLAB[st.fmt];if(st.fmt!=='banner')hsheet=false;toolbar();sheet();sizeCv();draw();}
       else if(id==='tb-head'){hsheet=!hsheet;toolbar();sheet();}
       else if(id==='tb-fit'){st.fit=st.fit==='fill'?'fit':'fill';toolbar();draw();}
-      else if(id==='tb-snd'){st.snd=!st.snd;toolbar();toast(st.snd?'The video\'s sound will be kept.':'The new video will have no sound.');}
+      else if(id==='tb-snd'){st.snd=!st.snd;if(B.el&&playing)B.el.muted=!st.snd;toolbar();toast(st.snd?'The video\'s sound will be kept.':'The new video will have no sound.');}
       else if(id==='tb-done'){hsheet=false;sel=null;panel=false;renderTL();toolbar();sheet();draw();}
       else if(id==='tb-edit'){panel=!panel;toolbar();sheet();}
       else if(id==='tb-kf')toggleKf();
