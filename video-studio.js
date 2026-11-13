@@ -168,12 +168,17 @@
     c.fillStyle='#000';c.fillRect(R.x,R.y,R.w,R.h);
     var v=vid||B.el;if(!v||v.readyState<2||!B.w){c.fillStyle='#161a21';c.fillRect(R.x,R.y,R.w,R.h);c.restore();return;}
     try{
-      if(st.fit==='fill'){var s0=Math.max(R.w/B.w,R.h/B.h),dw0=B.w*s0,dh0=B.h*s0;c.drawImage(v,R.x+(R.w-dw0)/2,R.y+(R.h-dh0)/2,dw0,dh0);}
-      else{
+      var z=B.zoom||1,px=B.px||0,py=B.py||0,s0,dw0,dh0,cxo,cyo;
+      if(st.fit==='fill'){
+        s0=Math.max(R.w/B.w,R.h/B.h)*z;dw0=B.w*s0;dh0=B.h*s0;
+        var mx=Math.max(0,(dw0-R.w)/2),my=Math.max(0,(dh0-R.h)/2);
+        cxo=clamp(px*R.w,-mx,mx);cyo=clamp(py*R.h,-my,my);if(!vid){B.px=cxo/R.w;B.py=cyo/R.h;}
+        c.drawImage(v,R.x+(R.w-dw0)/2+cxo,R.y+(R.h-dh0)/2+cyo,dw0,dh0);
+      }else{
         small.width=36;small.height=Math.max(2,Math.round(36*R.h/R.w));small.getContext('2d').drawImage(v,0,0,B.w,B.h,0,0,small.width,small.height);
         c.save();c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';var s1=Math.max(R.w/small.width,R.h/small.height);
         c.drawImage(small,R.x+(R.w-small.width*s1)/2,R.y+(R.h-small.height*s1)/2,small.width*s1,small.height*s1);c.fillStyle='rgba(0,0,0,.25)';c.fillRect(R.x,R.y,R.w,R.h);c.restore();
-        var s2=Math.min(R.w/B.w,R.h/B.h),dw=B.w*s2,dh=B.h*s2;c.drawImage(v,R.x+(R.w-dw)/2,R.y+(R.h-dh)/2,dw,dh);
+        var s2=Math.min(R.w/B.w,R.h/B.h)*z,dw=B.w*s2,dh=B.h*s2;c.drawImage(v,R.x+(R.w-dw)/2+px*R.w,R.y+(R.h-dh)/2+py*R.h,dw,dh);
       }
     }catch(e){}
     c.restore();
@@ -366,12 +371,17 @@
     }
     tb.innerHTML=h;
   }
+  function syncCropSheet(){var z=$('sh-z');if(z)z.value=Math.round((B.zoom||1)*100);}
   function syncSheetValues(){
     var l=sel&&get(sel);if(!l||!panel)return;var v=evalL(l,T);
     [['sh-w','w'],['sh-r','r'],['sh-o','o']].forEach(function(p){var e=$(p[0]);if(e)e.value=v[p[1]];});
   }
   function sheet(){
     var sh=$('vs-sheet'),l=sel&&get(sel);if(!sh)return;
+    if(clipSel&&!l){
+      sh.innerHTML='<div style="color:#c5cad3;font-size:.8rem;margin-bottom:.2rem">Drag the picture to choose what shows. Pinch or use Zoom.</div><div class="sl"><span>Zoom</span><input type="range" id="sh-z" min="100" max="400" value="'+Math.round((B.zoom||1)*100)+'"></div><button class="btn2" id="sh-zr" style="margin-top:.2rem">Reset crop</button>';
+      sh.style.display='';$('sh-z').addEventListener('input',function(e){B.zoom=+e.target.value/100;draw();});$('sh-zr').onclick=function(){B.zoom=1;B.px=0;B.py=0;syncCropSheet();draw();};sizeCv();return;
+    }
     if(hsheet&&!l&&st.fmt==='banner'){
       sh.innerHTML='<textarea id="sh-h" rows="2" maxlength="140" placeholder="Type your headline">'+st.head.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</textarea><div class="sl"><span>Headline size</span><input type="range" id="sh-hs" min="40" max="100" value="'+st.headSize+'"></div>';
       sh.style.display='';$('sh-h').addEventListener('input',function(e){st.head=e.target.value;draw();});$('sh-hs').addEventListener('input',function(e){st.headSize=+e.target.value;draw();});sizeCv();return;
@@ -419,7 +429,7 @@
       else if(id==='tb-logo')addLayer({type:'logo',col:false,w:24,x:.8,y:.08,t0:0,t1:B.dur});
       else if(id==='tb-text')addLayer({type:'text',t:'YOUR TEXT',c:'#ffffff',bc:'#2065fe',bg:true,w:70,y:.82,t1:Math.min(B.dur,T+4)});
       else if(id==='tb-img')pickFile('vs-fi');else if(id==='tb-pip')pickFile('vs-fp');
-      else if(id==='tb-cdone'){clipSel=false;renderTL();toolbar();}
+      else if(id==='tb-cdone'){clipSel=false;renderTL();toolbar();sheet();}
       else if(id==='tb-cs'){if(T>B.end-0.5){toast('Move the playhead earlier than the end.','error');return;}B.start=Math.max(0,T);renderTL();toast('Video now starts here.');}
       else if(id==='tb-ce'){if(T<B.start+0.5){toast('Move the playhead later than the start.','error');return;}B.end=Math.min(B.dur,T);renderTL();seek(Math.max(B.start,B.end-0.05));toast('Video now ends here.');}
       else if(id==='tb-cfull'){B.start=0;B.end=B.dur;renderTL();toast('Whole video restored.');}
@@ -434,22 +444,30 @@
       else if(id==='tb-lcol'&&l){l.col=!l.col;draw();}
       else if(id==='tb-fwd')moveZ(1);else if(id==='tb-bwd')moveZ(-1);else if(id==='tb-del')deleteSel();
     });
+    function areaW(){var W=cv.width;return st.fmt==='banner'?FR.area.w*W/FR.W:W;}
+    function areaH(){var H=cv.height;return st.fmt==='banner'?FR.area.h*H/FR.H:H;}
     function onHandle(l,p){var b=box(l,cv.width,cv.height,T);if(!b)return false;var a=b.v.r*Math.PI/180,hx=b.cx+(b.w/2*Math.cos(a)-b.h/2*Math.sin(a)),hy=b.cy+(b.w/2*Math.sin(a)+b.h/2*Math.cos(a));
       return Math.hypot(p.x*cv.width-hx,p.y*cv.height-hy)<=cv.width/12;}
     function two(){var k=Object.keys(ptrs);if(k.length<2)return null;var a=ptrs[k[0]],b=ptrs[k[1]];return {d:Math.hypot(a.x-b.x,a.y-b.y)||1,a:Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI};}
     cv.addEventListener('pointerdown',function(e){var p=pos(e);ptrs[e.pointerId]={x:e.clientX,y:e.clientY};try{cv.setPointerCapture(e.pointerId);}catch(x){}
       var cur=sel&&get(sel);
+      if(clipSel&&!cur&&B.el){
+        if(Object.keys(ptrs).length===2){var t3=two();gest={crop:true,d:t3.d,z:B.zoom||1};drag=null;e.preventDefault();return;}
+        if(!hit(p)){drag={crop:true,x0:p.x,y0:p.y,px:B.px||0,py:B.py||0};e.preventDefault();return;}
+      }
       if(Object.keys(ptrs).length===2&&cur){var t2=two(),v0=evalL(cur,T);gest={id:cur.id,d:t2.d,a:t2.a,w:v0.w,r:v0.r};drag=null;e.preventDefault();return;}
       if(cur&&visible(cur,T)&&onHandle(cur,p)){var v1=evalL(cur,T);drag={id:cur.id,scale:true,w:v1.w,x0:p.x,y0:p.y,cx:v1.x,cy:v1.y};e.preventDefault();return;}
       var l=hit(p);if(!l){if(sel){sel=null;panel=false;renderTL();toolbar();sheet();draw();}return;}
       if(sel!==l.id){hsheet=false;clipSel=false;sel=l.id;renderTL();toolbar();sheet();}var v=evalL(l,T);drag={id:l.id,dx:v.x-p.x,dy:v.y-p.y};draw();e.preventDefault();});
     cv.addEventListener('pointermove',function(e){
       if(ptrs[e.pointerId]){ptrs[e.pointerId]={x:e.clientX,y:e.clientY};}
+      if(gest&&gest.crop){var t4=two();if(t4){B.zoom=clamp(gest.z*t4.d/gest.d,1,4);syncCropSheet();draw();}return;}
+      if(drag&&drag.crop){B.px=drag.px+(pos(e).x-drag.x0)*cv.width/areaW();B.py=drag.py+(pos(e).y-drag.y0)*cv.height/areaH();draw();return;}
       if(gest){var l=get(gest.id),t2=two();if(l&&t2){setProp(l,'w',clamp(gest.w*t2.d/gest.d,3,250));setProp(l,'r',Math.round(clamp(gest.r+(t2.a-gest.a),-180,180)));syncSheetValues();draw();}return;}
       if(!drag||!drag.id)return;var l2=get(drag.id),p=pos(e);if(!l2)return;
       if(drag.scale){var W=cv.width,H=cv.height,d0=Math.hypot((drag.x0-drag.cx)*W,(drag.y0-drag.cy)*H)||1,d1=Math.hypot((p.x-drag.cx)*W,(p.y-drag.cy)*H);setProp(l2,'w',clamp(drag.w*d1/d0,3,250));syncSheetValues();draw();return;}
       setProp(l2,'x',clamp(p.x+drag.dx,0,1));setProp(l2,'y',clamp(p.y+drag.dy,0,1));draw();});
-    var endD=function(e){delete ptrs[e.pointerId];if(gest&&Object.keys(ptrs).length<2){gest=null;renderTL();}if(drag&&drag.id&&!Object.keys(ptrs).length){drag=null;renderTL();}};cv.addEventListener('pointerup',endD);cv.addEventListener('pointercancel',endD);
+    var endD=function(e){delete ptrs[e.pointerId];if(gest&&Object.keys(ptrs).length<2){gest=null;renderTL();}if(drag&&drag.crop){drag=null;}if(drag&&drag.id&&!Object.keys(ptrs).length){drag=null;renderTL();}};cv.addEventListener('pointerup',endD);cv.addEventListener('pointercancel',endD);
     cv.style.touchAction='none';
     tlPointer();
   }
@@ -461,7 +479,7 @@
       if(!isFinite(v.duration)||v.duration<1){URL.revokeObjectURL(url);toast('This video is too short or could not be read.','error');return;}
       if(v.duration>900){URL.revokeObjectURL(url);toast('This video is over 15 minutes. Please cut it shorter first.','error');return;}
       setPlaying(false);if(B.url)URL.revokeObjectURL(B.url);
-      B={file:file,url:url,el:v,w:v.videoWidth,h:v.videoHeight,dur:v.duration,start:0,end:v.duration};
+      B={zoom:1,px:0,py:0,file:file,url:url,el:v,w:v.videoWidth,h:v.videoHeight,dur:v.duration,start:0,end:v.duration};
       st.pps=clamp(Math.round(Math.min(160,Math.max(20,260/v.duration*1.0))),20,160);if(v.duration<8)st.pps=90;
       T=0;$('vs-empty').style.display='none';v.currentTime=0.05;thumb=null;L=L.filter(function(x){return x.type!=='logo'||!x.auto;});renderTL();toolbar();updTime();buildThumbs();
       if(st.fmt==='banner'&&!L.some(function(x){return x.type==='logo';})){var lg=addLayer({type:'logo',auto:true,col:false,w:20,x:.14,y:.60,t0:0,t1:B.dur});sel=null;panel=false;renderTL();toolbar();sheet();draw();}
@@ -610,17 +628,20 @@
       '<video controls playsinline src="'+result.url+'"></video><div style="color:#9aa1ad;font-size:.8rem">'+(blob.size/1048576).toFixed(1)+' MB · MP4'+(acodec==='opus'?' · sound in Opus format (Instagram may not play it; use Chrome on a phone for AAC)':'')+'</div>'+
       '<label style="display:block;margin-top:.7rem;color:#9aa1ad;font-size:.8rem">Video from (optional, e.g. Wasafi Media)</label><input type="text" id="vs-credit" maxlength="80" placeholder="Wasafi Media">'+
       '<label style="display:block;color:#9aa1ad;font-size:.8rem">Caption</label><textarea id="vs-cap" rows="3" maxlength="1800" placeholder="Write the caption here"></textarea>'+
-      '<div><button class="btn2" id="vs-dl"><i class="ti ti-download"></i> Download video</button><button class="btn2 p" id="vs-post"><i class="ti ti-send"></i> <span>Post to social media</span></button></div><div id="vs-st" style="color:#c5cad3;font-size:.85rem;margin-top:.4rem"></div></div>';
+      '<div><button class="btn2" id="vs-dl">⬇ Save to phone</button><button class="btn2 p" id="vs-post"><i class="ti ti-send"></i> <span>Post to social media</span></button></div><div id="vs-st" style="color:#c5cad3;font-size:.85rem;margin-top:.4rem"></div></div>';
     ov.appendChild(r);
     $('vs-rb').onclick=function(){r.remove();};
-    $('vs-dl').onclick=function(){var a=document.createElement('a');a.href=result.url;a.download=result.name;document.body.appendChild(a);a.click();a.remove();};
+    $('vs-dl').onclick=function(){dlNow();toast('Saved to your phone (check Downloads).','success');};
+    if(navigator.canShare&&navigator.share){try{var ff=new File([blob],name,{type:'video/mp4'});if(navigator.canShare({files:[ff]})){var gb=document.createElement('button');gb.className='btn2';gb.textContent='Save to gallery';gb.onclick=function(){navigator.share({files:[ff]}).catch(function(){});};$('vs-dl').parentNode.insertBefore(gb,$('vs-dl').nextSibling);}}catch(e){}}
     $('vs-post').onclick=function(){post(this);};
   }
+  function dlNow(){if(!result)return;var a=document.createElement('a');a.href=result.url;a.download=result.name;document.body.appendChild(a);a.click();a.remove();}
   async function post(btn){
     var lab=btn.querySelector('span'),stt=$('vs-st'),say=function(t){stt.textContent=t;};
     if(btn.dataset.busy||!result)return;
     if(typeof isLoggedIn!=='undefined'&&!isLoggedIn){toast('Log in as admin first.','error');return;}
     btn.dataset.busy='1';btn.disabled=true;if(lab)lab.textContent='Posting…';
+    try{dlNow();}catch(e){}
     var credit=$('vs-credit').value.replace(/\s+/g,' ').trim(),cap=$('vs-cap').value.trim();
     if(credit)cap=(cap?cap+'\n\n':'')+'Video kutoka '+credit;
     var done=[],failed=[],name=function(p){return p.charAt(0).toUpperCase()+p.slice(1);};
