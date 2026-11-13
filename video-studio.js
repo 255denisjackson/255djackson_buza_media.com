@@ -669,6 +669,8 @@
     $('vs-rb').onclick=function(){r.remove();};
     $('vs-dl').onclick=function(){dlNow();toast('Saved to your phone (check Downloads).','success');};
     if(navigator.canShare&&navigator.share){try{var ff=new File([blob],name,{type:'video/mp4'});if(navigator.canShare({files:[ff]})){var gb=document.createElement('button');gb.className='btn2';gb.textContent='Save to gallery';gb.onclick=function(){navigator.share({files:[ff]}).catch(function(){});};$('vs-dl').parentNode.insertBefore(gb,$('vs-dl').nextSibling);}}catch(e){}}
+    if(hook){var tb=document.createElement('button');tb.className='btn2 p';tb.id='vs-tt';tb.textContent='Send to TikTok queue';$('vs-dl').parentNode.insertBefore(tb,$('vs-dl'));
+      tb.onclick=function(){tb.disabled=true;tb.textContent='Sending…';Promise.resolve(hook.onResult(result.blob,$('vs-cap').value.trim(),$('vs-credit').value.trim())).then(function(ok){if(ok){tb.textContent='Sent ✓';toast('Added to the TikTok queue. Approve it there.','success');}else{tb.disabled=false;tb.textContent='Send to TikTok queue';}}).catch(function(){tb.disabled=false;tb.textContent='Send to TikTok queue';});};}
     $('vs-post').onclick=function(){post(this);};
     $('vs-sch').onclick=function(){schedule(this);};
   }
@@ -749,7 +751,9 @@
     }catch(e){say('Could not post the video right now. Please try again.');toast('Could not post the video right now.','error');}
     delete btn.dataset.busy;btn.disabled=false;if(lab)lab.textContent='Post to social media';
   }
-  window.__vsOpen=open;
+  var hook=null;
+  window.__vsOpen=function(){hook=null;open();};
+  window.__vsOpenWith=function(file,opts){opts=opts||{};hook=opts.onResult?opts:null;build();st.fmt=opts.branding===false?'9:16':'banner';$('vs-fmt').textContent=FLAB[st.fmt];if(opts.branding===false)st.fit='fit';open();toolbar();sizeCv();loadBase(file);};
   window.__vs={st:st,B:function(){return B;},L:function(){return L;},make:make,addLayer:addLayer,result:function(){return result;},seek:seek,toggleKf:toggleKf,sel:function(i){sel=i;},setProp:setProp,T:function(){return T;},evalL:evalL};
   var ob=document.getElementById('vs-open');if(ob)ob.addEventListener('click',open);
 })();
