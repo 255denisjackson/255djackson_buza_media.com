@@ -361,7 +361,7 @@
     thumb=document.createElement('canvas');thumb.width=2000;thumb.height=104;var x=thumb.getContext('2d');x.fillStyle='#2a2e36';x.fillRect(0,0,2000,104);
     var tv=document.createElement('video');tv.muted=true;tv.playsInline=true;tv.preload='auto';tv.src=B.url;
     try{await new Promise(function(res,rej){tv.onloadeddata=res;tv.onerror=rej;setTimeout(res,4000);});}catch(e){return;}
-    var n=40,tw=2000/n,url=B.url;
+    var n=isWeak()?14:40,tw=2000/n,url=B.url;
     for(var i=0;i<n&&B.url===url;i++){
       await new Promise(function(res){var d=false,f=function(){if(d)return;d=true;tv.removeEventListener('seeked',f);res();};tv.addEventListener('seeked',f);setTimeout(f,1500);try{tv.currentTime=Math.min(B.dur-0.05,(i+0.5)*B.dur/n);}catch(e){f();}});
       try{var s=Math.max(tw/tv.videoWidth,104/tv.videoHeight),dw=tv.videoWidth*s,dh=tv.videoHeight*s;x.save();x.beginPath();x.rect(i*tw,0,tw,104);x.clip();x.drawImage(tv,i*tw+(tw-dw)/2,(104-dh)/2,dw,dh);x.restore();}catch(e){}
@@ -414,7 +414,7 @@
         tbBtn('tb-fwd','ti-arrow-bar-up','Forward')+tbBtn('tb-bwd','ti-arrow-bar-down','Back layer')+tbBtn('tb-del','ti-trash','Delete');
     }else{
       h=tbBtn('tb-vid','ti-video','Video')+tbBtn('tb-logo','ti-star','Logo',false,!B.el)+tbBtn('tb-text','ti-typography','Text',false,!B.el)+tbBtn('tb-img','ti-photo','Photo',false,!B.el)+tbBtn('tb-pip','ti-picture-in-picture','Overlay',false,!B.el)+
-        (st.fmt==='banner'?tbBtn('tb-head','ti-heading','Headline',hsheet):'')+tbBtn('tb-ban','ti-frame',st.fmt==='banner'?'Banner: '+banOf(st.ban).name:'Banner off',st.fmt==='banner')+tbBtn('tb-split','ti-cut','Auto-split',ssheet,!B.el)+tbBtn('tb-fit','ti-aspect-ratio',st.fit==='fill'?'Fill':'Fit all',false,!B.el)+tbBtn('tb-snd',st.snd?'ti-volume':'ti-volume-off',st.snd?'Sound on':'Sound off',!st.snd);
+        (st.fmt==='banner'?tbBtn('tb-head','ti-heading','Headline',hsheet):'')+tbBtn('tb-ban','ti-frame',st.fmt==='banner'?'Banner: '+banOf(st.ban).name:'Banner off',st.fmt==='banner')+tbBtn('tb-split','ti-cut','Auto-split',ssheet,!B.el)+tbBtn('tb-q','ti-adjustments',fastMode()?'Speed: Fast':'Speed: Best',fastMode())+tbBtn('tb-fit','ti-aspect-ratio',st.fit==='fill'?'Fill':'Fit all',false,!B.el)+tbBtn('tb-snd',st.snd?'ti-volume':'ti-volume-off',st.snd?'Sound on':'Sound off',!st.snd);
     }
     tb.innerHTML=h;
   }
@@ -488,6 +488,7 @@
       else if(id==='tb-cfull'){B.start=0;B.end=B.dur;renderTL();toast('Whole video restored.');}
       else if(id==='tb-ban'){if(st.fmt!=='banner'){st.fmt='banner';setBanner(st.ban);$('vs-fmt').textContent=FLAB[st.fmt];}bsheet=!bsheet;hsheet=false;ssheet=false;toolbar();sheet();sizeCv();draw();}
       else if(id==='tb-head'){hsheet=!hsheet;bsheet=false;ssheet=false;toolbar();sheet();}
+      else if(id==='tb-q'){var nf=!fastMode();try{localStorage.setItem('vs_q',nf?'fast':'best');}catch(e){}toolbar();toast(nf?'Fast: smaller video (720 wide), saves quicker on weak phones.':'Best: full size video, takes longer to save.','success');}
       else if(id==='tb-split'){ssheet=!ssheet;hsheet=false;bsheet=false;toolbar();sheet();}
       else if(id==='tb-fit'){st.fit=st.fit==='fill'?'fit':'fill';toolbar();draw();}
       else if(id==='tb-snd'){st.snd=!st.snd;if(B.el&&playing)B.el.muted=!st.snd;toolbar();toast(st.snd?'The video\'s sound will be kept.':'The new video will have no sound.');}
@@ -566,12 +567,12 @@
   var batchMode=null;
   async function make(retry){
     if(busy)return;
-    var light=!!retry||(function(){try{return localStorage.getItem('vs_light')==='1';}catch(e){return false;}})();
+    var light=!!retry||fastMode()||(function(){try{return localStorage.getItem('vs_light')==='1';}catch(e){return false;}})();
     if(!B.el){toast('Add your video first.','error');return;}
     if(!(window.VideoEncoder&&window.VideoFrame)){toast('This browser cannot create video. Please use Chrome, Edge or a recent Safari.','error');return;}
     setPlaying(false);
-    var d=FMT[st.fmt],FPS=30,dur=B.end-B.start,n=Math.round(dur*FPS),i;
-    var vbps=Math.max(250000,Math.min(6000000,Math.floor((44*1024*1024*8)/dur-(dur>600?100000:160000))));
+    var fast=fastMode(),d=FMT[st.fmt],FPS=fast?24:30,dur=B.end-B.start,n=Math.round(dur*FPS),i;
+    var vbps=Math.max(250000,Math.min(fast?2800000:6000000,Math.floor((44*1024*1024*8)/dur-(dur>600?100000:160000))));
     var pc=await pickConfig(d[0],d[1],FPS,vbps,light?1:0);try{localStorage.setItem('vs_exporting','1');}catch(e){}
     if(!pc){toast('This device cannot create video here. Please try Chrome on another phone or a computer.','error');return;}
     var vcfg=pc.cfg,RW=vcfg.width,RH=vcfg.height;
@@ -624,7 +625,7 @@
         var fr=new VideoFrame(rc,{timestamp:Math.round(k*1e6/FPS),duration:Math.round(1e6/FPS)});
         venc.encode(fr,{keyFrame:k%60===0});fr.close();
       }
-      function prog(){showProg(true,Math.min(100,next/n*100),(next/FPS).toFixed(1)+' / '+dur.toFixed(1)+' s · keep this screen open');}
+      var tStart=Date.now();function prog(){var left=next>8?Math.max(0,Math.round((Date.now()-tStart)/1000*(n-next)/next)):0;showProg(true,Math.min(100,next/n*100),(next/FPS).toFixed(1)+' / '+dur.toFixed(1)+' s'+(left?' · about '+(left>=60?Math.ceil(left/60)+' min':left+' s')+' left':'')+' · keep this screen open');}
       function scene(t){drawScene(rctx,RW,RH,rv,false,t);}
       function pipSync(t){pips.forEach(function(l){var v=l.el;if(!visible(l,t)){if(!v.paused)try{v.pause();}catch(e){}return;}
         var w=pipWant(l,t);if(v.paused)try{var p=v.play();if(p&&p.catch)p.catch(function(){});}catch(e){}if(Math.abs(v.currentTime-w)>0.3)try{v.currentTime=w;}catch(e){}});}
@@ -839,6 +840,8 @@
       return '<div style="padding:.5rem 0;border-top:1px solid #272b33"><div style="color:#fff">'+fmtT(it.scheduled_at)+' · <b>'+lab[it.status]+'</b></div><div style="font-size:.8rem">'+(cap||'(no caption)')+'</div>'+(err?'<div style="font-size:.75rem;color:#ff8a8a">'+err.replace(/</g,'&lt;')+'</div>':'')+(it.status==='queued'?'<button class="btn2" data-del="'+it.id+'">Cancel</button>':'')+'</div>';}).join('');
     el.onclick=async function(e){var b=e.target.closest('button[data-del]');if(!b)return;b.disabled=true;await sb.from('video_queue').delete().eq('id',b.getAttribute('data-del')).eq('status','queued');showQueue();};
   }
+  function isWeak(){try{return (navigator.deviceMemory&&navigator.deviceMemory<=4)||(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=4);}catch(e){return false;}}
+  function fastMode(){try{var q=localStorage.getItem('vs_q');if(q==='fast')return true;if(q==='best')return false;}catch(e){}return isWeak();}
   function isStandalone(){try{return (window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;}catch(e){return false;}}
   function isPhone(){try{return matchMedia('(pointer:coarse)').matches||/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);}catch(e){return false;}}
   // Desktop: normal download. Phone / installed app: never navigate away (that closes the app), use the share sheet instead.
