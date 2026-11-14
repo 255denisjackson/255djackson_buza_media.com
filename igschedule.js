@@ -18,17 +18,20 @@
     var rows=r.data||[];
     var up=rows.filter(function(x){return x.status==='queued'||x.status==='posting'||x.status==='processing';}),past=rows.filter(function(x){return x.status==='done'||x.status==='failed';}).reverse();
     function item(x){var l=LAB[x.status]||[x.status,''];
-      var err=x.status==='failed'?(x.results||[]).filter(function(y){return y.status==='failed';}).map(function(y){return y.platform+': '+String(y.error||'').slice(0,100);}).join(' · '):'';
+      var err=x.status==='failed'?(x.results||[]).filter(function(y){return y.status==='failed';}).map(function(y){var e=String(y.error||'');return y.platform+': '+(/access token|OAuthException|"code":190|code\\":190/i.test(e)?'Facebook has logged the connection out (token expired). Needs to be reconnected, then press Retry.':e.slice(0,100));}).join(' · '):'';
       return '<div class="ys-it"><span class="ys-st '+l[1]+'">'+l[0]+'</span> <span class="ys-n">'+when(x.scheduled_at)+'</span><div style="margin:.3rem 0;font-size:.85rem;white-space:pre-line">'+esc(String(x.caption||'(no caption)').slice(0,140))+'</div>'+
       (err?'<div class="ys-n" style="color:#a4111f">'+esc(err)+'</div>':'')+
       (x.path&&x.status!=='done'?'<button class="btn btn-secondary" data-pv="'+esc(x.path)+'" style="margin-top:.3rem">▶ Preview</button> ':'')+
-      (x.status==='queued'||x.status==='failed'?'<button class="btn btn-secondary" data-yd="'+x.id+'" style="margin-top:.3rem">'+(x.status==='queued'?'Cancel':'Remove')+'</button>':'')+'</div>';}
+      (x.status==='failed'&&x.path?'<button class="btn btn-secondary" data-rt="'+x.id+'" style="margin-top:.3rem">↻ Retry</button> ':'')+(x.status==='queued'||x.status==='failed'?'<button class="btn btn-secondary" data-yd="'+x.id+'" style="margin-top:.3rem">'+(x.status==='queued'?'Cancel':'Remove')+'</button>':'')+'</div>';}
     root.innerHTML='<b style="font-size:.9rem">Coming up ('+up.length+')</b><div style="margin:.5rem 0 1rem">'+(up.length?up.map(item).join(''):'<div class="ys-n">Nothing scheduled. Make a video in Video Studio and press “Schedule”.</div>')+'</div>'+
       '<b style="font-size:.9rem">Done and failed</b><div style="margin-top:.5rem">'+(past.length?past.slice(0,30).map(item).join(''):'<div class="ys-n">Nothing yet.</div>')+'</div>';
     root.onclick=async function(e){var pv=e.target.closest('button[data-pv]');
       if(pv){var old=pv.parentNode.querySelector('video');if(old){old.pause();old.remove();pv.textContent='▶ Preview';return;}
         var vv=document.createElement('video');vv.src=sb.storage.from('social-videos').getPublicUrl(pv.getAttribute('data-pv')).data.publicUrl;vv.controls=true;vv.playsInline=true;vv.setAttribute('playsinline','');vv.style.cssText='display:block;width:100%;max-height:60vh;border-radius:12px;margin-top:.4rem;background:#000';
         pv.parentNode.appendChild(vv);pv.textContent='✕ Close preview';vv.play().catch(function(){});return;}
+      var rt=e.target.closest('button[data-rt]');
+      if(rt){rt.disabled=true;var q=await sb.from('video_queue').update({status:'queued',scheduled_at:new Date().toISOString(),results:null,container:null}).eq('id',rt.getAttribute('data-rt')).eq('status','failed');
+        if(q.error)toast('Could not retry.','error');else toast('Will try again within 5 minutes.','success');load();return;}
       var b=e.target.closest('button[data-yd]');if(!b)return;if(!confirm('Remove this video from the schedule?'))return;
       var id=b.getAttribute('data-yd'),it=rows.filter(function(x){return String(x.id)===id;})[0];
       var d=await sb.from('video_queue').delete().eq('id',id).in('status',['queued','failed']);
