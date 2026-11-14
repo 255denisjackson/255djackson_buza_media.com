@@ -341,7 +341,7 @@
   function renderTL(){
     var tli=$('vs-tli');if(!tli)return;var pps=st.pps,pad=padPx(),dur=B.dur||0,w=Math.max(10,dur*pps),html='';
     tli.style.width=(pad*2+w)+'px';
-    var stepS=pps>=120?1:pps>=60?2:pps>=30?5:10,ticks='';
+    var stepS=60,ticks='',STEPS=[1,2,5,10,15,30,60,120,300,600,1200,1800,3600];for(var si=0;si<STEPS.length;si++){if(STEPS[si]*pps>=58){stepS=STEPS[si];break;}}
     for(var s=0;s<=dur;s+=stepS)ticks+='<i style="left:'+(pad+s*pps)+'px"></i><b style="left:'+(pad+s*pps)+'px">'+Math.floor(s/60)+':'+('0'+Math.floor(s%60)).slice(-2)+'</b>';
     html+='<div class="rul">'+ticks+'</div>';
     if(B.el){
@@ -465,8 +465,8 @@
     $('vs-fmt').onclick=function(){st.fmt=FMTS[(FMTS.indexOf(st.fmt)+1)%FMTS.length];this.textContent=FLAB[st.fmt];if(st.fmt!=='banner')bsheet=false;toolbar();sheet();sizeCv();draw();};
     $('vs-first').onclick=function(){pickFile('vs-fv');};
     $('vs-play').onclick=function(){setPlaying(!playing);};
-    $('vs-zi').onclick=function(){st.pps=clamp(st.pps*1.5,15,300);renderTL();setScroll();};
-    $('vs-zo').onclick=function(){st.pps=clamp(st.pps/1.5,15,300);renderTL();setScroll();};
+    $('vs-zi').onclick=function(){st.pps=clamp(st.pps*1.5,.5,300);renderTL();setScroll();};
+    $('vs-zo').onclick=function(){st.pps=clamp(st.pps/1.5,.5,300);renderTL();setScroll();};
     $('vs-exp').onclick=function(){make(0);};
     $('vs-q').onclick=showQueue;
     $('vs-fv').onchange=function(e){loadBase(e.target.files[0]);e.target.value='';};
@@ -531,10 +531,10 @@
     var url=URL.createObjectURL(file),v=document.createElement('video');v.muted=true;v.playsInline=true;v.preload='auto';v.setAttribute('playsinline','');
     v.onloadedmetadata=function(){
       if(!isFinite(v.duration)||v.duration<1){URL.revokeObjectURL(url);toast('This video is too short or could not be read.','error');return;}
-      if(v.duration>900){URL.revokeObjectURL(url);toast('This video is over 15 minutes. Please cut it shorter first.','error');return;}
+      if(v.duration>14400){URL.revokeObjectURL(url);toast('This video is over 4 hours. Please cut it shorter first.','error');return;}
       setPlaying(false);if(B.url)URL.revokeObjectURL(B.url);
       B={zoom:1,px:0,py:0,file:file,url:url,el:v,w:v.videoWidth,h:v.videoHeight,dur:v.duration,start:0,end:v.duration};
-      st.pps=clamp(Math.round(Math.min(160,Math.max(20,260/v.duration*1.0))),20,160);if(v.duration<8)st.pps=90;
+      st.pps=v.duration>300?clamp(4000/v.duration,1,20):clamp(Math.round(Math.min(160,Math.max(20,260/v.duration*1.0))),20,160);if(v.duration<8)st.pps=90;
       T=0;$('vs-empty').style.display='none';v.currentTime=0.05;thumb=null;L=L.filter(function(x){return x.type!=='logo'||!x.auto;});renderTL();toolbar();updTime();buildThumbs();
       if(st.fmt==='banner'&&!L.some(function(x){return x.type==='logo';})){var lg=addLayer({type:'logo',auto:true,col:false,w:20,x:.14,y:.60,t0:0,t1:B.dur});sel=null;panel=false;renderTL();toolbar();sheet();draw();}
       if(v.videoWidth>v.videoHeight&&st.fmt==='9:16')toast('This video is wide. Try "Fit all" or the 16:9 size.','success');
@@ -589,7 +589,8 @@
         vs.push({data:dd,d:1000,key:c.type==='key'});},error:function(e){encErr=e;}});
       venc.configure(vcfg);
       var hasSound=false;
-      if(st.snd&&window.AudioEncoder&&window.AudioData){
+      var capture=st.snd&&!retry&&!!window.AudioEncoder&&!!window.AudioData&&'requestVideoFrameCallback' in HTMLVideoElement.prototype&&(B.file.size>150*1048576||B.dur>900),capOn=false,capChunks=[[],[]],capCtx=null;
+      if(st.snd&&window.AudioEncoder&&window.AudioData&&!capture){
         showProg(true,0,'Reading the sound…');
         try{
           var ac=new (window.AudioContext||window.webkitAudioContext)({sampleRate:48000});
@@ -630,7 +631,7 @@
       function playPhase(){
         return new Promise(function(resolve){
           var last=Date.now(),fin=false;
-          function finish(r){if(fin)return;fin=true;clearInterval(wd);try{rv.pause();}catch(e){}pausePips();resolve(r);}
+          function finish(r){if(fin)return;fin=true;capOn=false;clearInterval(wd);try{rv.pause();}catch(e){}pausePips();resolve(r);}
           var wd=setInterval(function(){if(Date.now()-last>3000)finish(false);},500);
           function cb(now,meta){
             last=Date.now();var t=meta.mediaTime;pipSync(t);scene(t);
@@ -641,7 +642,13 @@
           }
           rv.onended=function(){while(next<n){encodeCanvas(next);next++;}finish(true);};
           pips.forEach(function(l){try{l.el.currentTime=0;}catch(e){}});
-          seekTo(rv,B.start).then(function(){rv.playbackRate=1;var p=rv.play();if(p&&p.catch)p.catch(function(){finish(false);});rv.requestVideoFrameCallback(cb);});
+          if(capture){try{
+            capCtx=new (window.AudioContext||window.webkitAudioContext)({sampleRate:48000});
+            var csrc=capCtx.createMediaElementSource(rv),csp=capCtx.createScriptProcessor(4096,2,2),zg=capCtx.createGain();zg.gain.value=0;
+            csp.onaudioprocess=function(e){if(!capOn)return;var ib=e.inputBuffer;capChunks[0].push(new Float32Array(ib.getChannelData(0)));capChunks[1].push(new Float32Array(ib.getChannelData(ib.numberOfChannels>1?1:0)));};
+            csrc.connect(csp);csp.connect(zg);zg.connect(capCtx.destination);rv.muted=false;if(capCtx.resume)capCtx.resume();
+          }catch(e){capture=false;}}
+          seekTo(rv,B.start).then(function(){rv.playbackRate=1;capOn=!!capture;var p=rv.play();if(p&&p.catch)p.catch(function(){finish(false);});rv.requestVideoFrameCallback(cb);});
         });
       }
       if(!retry&&'requestVideoFrameCallback' in HTMLVideoElement.prototype&&document.visibilityState==='visible'){
@@ -658,6 +665,30 @@
       }
       if(encErr)throw encErr;
       if(cancel){try{venc.close();}catch(e){}showProg(false);toast('Stopped.');return;}
+      if(capture&&capChunks[0].length){
+        showProg(true,99,'Finishing the sound…');
+        try{
+          var tot=0;capChunks[0].forEach(function(a){tot+=a.length;});
+          var want=Math.round(dur*48000),N=Math.min(tot,want);ch=2;sr=48000;
+          var cch=[new Float32Array(N),new Float32Array(N)];
+          for(var cc=0;cc<2;cc++){var off=0;for(var ci=0;ci<capChunks[cc].length&&off<N;ci++){var part=capChunks[cc][ci];if(off+part.length>N)part=part.subarray(0,N-off);cch[cc].set(part,off);off+=part.length;}capChunks[cc]=[];}
+          var acfg2=null,cfgs2=[{codec:'mp4a.40.2',sampleRate:sr,numberOfChannels:ch,bitrate:96000},{codec:'opus',sampleRate:sr,numberOfChannels:ch,bitrate:96000}];
+          for(var k2=0;k2<cfgs2.length&&!acfg2;k2++){try{if((await AudioEncoder.isConfigSupported(cfgs2[k2])).supported)acfg2=cfgs2[k2];}catch(e){}}
+          if(acfg2){
+            acodec=acfg2.codec==='opus'?'opus':'aac';
+            aenc=new AudioEncoder({output:function(c,m){var dd=new Uint8Array(c.byteLength);c.copyTo(dd);
+              if(m&&m.decoderConfig&&m.decoderConfig.description){var ds=m.decoderConfig.description;adesc=new Uint8Array(ds.buffer?ds.buffer.slice(ds.byteOffset,ds.byteOffset+ds.byteLength):ds);}
+              var dl=c.duration?Math.round(c.duration*sr/1e6):(acodec==='aac'?1024:960);asamples.push({data:dd,d:dl});},error:function(e){throw e;}});
+            aenc.configure(acfg2);
+            for(var pp=0;pp<N;pp+=4800){var mm=Math.min(4800,N-pp),pl2=new Float32Array(mm*2);pl2.set(cch[0].subarray(pp,pp+mm),0);pl2.set(cch[1].subarray(pp,pp+mm),mm);
+              var ad2=new AudioData({format:'f32-planar',sampleRate:sr,numberOfFrames:mm,numberOfChannels:2,timestamp:Math.round(pp*1e6/sr),data:pl2});aenc.encode(ad2);ad2.close();
+              while(aenc.encodeQueueSize>20)await new Promise(function(r){setTimeout(r,5);});}
+            await aenc.flush();hasSound=asamples.length>0&&!!adesc;
+          }
+        }catch(e){hasSound=false;}
+        try{if(capCtx&&capCtx.close)capCtx.close();}catch(e){}
+        if(!hasSound)toast('No sound could be read from this video, so the new video will have no sound.','error');
+      }else if(st.snd&&(B.file.size>150*1048576||B.dur>900)&&!hasSound){toast('Sound for very long videos needs Chrome or Edge on a computer. This video will have no sound.','error');}
       await venc.flush();venc.close();
       if(!vdesc||!vs.length)throw new Error('encode');
       var vtrack={kind:'v',samples:vs,w:RW,h:RH,desc:vdesc,ts:FPS*1000,dur:vs.length/FPS};
