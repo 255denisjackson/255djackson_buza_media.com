@@ -574,7 +574,7 @@
     if(!(window.VideoEncoder&&window.VideoFrame)){toast('This browser cannot create video. Please use Chrome, Edge or a recent Safari.','error');return;}
     setPlaying(false);
     var fast=fastMode(),d=FMT[st.fmt],FPS=fast?24:30,dur=B.end-B.start,n=Math.round(dur*FPS),i;
-    var vbps=Math.max(250000,Math.min(fast?2800000:8000000,Math.floor((44*1024*1024*8)/dur-(dur>600?100000:160000))));
+    var vbps=Math.max(250000,Math.min(fast?2800000:5500000,Math.floor((44*1024*1024*8)/dur-(dur>600?100000:160000))));
     var pc=await pickConfig(d[0],d[1],FPS,vbps,light?1:0);try{localStorage.setItem('vs_exporting','1');}catch(e){}
     if(!pc){toast('This device cannot create video here. Please try Chrome on another phone or a computer.','error');return;}
     var vcfg=pc.cfg,RW=vcfg.width,RH=vcfg.height;
@@ -778,7 +778,7 @@
     if(pl.n>40){toast('That makes too many parts. Choose longer parts.','error');return;}
     if(!confirm(pl.n+' video'+(pl.n===1?'':'s')+' will be made and scheduled. Keep this screen on until it finishes. Start?'))return;
     btn.dataset.busy='1';btn.disabled=true;
-    var s0=B.start,e0=B.end,h0=st.head,wl=null,done=0,failed=false;
+    var s0=B.start,e0=B.end,h0=st.head,wl=null,done=0,failed=false,chain=Promise.resolve(),lastAt=null,makeFail=false;
     try{if(navigator.wakeLock)wl=await navigator.wakeLock.request('screen');}catch(e){}
     try{
       for(var i=0;i<pl.n&&!failed;i++){
@@ -789,19 +789,29 @@
         say('Making part '+(i+1)+' of '+pl.n+'…');
         await make(0);
         var blob=batchMode.blob;
-        if(!blob){failed=true;say(done+' of '+pl.n+' scheduled. '+(cancel?'Stopped.':'Part '+(i+1)+' could not be made.'));break;}
-        say('Uploading part '+(i+1)+' of '+pl.n+'…');
-        var pr=await sb.functions.invoke('social-post-video',{body:{action:'prepare'}});
-        if(pr.error||!pr.data||pr.data.error)throw new Error('prepare');
-        var up=await sb.storage.from('social-videos').uploadToSignedUrl(pr.data.path,pr.data.token,blob,{contentType:'video/mp4'});
-        if(up.error)throw new Error('upload');
-        var cap=(o.cap?o.cap+'\n\n':'')+(o.head?o.head+' · ':'')+tag.charAt(0)+tag.slice(1).toLowerCase();
-        var rs=await sb.rpc('schedule_video',{p_path:pr.data.path,p_caption:cap,p_gap:o.gap});
-        if(rs.error)throw new Error('schedule');
-        if(o.yt){var ys=await sb.rpc('schedule_youtube',{p_path:pr.data.path,p_title:(o.head?o.head+' ':'')+tag,p_desc:cap+(B.h>=B.w?'\n\n#Shorts':'')});void ys;}
-        done++;say(done+' of '+pl.n+' scheduled. Last one: '+fmtT(rs.data));
+        if(!blob){failed=true;makeFail=true;break;}
+        // upload + schedule this part in the background while the next part is being made (keeps the order of the slots)
+        (function(idx,bl,tg){
+          var prev=chain;
+          chain=prev.then(async function(){
+            if(failed)return;
+            var pr=await sb.functions.invoke('social-post-video',{body:{action:'prepare'}});
+            if(pr.error||!pr.data||pr.data.error)throw new Error('prepare');
+            var up=await sb.storage.from('social-videos').uploadToSignedUrl(pr.data.path,pr.data.token,bl,{contentType:'video/mp4'});
+            if(up.error)throw new Error('upload');
+            var cap=(o.cap?o.cap+'\n\n':'')+(o.head?o.head+' · ':'')+tg.charAt(0)+tg.slice(1).toLowerCase();
+            var rs=await sb.rpc('schedule_video',{p_path:pr.data.path,p_caption:cap,p_gap:o.gap});
+            if(rs.error)throw new Error('schedule');
+            if(o.yt){var ys=await sb.rpc('schedule_youtube',{p_path:pr.data.path,p_title:(o.head?o.head+' ':'')+tg,p_desc:cap+(B.h>=B.w?'\n\n#Shorts':'')});void ys;}
+            done++;lastAt=rs.data;say('Made '+(idx+1)+' of '+pl.n+' · scheduled '+done+'. Last one: '+fmtT(rs.data));
+          }).catch(function(){failed=true;});
+        })(i,blob,tag);
+        batchMode.blob=null;blob=null;
       }
-      if(!failed){say('✅ All '+pl.n+' parts are scheduled. The last one posts at '+fmtT(rs.data)+'. You can close this now.');toast('All parts scheduled.','success');}
+      say('Finishing the uploads… keep this screen on');await chain;
+      if(!failed&&done===pl.n){say('✅ All '+pl.n+' parts are scheduled. The last one posts at '+fmtT(lastAt)+'. You can close this now.');toast('All parts scheduled.','success');}
+      else if(makeFail){say(done+' of '+pl.n+' scheduled. '+(cancel?'Stopped.':'A part could not be made on this device.'));}
+      else if(failed&&done<pl.n){say(done+' of '+pl.n+' scheduled. Something failed (internet?). Try again for the rest.');}
     }catch(e){say(done+' of '+pl.n+' scheduled. Something failed. Check your internet and try again.');}
     finally{batchMode=null;B.start=s0;B.end=e0;st.head=h0;try{if(wl)wl.release();}catch(e){}btn.disabled=false;delete btn.dataset.busy;renderTL();draw();}
   }
