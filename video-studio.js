@@ -163,7 +163,7 @@
   '@media (min-width:900px){#vs-ov .tb{justify-content:center}}'+
   '@media (prefers-reduced-motion:reduce){#vs-ov button{transition:none}}';
   function build(){
-    try{if(localStorage.getItem('vs_exporting')==='1'){localStorage.removeItem('vs_exporting');localStorage.setItem('vs_light','1');setTimeout(function(){toast('The phone stopped the last export (not enough memory). I will use a lighter size now.','error');},800);}}catch(e){}
+    try{if(localStorage.getItem('vs_exporting')==='1'){localStorage.removeItem('vs_exporting');setTimeout(function(){toast('The last export was stopped by the phone (not enough memory). Close other apps and try again, or tap the Speed button to choose Fast.','error');},800);}}catch(e){}
     if(ov)return;
     var s=document.createElement('style');s.textContent=CSS+CSS2;document.head.appendChild(s);
     ov=document.createElement('div');ov.id='vs-ov';ov.style.display='none';
@@ -554,8 +554,8 @@
     for(var si=skip||0;si<sizes.length;si++){
       for(var ci=0;ci<CODECS.length;ci++){
         var hws=['no-preference','prefer-software'];
-        for(var hi=0;hi<hws.length;hi++){
-          var cfg={codec:CODECS[ci],width:sizes[si][0],height:sizes[si][1],bitrate:Math.round(vbps*(sizes[si][0]*sizes[si][1])/(fw*fh)),framerate:FPS,avc:{format:'avc'},latencyMode:'realtime',hardwareAcceleration:hws[hi]};
+        for(var hi=0;hi<hws.length*2;hi++){
+          var cfg={codec:CODECS[ci],width:sizes[si][0],height:sizes[si][1],bitrate:Math.round(vbps*(sizes[si][0]*sizes[si][1])/(fw*fh)),framerate:FPS,avc:{format:'avc'},latencyMode:(hi<hws.length&&!skip)?'quality':'realtime',hardwareAcceleration:hws[hi%hws.length]};
           try{var s=await VideoEncoder.isConfigSupported(cfg);if(s&&s.supported){return {cfg:cfg,scaled:si>0};}}catch(e){}
         }
       }
@@ -569,12 +569,12 @@
   var batchMode=null;
   async function make(retry){
     if(busy)return;
-    var light=!!retry||fastMode()||(function(){try{return localStorage.getItem('vs_light')==='1';}catch(e){return false;}})();
+    var light=!!retry||fastMode();try{localStorage.removeItem('vs_light');}catch(e){}
     if(!B.el){toast('Add your video first.','error');return;}
     if(!(window.VideoEncoder&&window.VideoFrame)){toast('This browser cannot create video. Please use Chrome, Edge or a recent Safari.','error');return;}
     setPlaying(false);
     var fast=fastMode(),d=FMT[st.fmt],FPS=fast?24:30,dur=B.end-B.start,n=Math.round(dur*FPS),i;
-    var vbps=Math.max(250000,Math.min(fast?2800000:6000000,Math.floor((44*1024*1024*8)/dur-(dur>600?100000:160000))));
+    var vbps=Math.max(250000,Math.min(fast?2800000:8000000,Math.floor((44*1024*1024*8)/dur-(dur>600?100000:160000))));
     var pc=await pickConfig(d[0],d[1],FPS,vbps,light?1:0);try{localStorage.setItem('vs_exporting','1');}catch(e){}
     if(!pc){toast('This device cannot create video here. Please try Chrome on another phone or a computer.','error');return;}
     var vcfg=pc.cfg,RW=vcfg.width,RH=vcfg.height;
@@ -847,7 +847,7 @@
       var b=e.target.closest('button[data-del]');if(!b)return;b.disabled=true;await sb.from('video_queue').delete().eq('id',b.getAttribute('data-del')).eq('status','queued');showQueue();};
   }
   function isWeak(){try{return (navigator.deviceMemory&&navigator.deviceMemory<=4)||(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=4);}catch(e){return false;}}
-  function fastMode(){try{var q=localStorage.getItem('vs_q');if(q==='fast')return true;if(q==='best')return false;}catch(e){}return isWeak()||isPhone();}
+  function fastMode(){try{var q=localStorage.getItem('vs_q');if(q==='fast')return true;if(q==='best')return false;}catch(e){}return false;}
   function isStandalone(){try{return (window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;}catch(e){return false;}}
   function isPhone(){try{return matchMedia('(pointer:coarse)').matches||/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);}catch(e){return false;}}
   // Desktop: normal download. Phone / installed app: never navigate away (that closes the app), use the share sheet instead.
