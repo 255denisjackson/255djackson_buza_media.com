@@ -592,7 +592,7 @@
         vs.push({data:dd,d:1000,key:c.type==='key'});},error:function(e){encErr=e;}});
       venc.configure(vcfg);
       var hasSound=false;
-      var capture=st.snd&&!retry&&!!window.AudioEncoder&&!!window.AudioData&&'requestVideoFrameCallback' in HTMLVideoElement.prototype&&(B.file.size>150*1048576||B.dur>900),capOn=false,capChunks=[[],[]],capCtx=null;
+      var capture=st.snd&&!retry&&!!window.AudioEncoder&&!!window.AudioData&&'requestVideoFrameCallback' in HTMLVideoElement.prototype&&(B.file.size>150*1048576||B.dur>900||(isPhone()&&(B.file.size>30*1048576||B.dur>120))),capOn=false,capCtx=null,capN=0,capWant=Math.round(dur*48000);
       if(st.snd&&window.AudioEncoder&&window.AudioData&&!capture){
         showProg(true,0,'Reading the sound…');
         try{
@@ -621,6 +621,14 @@
         }catch(e){hasSound=false;}
         if(!hasSound)toast('No sound could be read from this video, so the new video will have no sound.','error');
       }
+      function mkCapEnc(){return (async function(){var cf=[{codec:'mp4a.40.2',sampleRate:48000,numberOfChannels:2,bitrate:96000},{codec:'opus',sampleRate:48000,numberOfChannels:2,bitrate:96000}],ac2=null,q;
+        for(q=0;q<cf.length&&!ac2;q++){try{if((await AudioEncoder.isConfigSupported(cf[q])).supported)ac2=cf[q];}catch(e){}}
+        if(!ac2)return false;acodec=ac2.codec==='opus'?'opus':'aac';sr=48000;ch=2;
+        aenc=new AudioEncoder({output:function(c,m){var dd=new Uint8Array(c.byteLength);c.copyTo(dd);
+          if(m&&m.decoderConfig&&m.decoderConfig.description){var ds=m.decoderConfig.description;adesc=new Uint8Array(ds.buffer?ds.buffer.slice(ds.byteOffset,ds.byteOffset+ds.byteLength):ds);}
+          var dl=c.duration?Math.round(c.duration*sr/1e6):(acodec==='aac'?1024:960);asamples.push({data:dd,d:dl});},error:function(e){}});
+        aenc.configure(ac2);return true;})();}
+      if(capture){var okc=false;try{okc=await mkCapEnc();}catch(e){}if(!okc)capture=false;}
       var poster='',next=0;
       function encodeCanvas(k){
         if(k===0)poster=rc.toDataURL('image/jpeg',0.9);
@@ -641,14 +649,23 @@
             var idx=Math.min(n-1,Math.max(0,Math.round((t-B.start)*FPS)));
             while(next<=idx){encodeCanvas(next);next++;}
             prog();
-            if(cancel||next>=n||t>=B.end)finish(true);else rv.requestVideoFrameCallback(cb);
+            if(cancel||next>=n||t>=B.end){finish(true);return;}
+            if(venc.encodeQueueSize>5){
+              // phone cannot keep up: pause the clip until the encoder catches up (prevents running out of memory)
+              var sc=capOn;capOn=false;try{rv.pause();}catch(e){}pausePips();
+              (function wait(){last=Date.now();if(fin||cancel){return;}if(venc.encodeQueueSize>1){setTimeout(wait,25);return;}
+                last=Date.now();capOn=sc;var pp=rv.play();if(pp&&pp.catch)pp.catch(function(){});rv.requestVideoFrameCallback(cb);})();
+              return;}
+            rv.requestVideoFrameCallback(cb);
           }
           rv.onended=function(){while(next<n){encodeCanvas(next);next++;}finish(true);};
           pips.forEach(function(l){try{l.el.currentTime=0;}catch(e){}});
           if(capture){try{
             capCtx=new (window.AudioContext||window.webkitAudioContext)({sampleRate:48000});
             var csrc=capCtx.createMediaElementSource(rv),csp=capCtx.createScriptProcessor(4096,2,2),zg=capCtx.createGain();zg.gain.value=0;
-            csp.onaudioprocess=function(e){if(!capOn)return;var ib=e.inputBuffer;capChunks[0].push(new Float32Array(ib.getChannelData(0)));capChunks[1].push(new Float32Array(ib.getChannelData(ib.numberOfChannels>1?1:0)));};
+            csp.onaudioprocess=function(e){if(!capOn||!aenc||capN>=capWant)return;var ib=e.inputBuffer,m=Math.min(ib.length,capWant-capN),pl=new Float32Array(m*2);
+              pl.set(ib.getChannelData(0).subarray(0,m),0);pl.set(ib.getChannelData(ib.numberOfChannels>1?1:0).subarray(0,m),m);
+              try{var ad=new AudioData({format:'f32-planar',sampleRate:48000,numberOfFrames:m,numberOfChannels:2,timestamp:Math.round(capN*1e6/48000),data:pl});aenc.encode(ad);ad.close();capN+=m;}catch(er){}};
             csrc.connect(csp);csp.connect(zg);zg.connect(capCtx.destination);rv.muted=false;if(capCtx.resume)capCtx.resume();
           }catch(e){capture=false;}}
           seekTo(rv,B.start).then(function(){rv.playbackRate=1;capOn=!!capture;var p=rv.play();if(p&&p.catch)p.catch(function(){finish(false);});rv.requestVideoFrameCallback(cb);});
@@ -668,30 +685,12 @@
       }
       if(encErr)throw encErr;
       if(cancel){try{venc.close();}catch(e){}showProg(false);toast('Stopped.');return;}
-      if(capture&&capChunks[0].length){
+      if(capture&&aenc){
         showProg(true,99,'Finishing the sound…');
-        try{
-          var tot=0;capChunks[0].forEach(function(a){tot+=a.length;});
-          var want=Math.round(dur*48000),N=Math.min(tot,want);ch=2;sr=48000;
-          var cch=[new Float32Array(N),new Float32Array(N)];
-          for(var cc=0;cc<2;cc++){var off=0;for(var ci=0;ci<capChunks[cc].length&&off<N;ci++){var part=capChunks[cc][ci];if(off+part.length>N)part=part.subarray(0,N-off);cch[cc].set(part,off);off+=part.length;}capChunks[cc]=[];}
-          var acfg2=null,cfgs2=[{codec:'mp4a.40.2',sampleRate:sr,numberOfChannels:ch,bitrate:96000},{codec:'opus',sampleRate:sr,numberOfChannels:ch,bitrate:96000}];
-          for(var k2=0;k2<cfgs2.length&&!acfg2;k2++){try{if((await AudioEncoder.isConfigSupported(cfgs2[k2])).supported)acfg2=cfgs2[k2];}catch(e){}}
-          if(acfg2){
-            acodec=acfg2.codec==='opus'?'opus':'aac';
-            aenc=new AudioEncoder({output:function(c,m){var dd=new Uint8Array(c.byteLength);c.copyTo(dd);
-              if(m&&m.decoderConfig&&m.decoderConfig.description){var ds=m.decoderConfig.description;adesc=new Uint8Array(ds.buffer?ds.buffer.slice(ds.byteOffset,ds.byteOffset+ds.byteLength):ds);}
-              var dl=c.duration?Math.round(c.duration*sr/1e6):(acodec==='aac'?1024:960);asamples.push({data:dd,d:dl});},error:function(e){throw e;}});
-            aenc.configure(acfg2);
-            for(var pp=0;pp<N;pp+=4800){var mm=Math.min(4800,N-pp),pl2=new Float32Array(mm*2);pl2.set(cch[0].subarray(pp,pp+mm),0);pl2.set(cch[1].subarray(pp,pp+mm),mm);
-              var ad2=new AudioData({format:'f32-planar',sampleRate:sr,numberOfFrames:mm,numberOfChannels:2,timestamp:Math.round(pp*1e6/sr),data:pl2});aenc.encode(ad2);ad2.close();
-              while(aenc.encodeQueueSize>20)await new Promise(function(r){setTimeout(r,5);});}
-            await aenc.flush();hasSound=asamples.length>0&&!!adesc;
-          }
-        }catch(e){hasSound=false;}
-        try{if(capCtx&&capCtx.close)capCtx.close();}catch(e){}
+        try{await aenc.flush();hasSound=asamples.length>0&&!!adesc;}catch(e){hasSound=false;}
+        try{if(capCtx&&capCtx.state!=='closed'&&capCtx.close)capCtx.close().catch(function(){});}catch(e){}
         if(!hasSound)toast('No sound could be read from this video, so the new video will have no sound.','error');
-      }else if(st.snd&&(B.file.size>150*1048576||B.dur>900)&&!hasSound){toast('Sound for very long videos needs Chrome or Edge on a computer. This video will have no sound.','error');}
+      }else if(st.snd&&!retry&&!hasSound&&(B.file.size>150*1048576||B.dur>900)){toast('Sound for very long videos needs Chrome or Edge on a computer. This video will have no sound.','error');}
       await venc.flush();venc.close();
       if(!vdesc||!vs.length)throw new Error('encode');
       var vtrack={kind:'v',samples:vs,w:RW,h:RH,desc:vdesc,ts:FPS*1000,dur:vs.length/FPS};
@@ -707,7 +706,7 @@
       if(batchMode){batchMode.err=true;}
       else if(!retry&&!cancel){toast('Trying again in a safer way…','success');setTimeout(function(){busy=false;make(1);},300);}
       else toast('Could not create the video on this device. Try a shorter clip, another file, or Chrome.','error');
-    }finally{busy=false;try{localStorage.removeItem('vs_exporting');}catch(e){}draw();}
+    }finally{busy=false;try{rv.pause();rv.removeAttribute('src');rv.load();}catch(e){}try{if(capCtx&&capCtx.state!=='closed'&&capCtx.close)capCtx.close().catch(function(){});}catch(e){}try{localStorage.removeItem('vs_exporting');}catch(e){}draw();}
   }
 
   /* ---------- result: download + post to social media ---------- */
@@ -832,18 +831,23 @@
     var q=$('vs-qp');if(q)q.remove();q=document.createElement('div');q.id='vs-qp';q.className='scr';
     q.innerHTML='<div class="card"><div style="display:flex;align-items:center;justify-content:space-between"><b style="font-size:1.1rem">Scheduled videos</b><button class="ib" id="vs-qx" aria-label="Close">✕</button></div><div id="vs-ql" style="margin-top:.6rem;color:#9aa1ad">Loading…</div></div>';
     ov.appendChild(q);$('vs-qx').onclick=function(){q.remove();};
-    var r=await sb.from('video_queue').select('id,caption,scheduled_at,status,results').order('scheduled_at',{ascending:false}).limit(30);
+    var r=await sb.from('video_queue').select('id,path,caption,scheduled_at,status,results').order('scheduled_at',{ascending:false}).limit(30);
     var el=$('vs-ql');if(!el)return;
     if(r.error){el.textContent='Log in as admin to see the queue.';return;}
     if(!r.data.length){el.textContent='Nothing scheduled yet.';return;}
     var lab={queued:'Waiting',posting:'Posting…',processing:'Instagram processing',done:'Posted ✓',failed:'Failed'};
     el.innerHTML=r.data.map(function(it){var cap=String(it.caption||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').slice(0,60);
       var err=(it.status==='failed'?(it.results||[]).filter(function(x){return x.status==='failed';}).map(function(x){return x.platform+': '+String(x.error||'').slice(0,80);}).join(' · '):'');
-      return '<div style="padding:.5rem 0;border-top:1px solid #272b33"><div style="color:#fff">'+fmtT(it.scheduled_at)+' · <b>'+lab[it.status]+'</b></div><div style="font-size:.8rem">'+(cap||'(no caption)')+'</div>'+(err?'<div style="font-size:.75rem;color:#ff8a8a">'+err.replace(/</g,'&lt;')+'</div>':'')+(it.status==='queued'?'<button class="btn2" data-del="'+it.id+'">Cancel</button>':'')+'</div>';}).join('');
-    el.onclick=async function(e){var b=e.target.closest('button[data-del]');if(!b)return;b.disabled=true;await sb.from('video_queue').delete().eq('id',b.getAttribute('data-del')).eq('status','queued');showQueue();};
+      return '<div style="padding:.5rem 0;border-top:1px solid #272b33"><div style="color:#fff">'+fmtT(it.scheduled_at)+' · <b>'+lab[it.status]+'</b></div><div style="font-size:.8rem">'+(cap||'(no caption)')+'</div>'+(err?'<div style="font-size:.75rem;color:#ff8a8a">'+err.replace(/</g,'&lt;')+'</div>':'')+'<button class="btn2" data-pv="'+String(it.path||'').replace(/"/g,'')+'">▶ Preview</button>'+(it.status==='queued'?'<button class="btn2" data-del="'+it.id+'">Cancel</button>':'')+'</div>';}).join('');
+    el.onclick=async function(e){var pv=e.target.closest('button[data-pv]');
+      if(pv){var holder=pv.parentNode.querySelector('video');if(holder){holder.pause();holder.remove();pv.textContent='▶ Preview';return;}
+        var u=sb.storage.from('social-videos').getPublicUrl(pv.getAttribute('data-pv')).data.publicUrl;
+        var vv=document.createElement('video');vv.src=u;vv.controls=true;vv.playsInline=true;vv.setAttribute('playsinline','');vv.preload='metadata';vv.style.cssText='width:100%;max-height:60vh;border-radius:12px;margin-top:.4rem;background:#000';
+        pv.parentNode.insertBefore(vv,pv.nextSibling);pv.textContent='✕ Close preview';vv.play().catch(function(){});return;}
+      var b=e.target.closest('button[data-del]');if(!b)return;b.disabled=true;await sb.from('video_queue').delete().eq('id',b.getAttribute('data-del')).eq('status','queued');showQueue();};
   }
   function isWeak(){try{return (navigator.deviceMemory&&navigator.deviceMemory<=4)||(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=4);}catch(e){return false;}}
-  function fastMode(){try{var q=localStorage.getItem('vs_q');if(q==='fast')return true;if(q==='best')return false;}catch(e){}return isWeak();}
+  function fastMode(){try{var q=localStorage.getItem('vs_q');if(q==='fast')return true;if(q==='best')return false;}catch(e){}return isWeak()||isPhone();}
   function isStandalone(){try{return (window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;}catch(e){return false;}}
   function isPhone(){try{return matchMedia('(pointer:coarse)').matches||/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);}catch(e){return false;}}
   // Desktop: normal download. Phone / installed app: never navigate away (that closes the app), use the share sheet instead.

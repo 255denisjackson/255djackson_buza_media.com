@@ -25,11 +25,15 @@
     var up=rows.filter(function(x){return x.status==='queued'||x.status==='uploading';}),past=rows.filter(function(x){return x.status==='done'||x.status==='failed';}).reverse();
     function item(x){var l=LAB[x.status]||[x.status,''];return '<div class="ys-it"><span class="ys-st '+l[1]+'">'+l[0]+'</span> <span class="ys-n">'+when(x.posted_at||x.scheduled_at)+'</span><div style="margin:.3rem 0;font-weight:600;font-size:.88rem">'+esc(x.title)+'</div>'+
       (x.video_id?'<a href="https://youtube.com/shorts/'+esc(x.video_id)+'" target="_blank" rel="noopener">Open on YouTube</a>':'')+(x.error?'<div class="ys-n" style="color:#a4111f">'+esc(x.error)+'</div>':'')+
-      (x.status==='queued'||x.status==='failed'?' <button class="btn btn-secondary" data-yd="'+x.id+'" style="margin-top:.3rem">'+(x.status==='queued'?'Cancel':'Remove')+'</button>':'')+'</div>';}
+      (x.status==='queued'&&x.path?' <button class="btn btn-secondary" data-pv="'+esc(x.path)+'" style="margin-top:.3rem">▶ Preview</button>':'')+(x.status==='queued'||x.status==='failed'?' <button class="btn btn-secondary" data-yd="'+x.id+'" style="margin-top:.3rem">'+(x.status==='queued'?'Cancel':'Remove')+'</button>':'')+'</div>';}
     root.innerHTML='<div class="ys-n" style="margin-bottom:.4rem">Next 7 days (max 5 videos a day):</div><div class="ys-days">'+days+'</div>'+
       '<b style="font-size:.9rem">Coming up</b><div style="margin:.5rem 0 1rem">'+(up.length?up.map(item).join(''):'<div class="ys-n">Nothing scheduled. Make a video in Video Studio and press “Schedule for YouTube”.</div>')+'</div>'+
       '<b style="font-size:.9rem">Done and failed</b><div style="margin-top:.5rem">'+(past.length?past.slice(0,30).map(item).join(''):'<div class="ys-n">Nothing yet.</div>')+'</div>';
-    root.onclick=async function(e){var b=e.target.closest('button[data-yd]');if(!b)return;if(!confirm('Remove this video from the schedule?'))return;
+    root.onclick=async function(e){var pv=e.target.closest('button[data-pv]');
+      if(pv){var old=pv.parentNode.querySelector('video');if(old){old.pause();old.remove();pv.textContent='▶ Preview';return;}
+        var vv=document.createElement('video');vv.src=sb.storage.from('social-videos').getPublicUrl(pv.getAttribute('data-pv')).data.publicUrl;vv.controls=true;vv.playsInline=true;vv.setAttribute('playsinline','');vv.style.cssText='width:100%;max-height:60vh;border-radius:12px;margin-top:.4rem;background:#000';
+        pv.parentNode.appendChild(vv);pv.textContent='✕ Close preview';vv.play().catch(function(){});return;}
+      var b=e.target.closest('button[data-yd]');if(!b)return;if(!confirm('Remove this video from the schedule?'))return;
       var id=b.getAttribute('data-yd'),it=rows.filter(function(x){return String(x.id)===id;})[0];
       var d=await sb.from('yt_queue').delete().eq('id',id).in('status',['queued','failed']);
       if(d.error)toast('Could not remove.','error');else{if(it&&it.status==='queued')try{await sb.storage.from('social-videos').remove([it.path]);}catch(x){}load();}};
@@ -40,6 +44,6 @@
       p.innerHTML='<div class="admin-section"><div class="admin-section-title"><i class="ti ti-brand-youtube" aria-hidden="true"></i> YouTube schedule</div><div class="admin-section-sub">Videos you schedule from Video Studio upload to YouTube by themselves, 5 a day (12:00, 14:00, 16:00, 18:00, 20:00). When a day is full the next video goes to the next day. These 5 uploads also use the same daily YouTube allowance as the automatic news videos, so on a full day the automatic ones pause.</div><div id="ys-body"></div></div>';
       root=$('ys-body');}
     root.innerHTML='<div class="ys-n">Loading…</div>';load();
-    if(timer)clearInterval(timer);timer=setInterval(function(){var pn=$('panel-ytsched');if(pn&&!pn.classList.contains('hidden'))load();else{clearInterval(timer);timer=null;}},60000);
+    if(timer)clearInterval(timer);timer=setInterval(function(){var pn=$('panel-ytsched');if(pn&&!pn.classList.contains('hidden')){if(!pn.querySelector('video'))load();}else{clearInterval(timer);timer=null;}},60000);
   }};
 })();
