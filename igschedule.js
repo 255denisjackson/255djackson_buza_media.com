@@ -30,7 +30,7 @@
         var vv=document.createElement('video');vv.src=sb.storage.from('social-videos').getPublicUrl(pv.getAttribute('data-pv')).data.publicUrl;vv.controls=true;vv.playsInline=true;vv.setAttribute('playsinline','');vv.style.cssText='display:block;width:100%;max-height:60vh;border-radius:12px;margin-top:.4rem;background:#000';
         pv.parentNode.appendChild(vv);pv.textContent='✕ Close preview';vv.play().catch(function(){});return;}
       var rt=e.target.closest('button[data-rt]');
-      if(rt){rt.disabled=true;var q=await sb.from('video_queue').update({status:'queued',scheduled_at:new Date().toISOString(),results:null,container:null}).eq('id',rt.getAttribute('data-rt')).eq('status','failed');
+      if(rt){rt.disabled=true;var q=await sb.from('video_queue').update({status:'queued',scheduled_at:new Date().toISOString(),results:[],container:null}).eq('id',rt.getAttribute('data-rt')).eq('status','failed');
         if(q.error)toast('Could not retry.','error');else toast('Will try again within 5 minutes.','success');load();return;}
       var b=e.target.closest('button[data-yd]');if(!b)return;if(!confirm('Remove this video from the schedule?'))return;
       var id=b.getAttribute('data-yd'),it=rows.filter(function(x){return String(x.id)===id;})[0];
