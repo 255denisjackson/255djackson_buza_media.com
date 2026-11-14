@@ -152,6 +152,7 @@
   '@media (min-width:900px){#vs-ov .tb{justify-content:center}}'+
   '@media (prefers-reduced-motion:reduce){#vs-ov button{transition:none}}';
   function build(){
+    try{if(localStorage.getItem('vs_exporting')==='1'){localStorage.removeItem('vs_exporting');localStorage.setItem('vs_light','1');setTimeout(function(){toast('The phone stopped the last export (not enough memory). I will use a lighter size now.','error');},800);}}catch(e){}
     if(ov)return;
     var s=document.createElement('style');s.textContent=CSS+CSS2;document.head.appendChild(s);
     ov=document.createElement('div');ov.id='vs-ov';ov.style.display='none';
@@ -547,12 +548,13 @@
     p.style.display=on?'':'none';if(on){$('vs-bar').style.width=(pct||0)+'%';$('vs-ptxt').textContent=txt||'';}}
   async function make(retry){
     if(busy)return;
+    var light=!!retry||(function(){try{return localStorage.getItem('vs_light')==='1';}catch(e){return false;}})();
     if(!B.el){toast('Add your video first.','error');return;}
     if(!(window.VideoEncoder&&window.VideoFrame)){toast('This browser cannot create video. Please use Chrome, Edge or a recent Safari.','error');return;}
     setPlaying(false);
     var d=FMT[st.fmt],FPS=30,dur=B.end-B.start,n=Math.round(dur*FPS),i;
     var vbps=Math.max(250000,Math.min(6000000,Math.floor((44*1024*1024*8)/dur-(dur>600?100000:160000))));
-    var pc=await pickConfig(d[0],d[1],FPS,vbps,retry?1:0);
+    var pc=await pickConfig(d[0],d[1],FPS,vbps,light?1:0);try{localStorage.setItem('vs_exporting','1');}catch(e){}
     if(!pc){toast('This device cannot create video here. Please try Chrome on another phone or a computer.','error');return;}
     var vcfg=pc.cfg,RW=vcfg.width,RH=vcfg.height;
     if(pc.scaled)toast('Making the video in a smaller size ('+RW+'×'+RH+') so this device can handle it.','success');
@@ -651,7 +653,7 @@
       showProg(false);try{rv.pause();}catch(e){}pausePips();
       if(!retry&&!cancel){toast('Trying again in a safer way…','success');setTimeout(function(){busy=false;make(1);},300);}
       else toast('Could not create the video on this device. Try a shorter clip, another file, or Chrome.','error');
-    }finally{busy=false;draw();}
+    }finally{busy=false;try{localStorage.removeItem('vs_exporting');}catch(e){}draw();}
   }
 
   /* ---------- result: download + post to social media ---------- */
@@ -665,11 +667,10 @@
       '<label style="display:block;margin-top:.7rem;color:#9aa1ad;font-size:.8rem">Video from (optional, e.g. Wasafi Media)</label><input type="text" id="vs-credit" maxlength="80" placeholder="Wasafi Media">'+
       '<label style="display:block;color:#9aa1ad;font-size:.8rem">YouTube title (optional)</label><input type="text" id="vs-ytt" maxlength="90" placeholder="Uses the first line of the caption if empty">'+
       '<label style="display:block;color:#9aa1ad;font-size:.8rem">Caption</label><textarea id="vs-cap" rows="3" maxlength="1800" placeholder="Write the caption here"></textarea>'+
-      '<div><button class="btn2" id="vs-dl">⬇ Save to phone</button><button class="btn2 p" id="vs-post"><i class="ti ti-send"></i> <span>Post now</span></button><button class="btn2" id="vs-yt">▶ Schedule for YouTube</button><button class="btn2" id="vs-sch">🕒 Schedule (1 per hour)</button></div><div id="vs-st" style="color:#c5cad3;font-size:.85rem;margin-top:.4rem"></div></div>';
+      '<div><button class="btn2" id="vs-dl">⬇ Save to phone / gallery</button><button class="btn2 p" id="vs-post"><i class="ti ti-send"></i> <span>Post now</span></button><button class="btn2" id="vs-yt">▶ Schedule for YouTube</button><button class="btn2" id="vs-sch">🕒 Schedule (1 per hour)</button></div><div id="vs-st" style="color:#c5cad3;font-size:.85rem;margin-top:.4rem"></div></div>';
     ov.appendChild(r);
     $('vs-rb').onclick=function(){r.remove();};
-    $('vs-dl').onclick=function(){dlNow();toast('Saved to your phone (check Downloads).','success');};
-    if(navigator.canShare&&navigator.share){try{var ff=new File([blob],name,{type:'video/mp4'});if(navigator.canShare({files:[ff]})){var gb=document.createElement('button');gb.className='btn2';gb.textContent='Save to gallery';gb.onclick=function(){navigator.share({files:[ff]}).catch(function(){});};$('vs-dl').parentNode.insertBefore(gb,$('vs-dl').nextSibling);}}catch(e){}}
+    $('vs-dl').onclick=function(){saveToPhone(this);};
     $('vs-post').onclick=function(){post(this);};
     $('vs-sch').onclick=function(){schedule(this);};
     $('vs-yt').onclick=function(){scheduleYT(this);};
@@ -691,7 +692,7 @@
       if(up.error)throw new Error('upload');
       var rs=await sb.rpc('schedule_video',{p_path:pr.data.path,p_caption:cap});
       if(rs.error)throw new Error('schedule');
-      say('✅ Scheduled for '+fmtT(rs.data)+' (Tanzania time). It posts to Facebook & Instagram by itself. You can close this and make the next video.');
+      say('✅ Scheduled for '+fmtT(rs.data)+' (Tanzania time). It posts to Facebook & Instagram by itself.'+(isPhone()?' Tap “Save to phone” to keep a copy.':''));
       btn.textContent='Scheduled ✓';
     }catch(e){say('Could not schedule. Check your internet and try again.');btn.disabled=false;btn.textContent=old;delete btn.dataset.busy;}
   }
@@ -713,7 +714,7 @@
       if(up.error)throw new Error('upload');
       var rs=await sb.rpc('schedule_youtube',{p_path:pr.data.path,p_title:title,p_desc:desc});
       if(rs.error)throw new Error('schedule');
-      say('✅ YouTube: scheduled for '+fmtT(rs.data)+' (Tanzania time). Max 5 videos a day; when a day is full it moves to the next day. See the YouTube schedule in admin.');
+      say('✅ YouTube: scheduled for '+fmtT(rs.data)+' (Tanzania time). Max 5 a day; a full day moves to the next.'+(isPhone()?' Tap “Save to phone” to keep a copy.':''));
       btn.textContent='Scheduled ✓';
     }catch(e){say('Could not schedule for YouTube. Check your internet and try again.');btn.disabled=false;btn.textContent=old;delete btn.dataset.busy;}
   }
@@ -731,7 +732,24 @@
       return '<div style="padding:.5rem 0;border-top:1px solid #272b33"><div style="color:#fff">'+fmtT(it.scheduled_at)+' · <b>'+lab[it.status]+'</b></div><div style="font-size:.8rem">'+(cap||'(no caption)')+'</div>'+(err?'<div style="font-size:.75rem;color:#ff8a8a">'+err.replace(/</g,'&lt;')+'</div>':'')+(it.status==='queued'?'<button class="btn2" data-del="'+it.id+'">Cancel</button>':'')+'</div>';}).join('');
     el.onclick=async function(e){var b=e.target.closest('button[data-del]');if(!b)return;b.disabled=true;await sb.from('video_queue').delete().eq('id',b.getAttribute('data-del')).eq('status','queued');showQueue();};
   }
-  function dlNow(){if(!result)return;var a=document.createElement('a');a.href=result.url;a.download=result.name;document.body.appendChild(a);a.click();a.remove();}
+  function isStandalone(){try{return (window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;}catch(e){return false;}}
+  function isPhone(){try{return matchMedia('(pointer:coarse)').matches||/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);}catch(e){return false;}}
+  // Desktop: normal download. Phone / installed app: never navigate away (that closes the app), use the share sheet instead.
+  function anchorDl(){var a=document.createElement('a');a.href=result.url;a.download=result.name;a.rel='noopener';a.style.display='none';document.body.appendChild(a);a.click();setTimeout(function(){a.remove();},500);}
+  function dlNow(){if(!result||isPhone()||isStandalone())return;anchorDl();}
+  async function saveToPhone(btn){
+    if(!result)return;var stt=$('vs-st');
+    var file=null;try{file=new File([result.blob],result.name,{type:'video/mp4'});}catch(e){}
+    if(file&&navigator.canShare&&navigator.share){
+      try{if(navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'Buza Media video'});toast('Choose “Save video” / Gallery / Files in the list.','success');return;}}
+      catch(e){if(e&&e.name==='AbortError')return;}
+    }
+    if(!isStandalone()&&!isPhone()){anchorDl();toast('Saved to your Downloads.','success');return;}
+    // last resort on a phone: show the video so it can be pressed and held to save
+    var box=$('vs-hold');if(!box){box=document.createElement('div');box.id='vs-hold';box.style.cssText='margin-top:.6rem;color:#c5cad3;font-size:.82rem';btn.parentNode.parentNode.appendChild(box);}
+    box.innerHTML='Press and hold the video below, then choose <b>Download video</b>.<br><video src="'+result.url+'" controls playsinline style="width:100%;border-radius:12px;margin-top:.4rem"></video>';
+    if(stt)stt.textContent='';
+  }
   async function post(btn){
     var lab=btn.querySelector('span'),stt=$('vs-st'),say=function(t){stt.textContent=t;};
     if(btn.dataset.busy||!result)return;
