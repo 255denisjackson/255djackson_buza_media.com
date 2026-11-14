@@ -170,7 +170,7 @@
     ov.innerHTML=
      '<div class="top"><button class="ib" id="vs-x" aria-label="Close">'+sym('x',22)+'</button><div class="ttl">Video Studio</div><button class="pill" id="vs-q">Queue</button><button class="pill" id="vs-fmt">Banner</button><button class="exp" id="vs-exp">Export</button></div>'+
      '<div class="stage" id="vs-stage"><canvas id="vs-cv"></canvas><div class="empty" id="vs-empty"><div class="eic">'+sym('ti-video',34)+'</div><div style="color:#c5cad3;font-weight:600">Start with your video</div><div style="color:#7d8491;font-size:.8rem">Then add the Buza banner, logo, text and more</div><button id="vs-first">'+sym('plus',20)+' Add video</button></div></div>'+
-     '<div class="tp"><span id="vs-time">00:00.0 / 00:00.0</span><div class="mid"><button class="ib play" id="vs-play" aria-label="Play">'+sym('play',30)+'</button></div><span><button class="ib" id="vs-zo" aria-label="Zoom timeline out">'+sym('minus',20)+'</button><button class="ib" id="vs-zi" aria-label="Zoom timeline in">'+sym('plus',20)+'</button></span></div>'+
+     '<div class="tp"><span id="vs-time">00:00.0 / 00:00.0</span><div class="mid"><button class="ib play" id="vs-play" aria-label="Play">'+sym('play',30)+'</button></div><span><button class="pill" id="vs-spd" style="padding:.3rem .65rem;font-size:.72rem"></button><button class="ib" id="vs-zo" aria-label="Zoom timeline out">'+sym('minus',20)+'</button><button class="ib" id="vs-zi" aria-label="Zoom timeline in">'+sym('plus',20)+'</button></span></div>'+
      '<div class="tlw"><div class="tls" id="vs-tls"><div class="tli" id="vs-tli"></div></div><div class="ph"></div></div>'+
      '<div class="sheet" id="vs-sheet" style="display:none"></div>'+
      '<div class="tb" id="vs-tb"></div>'+
@@ -469,6 +469,8 @@
     $('vs-zo').onclick=function(){st.pps=clamp(st.pps/1.5,.5,300);renderTL();setScroll();};
     $('vs-exp').onclick=function(){make(0);};
     $('vs-q').onclick=showQueue;
+    function spdLab(){var b=$('vs-spd');if(b)b.textContent=fastMode()?'⚡ Fast':'★ Best';}
+    spdLab();$('vs-spd').onclick=function(){var nf=!fastMode();try{localStorage.setItem('vs_q',nf?'fast':'best');}catch(e){}spdLab();toolbar();toast(nf?'Fast: smaller video (720 wide), saves quicker on weak phones.':'Best: full size video, takes longer to save.','success');};
     $('vs-fv').onchange=function(e){loadBase(e.target.files[0]);e.target.value='';};
     $('vs-fi').onchange=function(e){var f=e.target.files[0];e.target.value='';if(!f)return;if(!/^image\//.test(f.type)){toast('Choose an image file.','error');return;}
       var im=new Image();im.onload=function(){addLayer({type:'img',el:im,w:40,y:.3,t1:Math.min(B.dur,T+4)});};im.onerror=function(){toast('That photo could not be opened.','error');};im.src=URL.createObjectURL(f);};
@@ -488,7 +490,7 @@
       else if(id==='tb-cfull'){B.start=0;B.end=B.dur;renderTL();toast('Whole video restored.');}
       else if(id==='tb-ban'){if(st.fmt!=='banner'){st.fmt='banner';setBanner(st.ban);$('vs-fmt').textContent=FLAB[st.fmt];}bsheet=!bsheet;hsheet=false;ssheet=false;toolbar();sheet();sizeCv();draw();}
       else if(id==='tb-head'){hsheet=!hsheet;bsheet=false;ssheet=false;toolbar();sheet();}
-      else if(id==='tb-q'){var nf=!fastMode();try{localStorage.setItem('vs_q',nf?'fast':'best');}catch(e){}toolbar();toast(nf?'Fast: smaller video (720 wide), saves quicker on weak phones.':'Best: full size video, takes longer to save.','success');}
+      else if(id==='tb-q'){var nf=!fastMode();try{localStorage.setItem('vs_q',nf?'fast':'best');}catch(e){}toolbar();var sb2=$('vs-spd');if(sb2)sb2.textContent=nf?'⚡ Fast':'★ Best';toast(nf?'Fast: smaller video (720 wide), saves quicker on weak phones.':'Best: full size video, takes longer to save.','success');}
       else if(id==='tb-split'){ssheet=!ssheet;hsheet=false;bsheet=false;toolbar();sheet();}
       else if(id==='tb-fit'){st.fit=st.fit==='fill'?'fit':'fill';toolbar();draw();}
       else if(id==='tb-snd'){st.snd=!st.snd;if(B.el&&playing)B.el.muted=!st.snd;toolbar();toast(st.snd?'The video\'s sound will be kept.':'The new video will have no sound.');}
