@@ -85,7 +85,7 @@
   var HFONT='Poppins,Inter,"Arial Black",Arial,sans-serif',HLH=1.12;
   var B={file:null,url:null,el:null,w:0,h:0,dur:0,start:0,end:0};
   var L=[],sel=null,idc=0,T=0,playing=false,raf=0,busy=false,cancel=false,result=null,drag=null,panel=false,lastSet=-9,LOGO={wh:null,col:null};
-  var cv,ctx,small=document.createElement('canvas'),thumb=null,hsheet=false,bsheet=false,ptrs={},gest=null,clipSel=false;
+  var cv,ctx,small=document.createElement('canvas'),thumb=null,hsheet=false,bsheet=false,ssheet=false,ptrs={},gest=null,clipSel=false;
   var ICO={"ti-video": "<rect x=\"3\" y=\"6\" width=\"13\" height=\"12\" rx=\"2.5\"/><path d=\"M16 10.5l5-3v9l-5-3z\"/>", "ti-star": "<path d=\"M12 3.5l2.6 5.5 6 .8-4.4 4.2 1.1 6-5.3-2.9-5.3 2.9 1.1-6L3.4 9.8l6-.8z\"/>", "ti-typography": "<path d=\"M5 7V5h14v2M12 5v14M9 19h6\"/>", "ti-photo": "<rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"3\"/><circle cx=\"9\" cy=\"10\" r=\"1.6\"/><path d=\"M21 16l-5-5-9 9\"/>", "ti-picture-in-picture": "<rect x=\"8\" y=\"8\" width=\"13\" height=\"13\" rx=\"3\"/><path d=\"M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2\"/>", "ti-aspect-ratio": "<path d=\"M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5\"/>", "ti-volume": "<path d=\"M4 9v6h4l5 4V5L8 9H4z\"/><path d=\"M16.5 9a4 4 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11\"/>", "ti-volume-off": "<path d=\"M4 9v6h4l5 4V5L8 9H4z\"/><path d=\"M17 9.5l4.5 5M21.5 9.5l-4.5 5\"/>", "ti-chevron-left": "<path d=\"M15 5l-7 7 7 7\"/>", "ti-adjustments": "<path d=\"M4 7h9M17 7h3M4 17h3M11 17h9\"/><circle cx=\"15\" cy=\"7\" r=\"2\"/><circle cx=\"9\" cy=\"17\" r=\"2\"/>", "ti-diamond": "<path d=\"M12 3l9 9-9 9-9-9z\"/>", "ti-diamond-filled": "<path d=\"M12 3l9 9-9 9-9-9z\" fill=\"currentColor\"/>", "ti-wand": "<path d=\"M5 19L16 8M14 6l4 4M7 4v3M5.5 5.5h3M19 14v3M17.5 15.5h3\"/>", "ti-palette": "<path d=\"M12 3a9 9 0 1 0 0 18c1.2 0 2-.8 2-1.8 0-.5-.2-.9-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4C21 6.5 17 3 12 3z\"/><circle cx=\"7.5\" cy=\"11\" r=\"1\"/><circle cx=\"10\" cy=\"7\" r=\"1\"/><circle cx=\"15\" cy=\"7\" r=\"1\"/>", "ti-arrow-bar-up": "<path d=\"M12 20V6M6 12l6-6 6 6\"/>", "ti-arrow-bar-down": "<path d=\"M12 4v14M6 12l6 6 6-6\"/>", "ti-trash": "<path d=\"M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3\"/>", "ti-frame": "<rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"3\"/><path d=\"M3 16h18\"/>", "ti-heading": "<path d=\"M6 4v16M18 4v16M6 12h12\"/>", "ti-cut": "<circle cx=\"6\" cy=\"6\" r=\"3\"/><circle cx=\"6\" cy=\"18\" r=\"3\"/><path d=\"M8.6 7.6L20 18M8.6 16.4L20 6\"/>", "ti-reset": "<path d=\"M4 12a8 8 0 1 0 3-6.2M4 4v5h5\"/>", "x": "<path d=\"M6 6l12 12M18 6L6 18\"/>", "minus": "<path d=\"M5 12h14\"/>", "plus": "<path d=\"M12 5v14M5 12h14\"/>", "play": "<path d=\"M8 5l11 7-11 7z\" fill=\"currentColor\"/>", "pause": "<rect x=\"6\" y=\"5\" width=\"4\" height=\"14\" rx=\"1\" fill=\"currentColor\"/><rect x=\"14\" y=\"5\" width=\"4\" height=\"14\" rx=\"1\" fill=\"currentColor\"/>"};
   function sym(n,sz){var d=ICO[n];if(!d)return '';sz=sz||24;return '<svg width="'+sz+'" height="'+sz+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+d+'</svg>';}
   function fmt(t){t=Math.max(0,t);var m=Math.floor(t/60),s=t-m*60;return (m<10?'0':'')+m+':'+(s<10?'0':'')+s.toFixed(1);}
@@ -414,7 +414,7 @@
         tbBtn('tb-fwd','ti-arrow-bar-up','Forward')+tbBtn('tb-bwd','ti-arrow-bar-down','Back layer')+tbBtn('tb-del','ti-trash','Delete');
     }else{
       h=tbBtn('tb-vid','ti-video','Video')+tbBtn('tb-logo','ti-star','Logo',false,!B.el)+tbBtn('tb-text','ti-typography','Text',false,!B.el)+tbBtn('tb-img','ti-photo','Photo',false,!B.el)+tbBtn('tb-pip','ti-picture-in-picture','Overlay',false,!B.el)+
-        (st.fmt==='banner'?tbBtn('tb-head','ti-heading','Headline',hsheet):'')+tbBtn('tb-ban','ti-frame',st.fmt==='banner'?'Banner: '+banOf(st.ban).name:'Banner off',st.fmt==='banner')+tbBtn('tb-fit','ti-aspect-ratio',st.fit==='fill'?'Fill':'Fit all',false,!B.el)+tbBtn('tb-snd',st.snd?'ti-volume':'ti-volume-off',st.snd?'Sound on':'Sound off',!st.snd);
+        (st.fmt==='banner'?tbBtn('tb-head','ti-heading','Headline',hsheet):'')+tbBtn('tb-ban','ti-frame',st.fmt==='banner'?'Banner: '+banOf(st.ban).name:'Banner off',st.fmt==='banner')+tbBtn('tb-split','ti-cut','Auto-split',ssheet,!B.el)+tbBtn('tb-fit','ti-aspect-ratio',st.fit==='fill'?'Fill':'Fit all',false,!B.el)+tbBtn('tb-snd',st.snd?'ti-volume':'ti-volume-off',st.snd?'Sound on':'Sound off',!st.snd);
     }
     tb.innerHTML=h;
   }
@@ -429,6 +429,7 @@
       sh.innerHTML='<div style="color:#c5cad3;font-size:.8rem;margin-bottom:.2rem">Drag the picture to choose what shows. Pinch or use Zoom.</div><div class="sl"><span>Zoom</span><input type="range" id="sh-z" min="100" max="400" value="'+Math.round((B.zoom||1)*100)+'"></div><button class="btn2" id="sh-zr" style="margin-top:.2rem">Reset crop</button>';
       sh.style.display='';$('sh-z').addEventListener('input',function(e){B.zoom=+e.target.value/100;draw();});$('sh-zr').onclick=function(){B.zoom=1;B.px=0;B.py=0;syncCropSheet();draw();};sizeCv();return;
     }
+    if(ssheet&&!l){splitSheet(sh);return;}
     if(bsheet&&!l){
       sh.innerHTML='<div class="sl" style="display:block"><span style="display:block;margin-bottom:.3rem">Choose the banner</span><select id="sh-bn" style="width:100%;padding:.6rem .7rem;border-radius:12px;background:#0b0d11;color:#eceff4;border:1px solid #303642;font-size:1rem">'+BANS.map(function(b){return '<option value="'+b.id+'"'+(st.fmt==='banner'&&st.ban===b.id?' selected':'')+'>'+b.name+'</option>';}).join('')+'<option value="off"'+(st.fmt!=='banner'?' selected':'')+'>No banner (full video)</option></select></div>';
       sh.style.display='';$('sh-bn').addEventListener('change',function(e){var v=e.target.value;bsheet=false;if(v==='off'){st.fmt='9:16';hsheet=false;}else{st.fmt='banner';setBanner(v);}$('vs-fmt').textContent=FLAB[st.fmt];toolbar();sheet();sizeCv();draw();if(st.fmt==='banner'&&B.el&&!L.some(function(x){return x.type==='logo';})){}});sizeCv();return;
@@ -485,11 +486,12 @@
       else if(id==='tb-cs'){if(T>B.end-0.5){toast('Move the playhead earlier than the end.','error');return;}B.start=Math.max(0,T);renderTL();toast('Video now starts here.');}
       else if(id==='tb-ce'){if(T<B.start+0.5){toast('Move the playhead later than the start.','error');return;}B.end=Math.min(B.dur,T);renderTL();seek(Math.max(B.start,B.end-0.05));toast('Video now ends here.');}
       else if(id==='tb-cfull'){B.start=0;B.end=B.dur;renderTL();toast('Whole video restored.');}
-      else if(id==='tb-ban'){if(st.fmt!=='banner'){st.fmt='banner';setBanner(st.ban);$('vs-fmt').textContent=FLAB[st.fmt];}bsheet=!bsheet;hsheet=false;toolbar();sheet();sizeCv();draw();}
-      else if(id==='tb-head'){hsheet=!hsheet;bsheet=false;toolbar();sheet();}
+      else if(id==='tb-ban'){if(st.fmt!=='banner'){st.fmt='banner';setBanner(st.ban);$('vs-fmt').textContent=FLAB[st.fmt];}bsheet=!bsheet;hsheet=false;ssheet=false;toolbar();sheet();sizeCv();draw();}
+      else if(id==='tb-head'){hsheet=!hsheet;bsheet=false;ssheet=false;toolbar();sheet();}
+      else if(id==='tb-split'){ssheet=!ssheet;hsheet=false;bsheet=false;toolbar();sheet();}
       else if(id==='tb-fit'){st.fit=st.fit==='fill'?'fit':'fill';toolbar();draw();}
       else if(id==='tb-snd'){st.snd=!st.snd;if(B.el&&playing)B.el.muted=!st.snd;toolbar();toast(st.snd?'The video\'s sound will be kept.':'The new video will have no sound.');}
-      else if(id==='tb-done'){hsheet=false;bsheet=false;sel=null;panel=false;renderTL();toolbar();sheet();draw();}
+      else if(id==='tb-done'){hsheet=false;bsheet=false;ssheet=false;sel=null;panel=false;renderTL();toolbar();sheet();draw();}
       else if(id==='tb-edit'){panel=!panel;toolbar();sheet();}
       else if(id==='tb-kf')toggleKf();
       else if(id==='tb-key'&&l){l.key=!l.key;panel=true;toolbar();sheet();draw();}
@@ -558,9 +560,10 @@
     return null;
   }
   function showProg(on,pct,txt){var p=$('vs-prog');if(!p){if(!on)return;p=document.createElement('div');p.id='vs-prog';p.className='scr';
-      p.innerHTML='<div class="card" style="padding-top:20vh;text-align:center"><div style="font-weight:800;font-size:1.1rem;margin-bottom:.8rem">Creating your video</div><div style="height:10px;border-radius:6px;background:#272b33;overflow:hidden"><div id="vs-bar" style="height:100%;width:0;background:#16d8e6"></div></div><div id="vs-ptxt" style="margin:.7rem 0;color:#9aa1ad"></div><button class="btn2" id="vs-stop">Stop</button></div>';
+      p.innerHTML='<div class="card" style="padding-top:20vh;text-align:center"><div id="vs-ptitle" style="font-weight:800;font-size:1.1rem;margin-bottom:.8rem">Creating your video</div><div style="height:10px;border-radius:6px;background:#272b33;overflow:hidden"><div id="vs-bar" style="height:100%;width:0;background:#16d8e6"></div></div><div id="vs-ptxt" style="margin:.7rem 0;color:#9aa1ad"></div><button class="btn2" id="vs-stop">Stop</button></div>';
       ov.appendChild(p);$('vs-stop').onclick=function(){cancel=true;};}
-    p.style.display=on?'':'none';if(on){$('vs-bar').style.width=(pct||0)+'%';$('vs-ptxt').textContent=txt||'';}}
+    p.style.display=on?'':'none';if(on){$('vs-ptitle').textContent=batchMode?batchMode.title:'Creating your video';$('vs-bar').style.width=(pct||0)+'%';$('vs-ptxt').textContent=txt||'';}}
+  var batchMode=null;
   async function make(retry){
     if(busy)return;
     var light=!!retry||(function(){try{return localStorage.getItem('vs_light')==='1';}catch(e){return false;}})();
@@ -663,10 +666,12 @@
         if(acodec==='opus'&&adesc&&adesc.length>=12&&adesc[0]===0x4F)atrack.pre=adesc[10]+adesc[11]*256;}
       var blob=mux(vtrack,atrack);showProg(false);
       if(blob.size>100*1024*1024){toast('The video came out too big. Make it shorter and try again.','error');return;}
+      if(batchMode){batchMode.blob=blob;return;}
       showResult(blob,poster,acodec);
     }catch(err){
       showProg(false);try{rv.pause();}catch(e){}pausePips();
-      if(!retry&&!cancel){toast('Trying again in a safer way…','success');setTimeout(function(){busy=false;make(1);},300);}
+      if(batchMode){batchMode.err=true;}
+      else if(!retry&&!cancel){toast('Trying again in a safer way…','success');setTimeout(function(){busy=false;make(1);},300);}
       else toast('Could not create the video on this device. Try a shorter clip, another file, or Chrome.','error');
     }finally{busy=false;try{localStorage.removeItem('vs_exporting');}catch(e){}draw();}
   }
@@ -681,6 +686,7 @@
       '<video controls playsinline src="'+result.url+'"></video><div style="color:#9aa1ad;font-size:.8rem">'+(blob.size/1048576).toFixed(1)+' MB · MP4'+(acodec==='opus'?' · sound in Opus format (Instagram may not play it; use Chrome on a phone for AAC)':'')+'</div>'+
       '<label style="display:block;margin-top:.7rem;color:#9aa1ad;font-size:.8rem">Video from (optional, e.g. Wasafi Media)</label><input type="text" id="vs-credit" maxlength="80" placeholder="Wasafi Media">'+
       '<label style="display:block;color:#9aa1ad;font-size:.8rem">YouTube title (optional)</label><input type="text" id="vs-ytt" maxlength="90" placeholder="Uses the first line of the caption if empty">'+
+      '<label style="display:block;color:#9aa1ad;font-size:.8rem">Time between scheduled videos</label><select id="vs-gap" style="width:100%;padding:.55rem;border-radius:10px;background:#0b0d11;color:#eceff4;border:1px solid #303642;margin-bottom:.4rem"><option value="1">1 hour</option><option value="2">2 hours</option><option value="3">3 hours</option></select>'+
       '<label style="display:block;color:#9aa1ad;font-size:.8rem">Caption</label><textarea id="vs-cap" rows="3" maxlength="1800" placeholder="Write the caption here"></textarea>'+
       '<div><button class="btn2" id="vs-dl">⬇ Save to phone / gallery</button><button class="btn2 p" id="vs-post"><i class="ti ti-send"></i> <span>Post now</span></button><button class="btn2" id="vs-yt">▶ Schedule for YouTube</button><button class="btn2" id="vs-sch">🕒 Schedule (1 per hour)</button></div><div id="vs-st" style="color:#c5cad3;font-size:.85rem;margin-top:.4rem"></div></div>';
     ov.appendChild(r);
@@ -705,11 +711,66 @@
       if(pr.error||!pr.data||pr.data.error)throw new Error('prepare');
       var up=await sb.storage.from('social-videos').uploadToSignedUrl(pr.data.path,pr.data.token,result.blob,{contentType:'video/mp4'});
       if(up.error)throw new Error('upload');
-      var rs=await sb.rpc('schedule_video',{p_path:pr.data.path,p_caption:cap});
+      var rs=await sb.rpc('schedule_video',{p_path:pr.data.path,p_caption:cap,p_gap:gapMin()});
       if(rs.error)throw new Error('schedule');
       say('✅ Scheduled for '+fmtT(rs.data)+' (Tanzania time). It posts to Facebook & Instagram by itself.'+(isPhone()?' Tap “Save to phone” to keep a copy.':''));
       btn.textContent='Scheduled ✓';
     }catch(e){say('Could not schedule. Check your internet and try again.');btn.disabled=false;btn.textContent=old;delete btn.dataset.busy;}
+  }
+  function gapMin(){var g=$('vs-gap');return Math.round((g?+g.value:1)*60)||60;}
+  function fmtDur(x){x=Math.round(x);return Math.floor(x/60)+':'+('0'+(x%60)).slice(-2);}
+  function splitPlan(len){var span=Math.max(0.1,B.end-B.start),n=Math.max(1,Math.ceil(span/len-0.001));return {n:n,per:span/n,span:span};}
+  function splitSheet(sh){
+    var len=+(sh.getAttribute('data-len')||180);
+    sh.innerHTML='<div style="color:#c5cad3;font-size:.8rem;margin-bottom:.3rem">Cut this video into equal parts and schedule every part automatically. Each part gets “PART 1/…” under your headline.</div>'+
+      '<div class="sl" style="display:flex;gap:.6rem"><label style="flex:1">Part length<select id="sp-len" style="width:100%;padding:.5rem;border-radius:10px;background:#0b0d11;color:#eceff4;border:1px solid #303642"><option value="60">1 minute</option><option value="120">2 minutes</option><option value="180">3 minutes</option></select></label>'+
+      '<label style="flex:1">Time between posts<select id="sp-gap" style="width:100%;padding:.5rem;border-radius:10px;background:#0b0d11;color:#eceff4;border:1px solid #303642"><option value="1">1 hour</option><option value="2">2 hours</option><option value="3">3 hours</option></select></label></div>'+
+      '<div id="sp-info" style="color:#16d8e6;font-size:.82rem;margin:.2rem 0"></div>'+
+      '<textarea id="sp-head" rows="2" maxlength="120" placeholder="Headline (the same on every part)"></textarea>'+
+      '<textarea id="sp-cap" rows="2" maxlength="900" placeholder="Caption (optional)" style="margin-top:.35rem"></textarea>'+
+      '<label style="display:flex;gap:.5rem;align-items:center;margin:.4rem 0;font-size:.82rem;color:#c5cad3"><input type="checkbox" id="sp-yt"> Also schedule every part on YouTube (max 5 a day)</label>'+
+      '<button class="btn2 p" id="sp-go" style="width:100%">Make parts &amp; schedule</button><div id="sp-st" style="color:#c5cad3;font-size:.8rem;margin-top:.35rem"></div>';
+    sh.style.display='';sizeCv();
+    $('sp-len').value=String(len);$('sp-head').value=st.head;
+    var info=function(){var pl=splitPlan(+$('sp-len').value);$('sp-info').textContent=fmtDur(pl.span)+' → '+pl.n+(pl.n===1?' part':' parts')+' of about '+fmtDur(pl.per)+' · about '+Math.ceil(pl.span/60)+' min to make, keep the screen on';sh.setAttribute('data-len',$('sp-len').value);};
+    info();$('sp-len').onchange=info;$('sp-head').oninput=function(e){st.head=e.target.value;draw();};
+    $('sp-go').onclick=function(){splitRun(this,{len:+$('sp-len').value,gap:(+$('sp-gap').value)*60,head:$('sp-head').value.trim(),cap:$('sp-cap').value.trim(),yt:$('sp-yt').checked});};
+  }
+  async function splitRun(btn,o){
+    var stt=$('sp-st'),say=function(t){if($('sp-st'))$('sp-st').textContent=t;};
+    if(busy||btn.dataset.busy)return;
+    if(typeof isLoggedIn!=='undefined'&&!isLoggedIn){toast('Log in as admin first.','error');return;}
+    if(!o.head&&st.fmt==='banner'){toast('Write the headline first.','error');return;}
+    var pl=splitPlan(o.len);
+    if(pl.n>40){toast('That makes too many parts. Choose longer parts.','error');return;}
+    if(!confirm(pl.n+' video'+(pl.n===1?'':'s')+' will be made and scheduled. Keep this screen on until it finishes. Start?'))return;
+    btn.dataset.busy='1';btn.disabled=true;
+    var s0=B.start,e0=B.end,h0=st.head,wl=null,done=0,failed=false;
+    try{if(navigator.wakeLock)wl=await navigator.wakeLock.request('screen');}catch(e){}
+    try{
+      for(var i=0;i<pl.n&&!failed;i++){
+        B.start=s0+i*pl.per;B.end=(i===pl.n-1)?e0:s0+(i+1)*pl.per;T=B.start;
+        var tag='PART '+(i+1)+'/'+pl.n;
+        st.head=o.head?o.head+'\n'+tag:tag;
+        batchMode={title:'Part '+(i+1)+' of '+pl.n,blob:null,err:false};cancel=false;
+        say('Making part '+(i+1)+' of '+pl.n+'…');
+        await make(0);
+        var blob=batchMode.blob;
+        if(!blob){failed=true;say(done+' of '+pl.n+' scheduled. '+(cancel?'Stopped.':'Part '+(i+1)+' could not be made.'));break;}
+        say('Uploading part '+(i+1)+' of '+pl.n+'…');
+        var pr=await sb.functions.invoke('social-post-video',{body:{action:'prepare'}});
+        if(pr.error||!pr.data||pr.data.error)throw new Error('prepare');
+        var up=await sb.storage.from('social-videos').uploadToSignedUrl(pr.data.path,pr.data.token,blob,{contentType:'video/mp4'});
+        if(up.error)throw new Error('upload');
+        var cap=(o.cap?o.cap+'\n\n':'')+(o.head?o.head+' · ':'')+tag.charAt(0)+tag.slice(1).toLowerCase();
+        var rs=await sb.rpc('schedule_video',{p_path:pr.data.path,p_caption:cap,p_gap:o.gap});
+        if(rs.error)throw new Error('schedule');
+        if(o.yt){var ys=await sb.rpc('schedule_youtube',{p_path:pr.data.path,p_title:(o.head?o.head+' ':'')+tag,p_desc:cap+(B.h>=B.w?'\n\n#Shorts':'')});void ys;}
+        done++;say(done+' of '+pl.n+' scheduled. Last one: '+fmtT(rs.data));
+      }
+      if(!failed){say('✅ All '+pl.n+' parts are scheduled. The last one posts at '+fmtT(rs.data)+'. You can close this now.');toast('All parts scheduled.','success');}
+    }catch(e){say(done+' of '+pl.n+' scheduled. Something failed. Check your internet and try again.');}
+    finally{batchMode=null;B.start=s0;B.end=e0;st.head=h0;try{if(wl)wl.release();}catch(e){}btn.disabled=false;delete btn.dataset.busy;renderTL();draw();}
   }
   async function scheduleYT(btn){
     var stt=$('vs-st'),say=function(t){stt.textContent=t;};
