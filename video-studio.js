@@ -838,8 +838,10 @@
     var lab={queued:'Waiting',posting:'Posting…',processing:'Instagram processing',done:'Posted ✓',failed:'Failed'};
     el.innerHTML=r.data.map(function(it){var cap=String(it.caption||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').slice(0,60);
       var err=(it.status==='failed'?(it.results||[]).filter(function(x){return x.status==='failed';}).map(function(x){return x.platform+': '+String(x.error||'').slice(0,80);}).join(' · '):'');
-      return '<div style="padding:.5rem 0;border-top:1px solid #272b33"><div style="color:#fff">'+fmtT(it.scheduled_at)+' · <b>'+lab[it.status]+'</b></div><div style="font-size:.8rem">'+(cap||'(no caption)')+'</div>'+(err?'<div style="font-size:.75rem;color:#ff8a8a">'+err.replace(/</g,'&lt;')+'</div>':'')+'<button class="btn2" data-pv="'+String(it.path||'').replace(/"/g,'')+'">▶ Preview</button>'+(it.status==='queued'?'<button class="btn2" data-del="'+it.id+'">Cancel</button>':'')+'</div>';}).join('');
-    el.onclick=async function(e){var pv=e.target.closest('button[data-pv]');
+      return '<div style="padding:.5rem 0;border-top:1px solid #272b33"><div style="color:#fff">'+fmtT(it.scheduled_at)+' · <b>'+lab[it.status]+'</b></div><div style="font-size:.8rem">'+(cap||'(no caption)')+'</div>'+(err?'<div style="font-size:.75rem;color:#ff8a8a">'+err.replace(/</g,'&lt;')+'</div>':'')+'<button class="btn2" data-pv="'+String(it.path||'').replace(/"/g,'')+'">▶ Preview</button>'+(it.status==='queued'&&window.IGSched?'<button class="btn2 p" data-pn="'+it.id+'">🚀 Post now</button>':'')+(it.status==='queued'?'<button class="btn2" data-del="'+it.id+'">Cancel</button>':'')+'</div>';}).join('');
+    el.onclick=async function(e){var pn=e.target.closest('button[data-pn]');
+      if(pn){var row=r.data.filter(function(x){return String(x.id)===pn.getAttribute('data-pn');})[0];pn.disabled=true;pn.textContent='Posting…';var rr=await window.IGSched.postNow(row);toast(rr.msg,rr.ok?'success':'error');showQueue();return;}
+      var pv=e.target.closest('button[data-pv]');
       if(pv){var holder=pv.parentNode.querySelector('video');if(holder){holder.pause();holder.remove();pv.textContent='▶ Preview';return;}
         var u=sb.storage.from('social-videos').getPublicUrl(pv.getAttribute('data-pv')).data.publicUrl;
         var vv=document.createElement('video');vv.src=u;vv.controls=true;vv.playsInline=true;vv.setAttribute('playsinline','');vv.preload='metadata';vv.style.cssText='width:100%;max-height:60vh;border-radius:12px;margin-top:.4rem;background:#000';
