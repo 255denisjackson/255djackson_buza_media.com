@@ -15,6 +15,29 @@
   '#panel-ytsched .ys-it{border:1px solid var(--border);border-radius:12px;padding:.7rem .9rem;margin-bottom:.6rem;background:var(--card)}'+
   '#panel-ytsched .ys-st{display:inline-block;border-radius:999px;padding:.12rem .55rem;font-size:.7rem;font-weight:700;background:#eef2ff;color:#3730a3}#panel-ytsched .ys-st.ok{background:#e3f8ea;color:#136c2e}#panel-ytsched .ys-st.bad{background:#fde8ea;color:#a4111f}#panel-ytsched .ys-st.wait{background:#fff4d6;color:#8a5a00}'+
   '#panel-ytsched .ys-n{font-size:.78rem;color:var(--muted);line-height:1.45}';
+
+  // Mix the waiting videos: keep every time slot exactly as it is, but alternate between different videos (parts of one video stay in order).
+  function mixOrder(items,keyOf){
+    var groups={},order=[];
+    items.forEach(function(x){var k=keyOf(x);if(!groups[k]){groups[k]=[];order.push(k);}groups[k].push(x);});
+    var out=[],keys=order.slice(),last=null;
+    while(keys.length){
+      var pool=keys.filter(function(k){return k!==last;});if(!pool.length)pool=keys;
+      var k=pool[Math.floor(Math.random()*pool.length)];
+      out.push(groups[k].shift());last=k;
+      if(!groups[k].length)keys.splice(keys.indexOf(k),1);
+    }
+    return out;
+  }
+  async function shuffleQueue(rows,btn){
+    var q=rows.filter(function(x){return x.status==='queued';}).sort(function(a,b){return new Date(a.scheduled_at)-new Date(b.scheduled_at);});
+    if(q.length<2){toast('Need at least 2 waiting videos to shuffle.','error');return;}
+    btn.disabled=true;btn.textContent='Shuffling…';
+    var slots=q.map(function(x){return x.scheduled_at;}),mixed=mixOrder(q,function(x){return String(x.title||'').replace(/\s*PART\s*\d+\/\d+\s*$/i,'').trim().slice(0,60)||x.id;});
+    var bad=0;
+    for(var i=0;i<mixed.length;i++){if(mixed[i].scheduled_at===slots[i])continue;var u=await sb.from('yt_queue').update({scheduled_at:slots[i]}).eq('id',mixed[i].id).eq('status','queued');if(u.error)bad++;}
+    toast(bad?'Some videos could not be moved.':'Shuffled. Times stay the same, the videos are mixed.',bad?'error':'success');load();
+  }
   async function load(){
     if(!root)return;
     var r=await sb.from('yt_queue').select('*').order('scheduled_at',{ascending:true}).limit(120);
@@ -27,8 +50,9 @@
       (x.video_id?'<a href="https://youtube.com/shorts/'+esc(x.video_id)+'" target="_blank" rel="noopener">Open on YouTube</a>':'')+(x.error?'<div class="ys-n" style="color:#a4111f">'+esc(x.error)+'</div>':'')+
       (x.status==='queued'&&x.path?' <button class="btn btn-secondary" data-pv="'+esc(x.path)+'" style="margin-top:.3rem">▶ Preview</button>':'')+(x.status==='queued'||x.status==='failed'?' <button class="btn btn-secondary" data-yd="'+x.id+'" style="margin-top:.3rem">'+(x.status==='queued'?'Cancel':'Remove')+'</button>':'')+'</div>';}
     root.innerHTML='<div class="ys-n" style="margin-bottom:.4rem">Next 7 days (max 5 videos a day):</div><div class="ys-days">'+days+'</div>'+
-      '<b style="font-size:.9rem">Coming up</b><div style="margin:.5rem 0 1rem">'+(up.length?up.map(item).join(''):'<div class="ys-n">Nothing scheduled. Make a video in Video Studio and press “Schedule for YouTube”.</div>')+'</div>'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem"><b style="font-size:.9rem">Coming up</b>'+(up.filter(function(x){return x.status==='queued';}).length>1?'<button class="btn btn-secondary" id="ys-shuf">🔀 Shuffle</button>':'')+'</div><div style="margin:.5rem 0 1rem">'+(up.length?up.map(item).join(''):'<div class="ys-n">Nothing scheduled. Make a video in Video Studio and press “Schedule for YouTube”.</div>')+'</div>'+
       '<b style="font-size:.9rem">Done and failed</b><div style="margin-top:.5rem">'+(past.length?past.slice(0,30).map(item).join(''):'<div class="ys-n">Nothing yet.</div>')+'</div>';
+    var sb2=$('ys-shuf');if(sb2)sb2.onclick=function(){shuffleQueue(rows,this);};
     root.onclick=async function(e){var pv=e.target.closest('button[data-pv]');
       if(pv){var old=pv.parentNode.querySelector('video');if(old){old.pause();old.remove();pv.textContent='▶ Preview';return;}
         var vv=document.createElement('video');vv.src=sb.storage.from('social-videos').getPublicUrl(pv.getAttribute('data-pv')).data.publicUrl;vv.controls=true;vv.playsInline=true;vv.setAttribute('playsinline','');vv.style.cssText='width:100%;max-height:60vh;border-radius:12px;margin-top:.4rem;background:#000';
