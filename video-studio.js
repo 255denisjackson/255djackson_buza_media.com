@@ -721,7 +721,7 @@
       '<label style="display:block;color:#9aa1ad;font-size:.8rem">YouTube title (optional)</label><input type="text" id="vs-ytt" maxlength="90" placeholder="Uses the first line of the caption if empty">'+
       '<label style="display:block;color:#9aa1ad;font-size:.8rem">Time between scheduled videos</label><select id="vs-gap" style="width:100%;padding:.55rem;border-radius:10px;background:#0b0d11;color:#eceff4;border:1px solid #303642;margin-bottom:.4rem"><option value="1">1 hour</option><option value="2">2 hours</option><option value="3">3 hours</option></select>'+
       '<label style="display:block;color:#9aa1ad;font-size:.8rem">Caption</label><textarea id="vs-cap" rows="3" maxlength="1800" placeholder="Write the caption here"></textarea>'+
-      '<div><button class="btn2" id="vs-dl">⬇ Save to phone / gallery</button><button class="btn2 p" id="vs-post"><i class="ti ti-send"></i> <span>Post now</span></button><button class="btn2" id="vs-yt">▶ Schedule for YouTube</button><button class="btn2" id="vs-sch">🕒 Schedule (1 per hour)</button></div><div id="vs-st" style="color:#c5cad3;font-size:.85rem;margin-top:.4rem"></div></div>';
+      '<div><button class="btn2" id="vs-dl">⬇ Save video</button><button class="btn2 p" id="vs-post"><i class="ti ti-send"></i> <span>Post now</span></button><button class="btn2" id="vs-yt">▶ Schedule for YouTube</button><button class="btn2" id="vs-sch">🕒 Schedule (1 per hour)</button></div><div id="vs-st" style="color:#c5cad3;font-size:.85rem;margin-top:.4rem"></div></div>';
     ov.appendChild(r);
     $('vs-rb').onclick=function(){r.remove();};
     $('vs-dl').onclick=function(){saveToPhone(this);};
@@ -865,18 +865,18 @@
   // Desktop: normal download. Phone / installed app: never navigate away (that closes the app), use the share sheet instead.
   function anchorDl(){var a=document.createElement('a');a.href=result.url;a.download=result.name;a.rel='noopener';a.style.display='none';document.body.appendChild(a);a.click();setTimeout(function(){a.remove();},500);}
   function dlNow(){if(!result||isPhone()||isStandalone())return;anchorDl();}
+  function isIOS(){try{return /iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);}catch(e){return false;}}
+  // One tap = the video saves. Computer and Android: normal download. iPhone: the system "Save Video" sheet (a download would close the app there).
   async function saveToPhone(btn){
-    if(!result)return;var stt=$('vs-st');
-    var file=null;try{file=new File([result.blob],result.name,{type:'video/mp4'});}catch(e){}
-    if(file&&navigator.canShare&&navigator.share){
-      try{if(navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'Buza Media video'});toast('Choose “Save video” / Gallery / Files in the list.','success');return;}}
-      catch(e){if(e&&e.name==='AbortError')return;}
+    if(!result)return;
+    if(isIOS()){
+      var file=null;try{file=new File([result.blob],result.name,{type:'video/mp4'});}catch(e){}
+      if(file&&navigator.canShare&&navigator.share){
+        try{if(navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'Buza Media video'});toast('Tap “Save Video” in the list.','success');return;}}
+        catch(e){if(e&&e.name==='AbortError')return;}
+      }
     }
-    if(!isStandalone()&&!isPhone()){anchorDl();toast('Saved to your Downloads.','success');return;}
-    // last resort on a phone: show the video so it can be pressed and held to save
-    var box=$('vs-hold');if(!box){box=document.createElement('div');box.id='vs-hold';box.style.cssText='margin-top:.6rem;color:#c5cad3;font-size:.82rem';btn.parentNode.parentNode.appendChild(box);}
-    box.innerHTML='Press and hold the video below, then choose <b>Download video</b>.<br><video src="'+result.url+'" controls playsinline style="width:100%;border-radius:12px;margin-top:.4rem"></video>';
-    if(stt)stt.textContent='';
+    anchorDl();toast('Saving… find it in Downloads / Gallery.','success');
   }
   async function post(btn){
     var lab=btn.querySelector('span'),stt=$('vs-st'),say=function(t){stt.textContent=t;};
