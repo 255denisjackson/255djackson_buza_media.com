@@ -811,6 +811,7 @@
   }
   function gapMin(){var g=$('vs-gap');return Math.round((g?+g.value:1)*60)||60;}
   function fmtDur(x){x=Math.round(x);return Math.floor(x/60)+':'+('0'+(x%60)).slice(-2);}
+  var spHeads=[];
   function splitPlan(len){var span=Math.max(0.1,B.end-B.start),n=Math.max(1,Math.ceil(span/len-0.001));return {n:n,per:span/n,span:span};}
   function splitSheet(sh){
     var len=+(sh.getAttribute('data-len')||180);
@@ -818,23 +819,35 @@
       '<div class="sl" style="display:flex;gap:.6rem"><label style="flex:1">Part length<select id="sp-len" style="width:100%;padding:.5rem;border-radius:10px;background:#0b0d11;color:#eceff4;border:1px solid #303642"><option value="60">1 minute</option><option value="120">2 minutes</option><option value="180">3 minutes</option></select></label>'+
       '<label style="flex:1">Time between posts<select id="sp-gap" style="width:100%;padding:.5rem;border-radius:10px;background:#0b0d11;color:#eceff4;border:1px solid #303642"><option value="1">1 hour</option><option value="2">2 hours</option><option value="3">3 hours</option></select></label></div>'+
       '<div id="sp-info" style="color:#16d8e6;font-size:.82rem;margin:.2rem 0"></div>'+
-      '<textarea id="sp-head" rows="2" maxlength="120" placeholder="Headline (the same on every part)"></textarea>'+
+      '<textarea id="sp-head" rows="2" maxlength="120" placeholder="Headline for every part"></textarea>'+
+      '<div style="margin:.35rem 0 .1rem;font-size:.8rem;color:#c5cad3">Want a different headline on some parts? Write it below. Empty = the headline above.</div><div id="sp-parts" style="max-height:30vh;overflow:auto;border:1px solid #303642;border-radius:12px;padding:.4rem"></div>'+
       '<textarea id="sp-cap" rows="2" maxlength="900" placeholder="Caption (optional)" style="margin-top:.35rem"></textarea>'+
       '<label style="display:flex;gap:.5rem;align-items:center;margin:.4rem 0;font-size:.82rem;color:#c5cad3"><input type="checkbox" id="sp-yt"> Also schedule every part on YouTube (max 5 a day)</label>'+
       '<button class="btn2 p" id="sp-go" style="width:100%">Make parts &amp; schedule</button><div id="sp-st" style="color:#c5cad3;font-size:.8rem;margin-top:.35rem"></div>';
     sh.style.display='';sizeCv();
     $('sp-len').value=String(len);$('sp-head').value=st.head;
     var info=function(){var pl=splitPlan(+$('sp-len').value);$('sp-info').textContent=fmtDur(pl.span)+' → '+pl.n+(pl.n===1?' part':' parts')+' of about '+fmtDur(pl.per)+' · about '+Math.ceil(pl.span/60)+' min to make, keep the screen on';sh.setAttribute('data-len',$('sp-len').value);};
-    info();$('sp-len').onchange=info;$('sp-head').oninput=function(e){st.head=e.target.value;draw();};
-    $('sp-go').onclick=function(){splitRun(this,{len:+$('sp-len').value,gap:(+$('sp-gap').value)*60,head:$('sp-head').value.trim(),cap:$('sp-cap').value.trim(),yt:$('sp-yt').checked});};
+    var parts=function(){
+      var pl=splitPlan(+$('sp-len').value),box=$('sp-parts');if(!box)return;box.innerHTML='';
+      for(var i=0;i<pl.n&&i<40;i++){(function(i){
+        var row=document.createElement('div');row.style.cssText='display:flex;gap:.4rem;align-items:center;margin:.25rem 0';
+        var lb=document.createElement('span');lb.textContent='PART '+(i+1)+'/'+pl.n;lb.style.cssText='font-size:.7rem;font-weight:700;color:#16d8e6;min-width:4.2rem';
+        var inp=document.createElement('input');inp.type='text';inp.maxLength=120;inp.placeholder='Same as above';inp.value=spHeads[i]||'';inp.style.cssText='flex:1;min-width:0;padding:.45rem .6rem;border-radius:10px;background:#0b0d11;color:#eceff4;border:1px solid #303642;font-size:.9rem';
+        var show=function(){var p2=splitPlan(+$('sp-len').value);T=clamp(B.start+i*p2.per+0.05,0,B.dur);seek(T);st.head=(inp.value.trim()||$('sp-head').value.trim());draw();};
+        inp.addEventListener('focus',show);inp.addEventListener('input',function(){spHeads[i]=inp.value;st.head=inp.value.trim()||$('sp-head').value.trim();draw();});
+        row.appendChild(lb);row.appendChild(inp);box.appendChild(row);})(i);}
+    };
+    info();parts();$('sp-len').onchange=function(){info();parts();};$('sp-head').oninput=function(e){st.head=e.target.value;draw();};
+    $('sp-go').onclick=function(){splitRun(this,{len:+$('sp-len').value,gap:(+$('sp-gap').value)*60,head:$('sp-head').value.trim(),heads:spHeads.map(function(x){return String(x||'').trim();}),cap:$('sp-cap').value.trim(),yt:$('sp-yt').checked});};
   }
   async function splitRun(btn,o){
     var stt=$('sp-st'),say=function(t){if($('sp-st'))$('sp-st').textContent=t;};
     if(busy||btn.dataset.busy)return;
     if(typeof isLoggedIn!=='undefined'&&!isLoggedIn){toast('Log in as admin first.','error');return;}
-    if(!o.head&&st.fmt==='banner'){toast('Write the headline first.','error');return;}
     var pl=splitPlan(o.len);
     if(pl.n>40){toast('That makes too many parts. Choose longer parts.','error');return;}
+    var hOf=function(i){return (o.heads&&o.heads[i])||o.head||'';};
+    if(st.fmt==='banner'){for(var hi=0;hi<pl.n;hi++)if(!hOf(hi)){toast('Part '+(hi+1)+' has no headline. Write the main headline, or one for that part.','error');return;}}
     if(!confirm(pl.n+' video'+(pl.n===1?'':'s')+' will be made and scheduled. Keep this screen on until it finishes. Start?'))return;
     btn.dataset.busy='1';btn.disabled=true;
     var s0=B.start,e0=B.end,h0=st.head,wl=null,done=0,failed=false,chain=Promise.resolve(),lastAt=null,makeFail=false;
@@ -843,14 +856,14 @@
       for(var i=0;i<pl.n&&!failed;i++){
         B.start=s0+i*pl.per;B.end=(i===pl.n-1)?e0:s0+(i+1)*pl.per;T=B.start;
         var tag='PART '+(i+1)+'/'+pl.n;
-        st.head=o.head?o.head+'\n'+tag:tag;
+        var hh=hOf(i);st.head=hh?hh+'\n'+tag:tag;
         batchMode={title:'Part '+(i+1)+' of '+pl.n,blob:null,err:false};cancel=false;
         say('Making part '+(i+1)+' of '+pl.n+'…');
         await make(0);
         var blob=batchMode.blob;
         if(!blob){failed=true;makeFail=true;break;}
         // upload + schedule this part in the background while the next part is being made (keeps the order of the slots)
-        (function(idx,bl,tg){
+        (function(idx,bl,tg,hd){
           var prev=chain;
           chain=prev.then(async function(){
             if(failed)return;
@@ -858,13 +871,13 @@
             if(pr.error||!pr.data||pr.data.error)throw new Error('prepare');
             var up=await sb.storage.from('social-videos').uploadToSignedUrl(pr.data.path,pr.data.token,bl,{contentType:'video/mp4'});
             if(up.error)throw new Error('upload');
-            var cap=(o.cap?o.cap+'\n\n':'')+(o.head?o.head+' · ':'')+tg.charAt(0)+tg.slice(1).toLowerCase();
+            var cap=(o.cap?o.cap+'\n\n':'')+(hd?hd+' · ':'')+tg.charAt(0)+tg.slice(1).toLowerCase();
             var rs=await sb.rpc('schedule_video',{p_path:pr.data.path,p_caption:cap,p_gap:o.gap});
             if(rs.error)throw new Error('schedule');
-            if(o.yt){var ys=await sb.rpc('schedule_youtube',{p_path:pr.data.path,p_title:(o.head?o.head+' ':'')+tg,p_desc:cap+(B.h>=B.w?'\n\n#Shorts':'')});void ys;}
+            if(o.yt){var ys=await sb.rpc('schedule_youtube',{p_path:pr.data.path,p_title:(hd?hd+' ':'')+tg,p_desc:cap+(B.h>=B.w?'\n\n#Shorts':'')});void ys;}
             done++;lastAt=rs.data;say('Made '+(idx+1)+' of '+pl.n+' · scheduled '+done+'. Last one: '+fmtT(rs.data));
           }).catch(function(){failed=true;});
-        })(i,blob,tag);
+        })(i,blob,tag,hOf(i));
         batchMode.blob=null;blob=null;
       }
       say('Finishing the uploads… keep this screen on');await chain;
