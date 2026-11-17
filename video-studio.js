@@ -344,6 +344,7 @@
   var stallAt=0,stallT=-1,stallWarned=false;
   function loop(){
     raf=0;if(!playing)return;
+    if(spPlayEnd&&B.el.currentTime>=spPlayEnd){setPlaying(false);return;}
     if(B.el.currentTime!==stallT){stallT=B.el.currentTime;stallAt=Date.now();}
     else if(Date.now()-stallAt>6000&&!stallWarned){stallWarned=true;toast('The video is not moving. This phone may be too busy or the format is not supported. Close other apps, or try an MP4 (H.264).','error');}
     var c=B.el.currentTime;if(c>=B.end-0.03||c<B.start-0.3){B.el.currentTime=B.start;c=B.start;}
@@ -353,6 +354,7 @@
   function hold(v){try{var h=document.getElementById('vs-hold');if(!h){h=document.createElement('div');h.id='vs-hold';h.style.cssText='position:fixed;left:0;top:0;width:2px;height:2px;overflow:hidden;opacity:.02;pointer-events:none;z-index:-1';(document.body||document.documentElement).appendChild(h);}if(v.parentNode!==h)h.appendChild(v);}catch(e){}return v;}
   function unhold(v){try{if(v&&v.parentNode)v.parentNode.removeChild(v);}catch(e){}}
   function setPlaying(on){
+    if(!on)spPlayEnd=0;
     if(on&&!B.el){toast('Add your video first.','error');return;}
     playing=on;var b=$('vs-play');if(b)b.innerHTML=sym(on?'pause':'play',30);b.setAttribute('aria-label',on?'Pause':'Play');
     if(!B.el)return;
@@ -811,7 +813,7 @@
   }
   function gapMin(){var g=$('vs-gap');return Math.round((g?+g.value:1)*60)||60;}
   function fmtDur(x){x=Math.round(x);return Math.floor(x/60)+':'+('0'+(x%60)).slice(-2);}
-  var spHeads=[];
+  var spHeads=[],spPlayEnd=0;
   function splitPlan(len){var span=Math.max(0.1,B.end-B.start),n=Math.max(1,Math.ceil(span/len-0.001));return {n:n,per:span/n,span:span};}
   function splitSheet(sh){
     var len=+(sh.getAttribute('data-len')||180);
@@ -820,7 +822,7 @@
       '<label style="flex:1">Time between posts<select id="sp-gap" style="width:100%;padding:.5rem;border-radius:10px;background:#0b0d11;color:#eceff4;border:1px solid #303642"><option value="1">1 hour</option><option value="2">2 hours</option><option value="3">3 hours</option></select></label></div>'+
       '<div id="sp-info" style="color:#16d8e6;font-size:.82rem;margin:.2rem 0"></div>'+
       '<textarea id="sp-head" rows="2" maxlength="120" placeholder="Headline for every part"></textarea>'+
-      '<div style="margin:.35rem 0 .1rem;font-size:.8rem;color:#c5cad3">Want a different headline on some parts? Write it below. Empty = the headline above.</div><div id="sp-parts" style="max-height:30vh;overflow:auto;border:1px solid #303642;border-radius:12px;padding:.4rem"></div>'+
+      '<div style="margin:.35rem 0 .1rem;font-size:.8rem;color:#c5cad3">Tap ▶ to listen to a part, then write its headline. Empty = the headline above.</div><div id="sp-parts" style="max-height:30vh;overflow:auto;border:1px solid #303642;border-radius:12px;padding:.4rem"></div>'+
       '<textarea id="sp-cap" rows="2" maxlength="900" placeholder="Caption (optional)" style="margin-top:.35rem"></textarea>'+
       '<label style="display:flex;gap:.5rem;align-items:center;margin:.4rem 0;font-size:.82rem;color:#c5cad3"><input type="checkbox" id="sp-yt"> Also schedule every part on YouTube (max 5 a day)</label>'+
       '<button class="btn2 p" id="sp-go" style="width:100%">Make parts &amp; schedule</button><div id="sp-st" style="color:#c5cad3;font-size:.8rem;margin-top:.35rem"></div>';
@@ -831,11 +833,13 @@
       var pl=splitPlan(+$('sp-len').value),box=$('sp-parts');if(!box)return;box.innerHTML='';
       for(var i=0;i<pl.n&&i<40;i++){(function(i){
         var row=document.createElement('div');row.style.cssText='display:flex;gap:.4rem;align-items:center;margin:.25rem 0';
-        var lb=document.createElement('span');lb.textContent='PART '+(i+1)+'/'+pl.n;lb.style.cssText='font-size:.7rem;font-weight:700;color:#16d8e6;min-width:4.2rem';
+        var lb=document.createElement('span');lb.innerHTML='PART '+(i+1)+'/'+pl.n+'<br><span style="font-weight:500;color:#8b93a1">'+fmtDur(B.start+i*pl.per)+'</span>';lb.style.cssText='font-size:.7rem;font-weight:700;color:#16d8e6;min-width:4rem;line-height:1.2';
+        var pb=document.createElement('button');pb.className='ib';pb.type='button';pb.setAttribute('aria-label','Listen to part '+(i+1));pb.innerHTML=sym('play',20);pb.style.cssText='flex:none;width:2.2rem;height:2.2rem';
         var inp=document.createElement('input');inp.type='text';inp.maxLength=120;inp.placeholder='Same as above';inp.value=spHeads[i]||'';inp.style.cssText='flex:1;min-width:0;padding:.45rem .6rem;border-radius:10px;background:#0b0d11;color:#eceff4;border:1px solid #303642;font-size:.9rem';
         var show=function(){var p2=splitPlan(+$('sp-len').value);T=clamp(B.start+i*p2.per+0.05,0,B.dur);seek(T);st.head=(inp.value.trim()||$('sp-head').value.trim());draw();};
         inp.addEventListener('focus',show);inp.addEventListener('input',function(){spHeads[i]=inp.value;st.head=inp.value.trim()||$('sp-head').value.trim();draw();});
-        row.appendChild(lb);row.appendChild(inp);box.appendChild(row);})(i);}
+        pb.onclick=function(){var p2=splitPlan(+$('sp-len').value),a=B.start+i*p2.per;if(playing&&spPlayEnd){setPlaying(false);return;}T=clamp(a+0.02,0,B.dur);seek(T);st.head=(inp.value.trim()||$('sp-head').value.trim());draw();spPlayEnd=Math.min(B.end,a+p2.per);setPlaying(true);};
+        row.appendChild(lb);row.appendChild(pb);row.appendChild(inp);box.appendChild(row);})(i);}
     };
     info();parts();$('sp-len').onchange=function(){info();parts();};$('sp-head').oninput=function(e){st.head=e.target.value;draw();};
     $('sp-go').onclick=function(){splitRun(this,{len:+$('sp-len').value,gap:(+$('sp-gap').value)*60,head:$('sp-head').value.trim(),heads:spHeads.map(function(x){return String(x||'').trim();}),cap:$('sp-cap').value.trim(),yt:$('sp-yt').checked});};
