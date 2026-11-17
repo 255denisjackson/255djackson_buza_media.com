@@ -640,7 +640,7 @@
     if(!pc){toast('This device cannot create video here. Please try Chrome on another phone or a computer.','error');return;}
     var vcfg=pc.cfg,RW=vcfg.width,RH=vcfg.height;
     if(pc.scaled)toast('Making the video in a smaller size ('+RW+'×'+RH+') so this device can handle it.','success');
-    clearResult();busy=true;cancel=false;var rv=hold(document.createElement('video'));
+    clearResult();busy=true;cancel=false;awakeOn();var rv=hold(document.createElement('video'));
     var pips=L.filter(function(l){return l.type==='pip'&&l.el;});
     try{
       var vs=[],vdesc=null,aenc=null,asamples=[],adesc=null,acodec='',sr=48000,ch=2,pre=312;
@@ -767,7 +767,7 @@
       if(batchMode){batchMode.err=true;}
       else if(!retry&&!cancel){toast('Trying again in a safer way…','success');setTimeout(function(){busy=false;make(1);},300);}
       else toast('Could not create the video on this device ('+String(err&&err.message||err).slice(0,60)+'). Try a shorter clip, another file, or Chrome.','error');
-    }finally{busy=false;try{rv.pause();rv.removeAttribute('src');rv.load();}catch(e){}unhold(rv);try{if(capCtx&&capCtx.state!=='closed'&&capCtx.close)capCtx.close().catch(function(){});}catch(e){}try{localStorage.removeItem('vs_exporting');}catch(e){}draw();}
+    }finally{busy=false;awakeOff();try{rv.pause();rv.removeAttribute('src');rv.load();}catch(e){}unhold(rv);try{if(capCtx&&capCtx.state!=='closed'&&capCtx.close)capCtx.close().catch(function(){});}catch(e){}try{localStorage.removeItem('vs_exporting');}catch(e){}draw();}
   }
 
   /* ---------- result: download + post to social media ---------- */
@@ -814,6 +814,13 @@
   function gapMin(){var g=$('vs-gap');return Math.round((g?+g.value:1)*60)||60;}
   function fmtDur(x){x=Math.round(x);return Math.floor(x/60)+':'+('0'+(x%60)).slice(-2);}
   var spHeads=[],spPlayEnd=0;
+  // keep the screen on while making/uploading videos (re-asked whenever the app comes back to the front)
+  var awake={n:0,lock:null,on:false};
+  async function awakeAsk(){try{if(awake.on&&navigator.wakeLock&&(!awake.lock||awake.lock.released)&&document.visibilityState==='visible'){awake.lock=await navigator.wakeLock.request('screen');}}catch(e){}}
+  function awakeOn(){awake.n++;awake.on=true;awakeAsk();}
+  function awakeOff(){awake.n=Math.max(0,awake.n-1);if(!awake.n){awake.on=false;try{if(awake.lock)awake.lock.release();}catch(e){}awake.lock=null;}}
+  document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')awakeAsk();});
+  window.addEventListener('beforeunload',function(e){if(awake.on){e.preventDefault();e.returnValue='';}});
   function splitPlan(len){var span=Math.max(0.1,B.end-B.start),n=Math.max(1,Math.ceil(span/len-0.001));return {n:n,per:span/n,span:span};}
   function splitSheet(sh){
     var len=+(sh.getAttribute('data-len')||180);
@@ -855,7 +862,7 @@
     if(!confirm(pl.n+' video'+(pl.n===1?'':'s')+' will be made and scheduled. Keep this screen on until it finishes. Start?'))return;
     btn.dataset.busy='1';btn.disabled=true;
     var s0=B.start,e0=B.end,h0=st.head,wl=null,done=0,failed=false,chain=Promise.resolve(),lastAt=null,makeFail=false;
-    try{if(navigator.wakeLock)wl=await navigator.wakeLock.request('screen');}catch(e){}
+    awakeOn();
     try{
       for(var i=0;i<pl.n&&!failed;i++){
         B.start=s0+i*pl.per;B.end=(i===pl.n-1)?e0:s0+(i+1)*pl.per;T=B.start;
@@ -889,7 +896,7 @@
       else if(makeFail){say(done+' of '+pl.n+' scheduled. '+(cancel?'Stopped.':'A part could not be made on this device.'));}
       else if(failed&&done<pl.n){say(done+' of '+pl.n+' scheduled. Something failed (internet?). Try again for the rest.');}
     }catch(e){say(done+' of '+pl.n+' scheduled. Something failed. Check your internet and try again.');}
-    finally{batchMode=null;B.start=s0;B.end=e0;st.head=h0;try{if(wl)wl.release();}catch(e){}btn.disabled=false;delete btn.dataset.busy;renderTL();draw();}
+    finally{batchMode=null;B.start=s0;B.end=e0;st.head=h0;awakeOff();btn.disabled=false;delete btn.dataset.busy;renderTL();draw();}
   }
   async function scheduleYT(btn){
     var stt=$('vs-st'),say=function(t){stt.textContent=t;};
