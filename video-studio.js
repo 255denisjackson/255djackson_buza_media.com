@@ -134,6 +134,7 @@
   '#vs-ov .ph{position:absolute;left:50%;top:0;bottom:0;width:2px;background:#fff;pointer-events:none;z-index:5;transform:translateX(-1px)}'+
   '#vs-ov .rul{position:relative;height:22px;color:#7d8491;font-size:.65rem}#vs-ov .rul i{position:absolute;top:0;width:1px;height:8px;background:#4a505b}#vs-ov .rul b{position:absolute;top:9px;font-weight:500;transform:translateX(-50%)}'+
   '#vs-ov .clip{position:relative;height:52px;border-radius:6px;overflow:hidden;background:#2a2e36}#vs-ov .clip canvas{position:absolute;inset:0;width:100%;height:100%}'+
+  '#vs-ov .cutx{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(45deg,rgba(225,29,72,.85) 0 6px,rgba(20,20,24,.85) 6px 12px);border-left:2px solid #fb7185;border-right:2px solid #fb7185;pointer-events:none;z-index:2}#vs-ov .cmk{position:absolute;top:0;bottom:0;width:3px;background:#facc15;pointer-events:none;z-index:3}'+
   '#vs-ov .dim{position:absolute;top:0;bottom:0;background:rgba(0,0,0,.62);pointer-events:none}'+
   '#vs-ov .clip.sel{outline:3px solid #16d8e6;outline-offset:-3px}#vs-ov .hd{position:absolute;top:0;bottom:0;width:30px;background:#fff;border-radius:6px;touch-action:none;display:flex;align-items:center;justify-content:center;color:#111;font-size:.7rem;z-index:3}'+
   '#vs-ov .row{position:relative;height:30px;margin-top:4px}'+
@@ -348,6 +349,7 @@
     if(B.el.currentTime!==stallT){stallT=B.el.currentTime;stallAt=Date.now();}
     else if(Date.now()-stallAt>6000&&!stallWarned){stallWarned=true;toast('The video is not moving. This phone may be too busy or the format is not supported. Close other apps, or try an MP4 (H.264).','error');}
     var c=B.el.currentTime;if(c>=B.end-0.03||c<B.start-0.3){B.el.currentTime=B.start;c=B.start;}
+    var cu0=cutAt(c);if(cu0){if(cu0.b>=B.end-0.03){B.el.currentTime=B.start;c=B.start;}else{B.el.currentTime=cu0.b;c=cu0.b;}}
     T=c;syncPips(T,true);draw();updTime();setScroll();raf=requestAnimationFrame(loop);
   }
   // phones decode video more reliably when the element is part of the page (kept invisible)
@@ -388,7 +390,7 @@
     html+='<div class="rul">'+ticks+'</div>';
     if(B.el){
       html+='<div class="clip'+(clipSel?' sel':'')+'" id="vs-clip" style="margin-left:'+pad+'px;width:'+w+'px"><canvas id="vs-th" width="2000" height="104"></canvas>'+
-        '<div class="dim" style="left:0;width:'+(B.start*pps)+'px"></div><div class="dim" style="left:'+(B.end*pps)+'px;right:0"></div>'+
+        cutsIn().map(function(c){return '<div class="cutx" style="left:'+(c.a*pps)+'px;width:'+((c.b-c.a)*pps)+'px"></div>';}).join('')+(cutMark!==null?'<div class="cmk" style="left:'+(cutMark*pps)+'px"></div>':'')+'<div class="dim" style="left:0;width:'+(B.start*pps)+'px"></div><div class="dim" style="left:'+(B.end*pps)+'px;right:0"></div>'+
         '<div class="hd" id="vs-hs" style="left:'+(B.start*pps-(B.start>0?0:0))+'px">‹</div><div class="hd" id="vs-he" style="left:'+(B.end*pps-30)+'px">›</div></div>';
     }else html+='<div class="clip" style="margin-left:'+pad+'px;width:'+Math.max(200,pad)+'px;display:flex;align-items:center;justify-content:center;color:#7d8491;font-size:.75rem">Your video</div>';
     for(var i=L.length-1;i>=0;i--){var l=L[i],left=pad+l.t0*pps,bw=Math.max(24,(l.t1-l.t0)*pps),kfs='';
@@ -449,14 +451,14 @@
   function toolbar(){
     var tb=$('vs-tb');if(!tb)return;var l=sel&&get(sel),h='';
     if(clipSel&&!l){
-      h=tbBtn('tb-cdone','ti-chevron-left','Back')+tbBtn('tb-cs','ti-cut','Start here')+tbBtn('tb-ce','ti-cut','End here')+tbBtn('tb-cfull','ti-reset','Full video')+tbBtn('tb-fit','ti-aspect-ratio',st.fit==='fill'?'Fill':'Fit all')+tbBtn('tb-snd',st.snd?'ti-volume':'ti-volume-off',st.snd?'Sound on':'Sound off',!st.snd);
+      h=tbBtn('tb-cdone','ti-chevron-left','Back')+tbBtn('tb-cc1','ti-scissors',cutMark===null?'Cut from here':'Cut starts '+fmt(cutMark),cutMark!==null)+tbBtn('tb-cc2','ti-scissors','Cut to here',false,cutMark===null)+tbBtn('tb-cundo','ti-arrow-back-up','Undo cut',false,!CUTS.length)+tbBtn('tb-cs','ti-cut','Start here')+tbBtn('tb-ce','ti-cut','End here')+tbBtn('tb-cfull','ti-reset','Full video')+tbBtn('tb-fit','ti-aspect-ratio',st.fit==='fill'?'Fill':'Fit all')+tbBtn('tb-snd',st.snd?'ti-volume':'ti-volume-off',st.snd?'Sound on':'Sound off',!st.snd);
     }else if(l){
       var hasK=!!kfAt(l,T);
       h=tbBtn('tb-done','ti-chevron-left','Back')+tbBtn('tb-edit','ti-adjustments','Edit',panel)+tbBtn('tb-kf','ti-diamond'+(hasK?'-filled':''),hasK?'Remove key':'Keyframe',hasK||l.kf.length>0)+
         ((l.type==='img'||l.type==='pip')?tbBtn('tb-key','ti-wand','Remove BG',l.key):'')+(l.type==='logo'?tbBtn('tb-lcol','ti-palette','Logo colour'):'')+
         tbBtn('tb-fwd','ti-arrow-bar-up','Forward')+tbBtn('tb-bwd','ti-arrow-bar-down','Back layer')+tbBtn('tb-del','ti-trash','Delete');
     }else{
-      h=tbBtn('tb-vid','ti-video','Video')+tbBtn('tb-logo','ti-star','Logo',false,!B.el)+tbBtn('tb-text','ti-typography','Text',false,!B.el)+tbBtn('tb-img','ti-photo','Photo',false,!B.el)+tbBtn('tb-pip','ti-picture-in-picture','Overlay',false,!B.el)+
+      h=tbBtn('tb-vid','ti-video','Video')+tbBtn('tb-cutm','ti-scissors','Cut out',CUTS.length>0,!B.el)+tbBtn('tb-logo','ti-star','Logo',false,!B.el)+tbBtn('tb-text','ti-typography','Text',false,!B.el)+tbBtn('tb-img','ti-photo','Photo',false,!B.el)+tbBtn('tb-pip','ti-picture-in-picture','Overlay',false,!B.el)+
         (st.fmt==='banner'?tbBtn('tb-head','ti-heading','Headline',hsheet):'')+tbBtn('tb-ban','ti-frame',st.fmt==='banner'?'Banner: '+banOf(st.ban).name:'Banner off',st.fmt==='banner')+tbBtn('tb-sp','ti-layout-columns','Split screen',spsheet||SP.on,!B.el)+tbBtn('tb-split','ti-cut','Auto-split',ssheet,!B.el)+tbBtn('tb-q','ti-adjustments',fastMode()?'Speed: Fast':'Speed: Best',fastMode())+tbBtn('tb-fit','ti-aspect-ratio',st.fit==='fill'?'Fill':'Fit all',false,!B.el)+tbBtn('tb-snd',st.snd?'ti-volume':'ti-volume-off',st.snd?'Sound on':'Sound off',!st.snd);
     }
     tb.innerHTML=h;
@@ -541,10 +543,14 @@
       else if(id==='tb-logo')addLayer({type:'logo',col:false,w:24,x:.8,y:.08,t0:0,t1:B.dur});
       else if(id==='tb-text')addLayer({type:'text',t:'YOUR TEXT',c:'#ffffff',bc:'#2065fe',bg:true,w:70,y:.82,t1:Math.min(B.dur,T+4)});
       else if(id==='tb-img')pickFile('vs-fi');else if(id==='tb-pip')pickFile('vs-fp');
+      else if(id==='tb-cutm'){clipSel=true;renderTL();toolbar();sheet();toast('Move the playhead to where the unwanted part STARTS, then tap “Cut from here”.','success');}
+      else if(id==='tb-cc1'){cutMark=T;renderTL();toolbar();toast('Now move to where the unwanted part ENDS and tap “Cut to here”.','success');}
+      else if(id==='tb-cc2'){var ca=Math.min(cutMark,T),cb2=Math.max(cutMark,T);if(cb2-ca<0.3){toast('That part is too short. Move the playhead further.','error');return;}CUTS.push({a:ca,b:cb2});cutMark=null;renderTL();toolbar();toast('Removed '+(cb2-ca).toFixed(1)+' s. The video now skips it.','success');}
+      else if(id==='tb-cundo'){CUTS.pop();cutMark=null;renderTL();toolbar();toast('Last cut undone.','success');}
       else if(id==='tb-cdone'){clipSel=false;renderTL();toolbar();sheet();}
       else if(id==='tb-cs'){if(T>B.end-0.5){toast('Move the playhead earlier than the end.','error');return;}B.start=Math.max(0,T);renderTL();toast('Video now starts here.');}
       else if(id==='tb-ce'){if(T<B.start+0.5){toast('Move the playhead later than the start.','error');return;}B.end=Math.min(B.dur,T);renderTL();seek(Math.max(B.start,B.end-0.05));toast('Video now ends here.');}
-      else if(id==='tb-cfull'){B.start=0;B.end=B.dur;renderTL();toast('Whole video restored.');}
+      else if(id==='tb-cfull'){CUTS=[];cutMark=null;B.start=0;B.end=B.dur;renderTL();toast('Whole video restored.');}
       else if(id==='tb-ban'){if(st.fmt!=='banner'){st.fmt='banner';setBanner(st.ban);$('vs-fmt').textContent=FLAB[st.fmt];}bsheet=!bsheet;hsheet=false;ssheet=false;spsheet=false;toolbar();sheet();sizeCv();draw();}
       else if(id==='tb-head'){hsheet=!hsheet;bsheet=false;ssheet=false;spsheet=false;toolbar();sheet();}
       else if(id==='tb-q'){var nf=!fastMode();try{localStorage.setItem('vs_q',nf?'fast':'best');}catch(e){}toolbar();var sb2=$('vs-spd');if(sb2)sb2.textContent=nf?'⚡ Fast':'★ Best';toast(nf?'Fast: smaller video (720 wide), saves quicker on weak phones.':'Best: full size video, takes longer to save.','success');}
@@ -634,7 +640,7 @@
     if(!B.el){toast('Add your video first.','error');return;}
     if(!(window.VideoEncoder&&window.VideoFrame)){toast('This browser cannot create video. Please use Chrome, Edge or a recent Safari.','error');return;}
     setPlaying(false);
-    var fast=fastMode(),d=FMT[st.fmt],FPS=fast?24:30,dur=B.end-B.start,n=Math.round(dur*FPS),i;
+    var fast=fastMode(),d=FMT[st.fmt],FPS=fast?24:30,dur=keptDur(),n=Math.round(dur*FPS),i;
     var vbps=Math.max(250000,Math.min(fast?2800000:5500000,Math.floor((44*1024*1024*8)/dur-(dur>600?100000:160000))));
     var pc=await pickConfig(d[0],d[1],FPS,vbps,light?1:0);try{localStorage.setItem('vs_exporting','1');}catch(e){}
     if(!pc){toast('This device cannot create video here. Please try Chrome on another phone or a computer.','error');return;}
@@ -668,14 +674,17 @@
               if(m&&m.decoderConfig&&m.decoderConfig.description){var ds=m.decoderConfig.description;adesc=new Uint8Array(ds.buffer?ds.buffer.slice(ds.byteOffset,ds.byteOffset+ds.byteLength):ds);}
               var dl=c.duration?Math.round(c.duration*sr/1e6):(acodec==='aac'?1024:960);asamples.push({data:dd,d:dl});},error:function(e){throw e;}});
             aenc.configure(acfg);
-            var s0=Math.floor(B.start*sr),s1=Math.min(buf.length,Math.floor(B.end*sr)),step=4800,chans=[];
+            var step=4800,chans=[],outS=0,segs=keptSegs();
             for(i=0;i<ch;i++)chans.push(buf.getChannelData(i));
-            for(var p=s0;p<s1;p+=step){
-              var m=Math.min(step,s1-p),pl=new Float32Array(m*ch);
-              for(i=0;i<ch;i++)pl.set(chans[i].subarray(p,p+m),i*m);
-              var ad=new AudioData({format:'f32-planar',sampleRate:sr,numberOfFrames:m,numberOfChannels:ch,timestamp:Math.round((p-s0)*1e6/sr),data:pl});
-              aenc.encode(ad);ad.close();
-              while(aenc.encodeQueueSize>20)await new Promise(function(r){setTimeout(r,5);});
+            for(var sg=0;sg<segs.length;sg++){
+              var s0=Math.floor(segs[sg].a*sr),s1=Math.min(buf.length,Math.floor(segs[sg].b*sr));
+              for(var p=s0;p<s1;p+=step){
+                var m=Math.min(step,s1-p),pl=new Float32Array(m*ch);
+                for(i=0;i<ch;i++)pl.set(chans[i].subarray(p,p+m),i*m);
+                var ad=new AudioData({format:'f32-planar',sampleRate:sr,numberOfFrames:m,numberOfChannels:ch,timestamp:Math.round(outS*1e6/sr),data:pl});
+                aenc.encode(ad);ad.close();outS+=m;
+                while(aenc.encodeQueueSize>20)await new Promise(function(r){setTimeout(r,5);});
+              }
             }
             await aenc.flush();hasSound=asamples.length>0&&!!adesc;
           }
@@ -706,8 +715,16 @@
           function finish(r){if(fin)return;fin=true;capOn=false;clearInterval(wd);try{rv.pause();}catch(e){}pausePips();resolve(r);}
           var wd=setInterval(function(){if(Date.now()-last>3000)finish(false);},500);
           function cb(now,meta){
-            last=Date.now();var t=meta.mediaTime;pipSync(t);scene(t);
-            var idx=Math.min(n-1,Math.max(0,Math.round((t-B.start)*FPS)));
+            last=Date.now();var t=meta.mediaTime;
+            var cutNow=cutAt(t);
+            if(cutNow){ // inside a removed part: do not save this frame, jump to the end of the cut
+              var scap=capOn;capOn=false;
+              if(cutNow.b>=B.end-0.03){finish(true);return;}
+              var onSeek=function(){rv.removeEventListener('seeked',onSeek);capOn=scap;};rv.addEventListener('seeked',onSeek);
+              try{rv.currentTime=cutNow.b;}catch(e){capOn=scap;}
+              rv.requestVideoFrameCallback(cb);return;}
+            pipSync(t);scene(t);
+            var idx=Math.min(n-1,Math.max(0,Math.round(outT(t)*FPS)));
             while(next<=idx){encodeCanvas(next);next++;}
             prog();
             if(cancel||next>=n||t>=B.end){finish(true);return;}
@@ -737,7 +754,7 @@
         while(venc.encodeQueueSize>0)await new Promise(function(r){setTimeout(r,10);});
       }
       for(;next<n&&!cancel&&!encErr;){
-        var t=B.start+next/FPS;
+        var t=srcT(next/FPS);
         await seekTo(rv,Math.min(t,Math.max(0,B.dur-0.001)));
         for(var q=0;q<pips.length;q++){var pv=pips[q].el;if(visible(pips[q],t))await seekTo(pv,Math.min(pipWant(pips[q],t),Math.max(0,(pv.duration||1)-0.001)));}
         scene(t);encodeCanvas(next);next++;
@@ -814,6 +831,15 @@
   function gapMin(){var g=$('vs-gap');return Math.round((g?+g.value:1)*60)||60;}
   function fmtDur(x){x=Math.round(x);return Math.floor(x/60)+':'+('0'+(x%60)).slice(-2);}
   var spHeads=[],spPlayEnd=0;
+  // removed middle parts (source seconds), shown red on the timeline and skipped in preview and in the saved video
+  var CUTS=[],cutMark=null;
+  function cutsIn(){var a=CUTS.map(function(c){return {a:Math.max(B.start,Math.min(c.a,c.b)),b:Math.min(B.end,Math.max(c.a,c.b))};}).filter(function(c){return c.b-c.a>0.05;}).sort(function(x,y){return x.a-y.a;}),o=[];
+    a.forEach(function(c){var l=o[o.length-1];if(l&&c.a<=l.b+0.01){l.b=Math.max(l.b,c.b);}else o.push({a:c.a,b:c.b});});return o;}
+  function cutAt(t){var cs=cutsIn();for(var i=0;i<cs.length;i++){if(t>=cs[i].a-0.001&&t<cs[i].b-0.001)return cs[i];}return null;}
+  function keptDur(){var d=B.end-B.start;cutsIn().forEach(function(c){d-=c.b-c.a;});return Math.max(0.1,d);}
+  function outT(t){var o=t-B.start;cutsIn().forEach(function(c){if(t>=c.b)o-=c.b-c.a;else if(t>c.a)o-=t-c.a;});return Math.max(0,o);}
+  function srcT(o){var t=B.start+o;cutsIn().forEach(function(c){if(t>=c.a-0.0001)t+=c.b-c.a;});return t;}
+  function keptSegs(){var cs=cutsIn(),segs=[],p=B.start;cs.forEach(function(c){if(c.a>p)segs.push({a:p,b:c.a});p=c.b;});if(B.end>p)segs.push({a:p,b:B.end});return segs;}
   // keep the screen on while making/uploading videos (re-asked whenever the app comes back to the front)
   var awake={n:0,lock:null,on:false};
   async function awakeAsk(){try{if(awake.on&&navigator.wakeLock&&(!awake.lock||awake.lock.released)&&document.visibilityState==='visible'){awake.lock=await navigator.wakeLock.request('screen');}}catch(e){}}
