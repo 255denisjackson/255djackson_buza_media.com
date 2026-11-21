@@ -3133,12 +3133,13 @@ function spGoalHeadline(m){
   const body=hs===as?`${m.home.name} NA ${m.away.name} ZIMETOSHANA ${hs}-${as}`:`${lead} ANAONGOZA ${d===1?'GOLI 1':'MAGOLI '+(SP_NUM[d]||d)} DHIDI YA ${other}`;
   return `${half} ${min} ${body}`.replace(/\s+/g,' ').trim();
 }
+const SP_LIVE_LG=['eng.1','esp.1','ger.1','uefa.champions','caf.champions','caf.confed','eng.league_cup','eng.fa','caf.nations_qual']; // night posting is allowed for these
 let SP_LIVEQ=Promise.resolve();
 function spLiveCheck(prev,next){
   if(!spIsAdmin()||!spLiveOn()||(SP.date||spTodayKey())!==spTodayKey())return;
   next.forEach(m=>{
     const o=prev.get(m.id);if(!o)return;
-    const eh=new Date(Date.now()+3*3600000).getUTCHours();if(eh<6||eh>=21)return; // no posting at night
+    if(!SP_LIVE_LG.includes(m.league))return; // only the big leagues and cups
     const tot=x=>(x.home.score||0)+(x.away.score||0);
     if(m.state==='in'&&tot(m)>tot(o))SP_LIVEQ=SP_LIVEQ.then(()=>spLivePost(m,'g:'+m.id+':'+(m.home.score||0)+'-'+(m.away.score||0),spGoalHeadline(m)));
     else if(o.state==='in'&&m.state==='post')SP_LIVEQ=SP_LIVEQ.then(()=>spLivePost(m,'ft:'+m.id,spHeadline(m)));
@@ -3149,13 +3150,16 @@ async function spLivePost(m,key,headline){
     const ins=await sb.from('live_goal_posts').insert({key});   // another device may have posted this one already
     if(ins.error)return;
     if(!window.VSStillVideo){showToast('Live post: Video Studio is not ready.','error');return;}
+    if(!key.startsWith('ft:'))await new Promise(z=>setTimeout(z,20000)); // let the scorer's name arrive
+    const fr=SP.matches.find(x=>x.id===m.id);
+    if(fr&&fr.home.score===m.home.score&&fr.away.score===m.away.score)m={...m,goals:fr.goals,detail:m.detail};
     const big=await spBanner(m,false,{headline,wm:true});
     const trk=['rise_of_legends','building_the_future','spark_of_inspiration','perfection','main_street'];
     const base=typeof siteBaseUrl==='function'?siteBaseUrl():'';
     const blob=await window.VSStillVideo(big,7,base+'audio/'+trk[Math.floor(Math.random()*trk.length)]+'.aac');
     if(!blob){showToast('Live post: this browser cannot make video.','error');return;}
     const ft=key.startsWith('ft:');
-    const cap=(ft?`MATOKEO: ${spTitle(m)} | ${m.leagueName}`:`GOOOLI! ${spTitle(m)} | ${m.leagueName}\n\n${headline}`)+`\n\nFuatilia matokeo ya moja kwa moja: ${base}\n\n#BuzaMediaSports #Matokeo #Soka #BuzaMedia`;
+    const cap=(ft?`MATOKEO: ${spTitle(m)} | ${m.leagueName}`:`GOOOLI! ${spTitle(m)} | ${m.leagueName}\n\n${headline}${(()=>{const g=(m.goals||[]).slice(-1)[0];return g&&g.player?`\nMfungaji: ${g.player} ${g.min||''}${g.og?' (OG)':g.pen?' (pen)':''}`:'';})()}`)+`\n\nFuatilia matokeo ya moja kwa moja: ${base}\n\n#BuzaMediaSports #Matokeo #Soka #BuzaMedia`;
     const pr=await sb.functions.invoke('social-post-video',{body:{action:'prepare'}});
     if(pr.error||!pr.data||pr.data.error)throw new Error('prepare');
     const up=await sb.storage.from('social-videos').uploadToSignedUrl(pr.data.path,pr.data.token,blob,{contentType:'video/mp4'});
