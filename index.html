@@ -3053,8 +3053,10 @@ async function spScheduleLeagues(btn){
   const day=SP.date||spTodayKey();
   if(day!==spTodayKey()){showToast('Open today\'s matches first.','error');return;}
   const lgs=[];SP.matches.forEach(m=>{if(!lgs.includes(m.league))lgs.push(m.league);});
+  const firstKo=lg=>Math.min(...SP.matches.filter(m=>m.league===lg).map(m=>new Date(m.date).getTime()));
+  lgs.sort((a,b)=>firstKo(a)-firstKo(b));
   if(!lgs.length){showToast('No matches today.','error');return;}
-  if(!confirm('Schedule '+lgs.length+' pictures (one per league), one every hour, today only until 21:00?'))return;
+  if(!confirm('Schedule '+lgs.length+' pictures (one per league), one every hour from the morning, each BEFORE its first match?'))return;
   spBusy(btn,true,'Scheduling…');
   let ok=0,skip=0,dup=0,fail=0,lines=[];
   try{
@@ -3066,13 +3068,13 @@ async function spScheduleLeagues(btn){
         const data=cv.toDataURL('image/jpeg',0.9);
         const list=arr.map(m=>`${m.home.name} vs ${m.away.name} - saa ${spTime(m.date)}`).join('\n');
         const cap=`MECHI ZA LEO LIGI YA ${name.toUpperCase()}\n\n${list}\n\nFuatilia matokeo ya moja kwa moja: ${typeof siteBaseUrl==='function'?siteBaseUrl():''}\n\n#BuzaMediaSports #MechiZaLeo #Soka #BuzaMedia`;
-        const r=await sb.functions.invoke('social-match-queue',{body:{action:'add',image_b64:data,caption:cap,league:name,day,gap:60}});
+        const r=await sb.functions.invoke('social-match-queue',{body:{action:'add',image_b64:data,caption:cap,league:name,day,gap:60,first_kickoff:new Date(firstKo(lg)).toISOString()}});
         const d=r.data||{};
-        if(r.error||d.error)fail++;else if(d.status==='queued'){ok++;lines.push(name+' '+spTime(d.scheduled_at));}else if(d.status==='duplicate')dup++;else skip++;
+        if(r.error||d.error)fail++;else if(d.status==='queued'){ok++;lines.push(name+' '+spTime(d.scheduled_at));}else if(d.status==='duplicate')dup++;else{skip++;if(d.reason)lines.push(name+': '+d.reason);}
       }catch(e){fail++;}
     }
   }finally{spBusy(btn,false);}
-  showToast((ok?ok+' scheduled ('+lines.join(', ')+'). ':'')+(dup?dup+' already scheduled. ':'')+(skip?skip+' too late today. ':'')+(fail?fail+' failed.':''),fail&&!ok?'error':'success');
+  showToast((ok?ok+' scheduled ('+lines.join(', ')+'). ':'')+(dup?dup+' already scheduled. ':'')+(skip?skip+' not scheduled (match too soon / started). ':'')+(fail?fail+' failed.':''),fail&&!ok?'error':'success');
 }
 async function spDownloadDay(btn){
   if(!spIsAdmin())return;
