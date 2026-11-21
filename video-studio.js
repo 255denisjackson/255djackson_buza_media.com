@@ -1028,6 +1028,46 @@
     }catch(e){say('Could not post the video right now. Please try again.');toast('Could not post the video right now.','error');}
     delete btn.dataset.busy;btn.disabled=false;if(lab)lab.textContent='Post to social media';
   }
+  /* a still picture + music -> short MP4 (used for the live goal posts). Returns a Blob or null. */
+  async function stillVideo(src,secs,audioUrl){
+    if(!(window.VideoEncoder&&window.VideoFrame))return null;
+    var FPS=10,k=Math.min(1,1080/src.width),RW=Math.round(src.width*k/16)*16,RH=Math.round(src.height*k/2)*2,n=Math.round(secs*FPS),i;
+    var pc=await pickConfig(RW,RH,FPS,1800000,0);if(!pc)return null;
+    var rc=document.createElement('canvas');rc.width=pc.cfg.width;rc.height=pc.cfg.height;var x=rc.getContext('2d');x.drawImage(src,0,0,rc.width,rc.height);
+    var vs=[],vdesc=null,err=null;
+    var venc=new VideoEncoder({output:function(c,m){var dd=new Uint8Array(c.byteLength);c.copyTo(dd);if(m&&m.decoderConfig&&m.decoderConfig.description)vdesc=new Uint8Array(m.decoderConfig.description.buffer?m.decoderConfig.description:m.decoderConfig.description);vs.push({data:dd,d:1000,key:c.type==='key'});},error:function(e){err=e;}});
+    venc.configure(pc.cfg);
+    for(i=0;i<n;i++){var f=new VideoFrame(rc,{timestamp:Math.round(i*1e6/FPS)});venc.encode(f,{keyFrame:i%10===0});f.close();while(venc.encodeQueueSize>8)await new Promise(function(r){setTimeout(r,5);});}
+    await venc.flush();venc.close();if(err||!vdesc||!vs.length)return null;
+    var asamples=[],adesc=null,hasSound=false,sr=48000,ch=2,acodec='aac';
+    try{
+      if(audioUrl&&window.AudioEncoder&&window.AudioData){
+        var raw=await (await fetch(audioUrl)).arrayBuffer(),oc=new (window.OfflineAudioContext||window.webkitOfflineAudioContext)(2,sr,sr);
+        var buf=await oc.decodeAudioData(raw);ch=Math.min(2,buf.numberOfChannels);
+        var acfg=null,cfs=[{codec:'mp4a.40.2',sampleRate:sr,numberOfChannels:ch,bitrate:128000},{codec:'opus',sampleRate:sr,numberOfChannels:ch,bitrate:96000}];
+        for(i=0;i<cfs.length&&!acfg;i++){try{if((await AudioEncoder.isConfigSupported(cfs[i])).supported)acfg=cfs[i];}catch(e){}}
+        acodec=acfg&&acfg.codec==='opus'?'opus':'aac';
+        if(acfg){
+          var aenc=new AudioEncoder({output:function(c,m){var dd=new Uint8Array(c.byteLength);c.copyTo(dd);if(m&&m.decoderConfig&&m.decoderConfig.description){var ds=m.decoderConfig.description;adesc=new Uint8Array(ds.buffer?ds.buffer.slice(ds.byteOffset,ds.byteOffset+ds.byteLength):ds);}asamples.push({data:dd,d:c.duration?Math.round(c.duration*sr/1e6):(acodec==='aac'?1024:960)});},error:function(){}});
+          aenc.configure(acfg);
+          var total=Math.min(buf.length,Math.round(secs*sr)),fade=Math.round(sr*0.6),step=4800,chans=[];
+          for(i=0;i<ch;i++)chans.push(buf.getChannelData(i));
+          for(var p=0;p<total;p+=step){
+            var m2=Math.min(step,total-p),pl=new Float32Array(m2*ch);
+            for(i=0;i<ch;i++){var seg=chans[i].subarray(p,p+m2),o=pl.subarray(i*m2,(i+1)*m2);for(var j=0;j<m2;j++){var g=(total-(p+j))<fade?(total-(p+j))/fade:1;o[j]=seg[j]*g;}}
+            var ad=new AudioData({format:'f32-planar',sampleRate:sr,numberOfFrames:m2,numberOfChannels:ch,timestamp:Math.round(p*1e6/sr),data:pl});
+            aenc.encode(ad);ad.close();
+            while(aenc.encodeQueueSize>20)await new Promise(function(r){setTimeout(r,5);});
+          }
+          await aenc.flush();hasSound=asamples.length>0&&!!adesc;
+        }
+      }
+    }catch(e){hasSound=false;}
+    var vtrack={kind:'v',samples:vs,w:pc.cfg.width,h:pc.cfg.height,desc:vdesc,ts:FPS*1000,dur:vs.length/FPS};
+    var atrack=null;if(hasSound){var tot=0;asamples.forEach(function(q){tot+=q.d;});atrack={kind:'a',samples:asamples,codec:acodec,desc:adesc,ch:ch,sr:sr,ts:sr,pre:312,dur:tot/sr};if(acodec==='opus'&&adesc&&adesc.length>=12&&adesc[0]===0x4F)atrack.pre=adesc[10]+adesc[11]*256;}
+    var blob=mux(vtrack,atrack);blob.hasSound=hasSound;return blob;
+  }
+  window.VSStillVideo=stillVideo;
   window.__vsOpen=open;
   window.__vs={st:st,B:function(){return B;},L:function(){return L;},make:make,addLayer:addLayer,result:function(){return result;},seek:seek,toggleKf:toggleKf,sel:function(i){sel=i;},setProp:setProp,T:function(){return T;},evalL:evalL};
   var ob=document.getElementById('vs-open');if(ob)ob.addEventListener('click',open);

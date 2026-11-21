@@ -2251,6 +2251,7 @@ function spApply(next){
   if(!next.some(x=>x.id===SP.heroId)){const f=spVisible()[0];SP.heroId=f?f.id:null;}
   if(oldSig!==spSig(spVisible()))spRenderAll();else spPatch();
   changed.forEach(c=>spBump(c.m,c.o));
+  try{spLiveCheck(prev,next);}catch(e){}
 }
 function spSet(el,txt){if(el&&el.textContent!==String(txt))el.textContent=txt;}
 function spPatch(){
@@ -2386,7 +2387,7 @@ function spRenderLive(){
   const el=document.getElementById('sp-live'),v=spVisible(),anyLive=v.some(m=>m.state==='in');
   const title=anyLive?'Live Matches':'Matches';
   if(!v.length){el.innerHTML=`<div class="sp-h"><span><i class="ti ti-broadcast" aria-hidden="true"></i>${title}</span></div><div class="sp-empty">No matches to show.</div>`;return;}
-  el.innerHTML=`<div class="sp-h"><span><i class="ti ti-broadcast" aria-hidden="true"></i>${title}</span><span class="sp-hr">${spIsAdmin()?'<button class="sp-act sp-dlt" onclick="spDownloadDay(this)"><i class="ti ti-download" aria-hidden="true"></i> <span>Download all matches</span></button><button class="sp-act sp-dlt" onclick="spScheduleLeagues(this)"><i class="ti ti-calendar-time" aria-hidden="true"></i> <span>Schedule today\'s leagues</span></button>':''}<span class="sp-pill">${v.length}</span></span></div><div class="sp-list">`+v.map(m=>{
+  el.innerHTML=`<div class="sp-h"><span><i class="ti ti-broadcast" aria-hidden="true"></i>${title}</span><span class="sp-hr">${spIsAdmin()?'<button class="sp-act sp-dlt" onclick="spDownloadDay(this)"><i class="ti ti-download" aria-hidden="true"></i> <span>Download all matches</span></button><button class="sp-act sp-dlt" id="sp-live-btn" onclick="spLiveToggle(this)"><i class="ti ti-broadcast" aria-hidden="true"></i> <span>Live goal posts: '+(spLiveOn()?'ON':'OFF')+'</span></button><button class="sp-act sp-dlt" onclick="spScheduleLeagues(this)"><i class="ti ti-calendar-time" aria-hidden="true"></i> <span>Schedule today\'s leagues</span></button>':''}<span class="sp-pill">${v.length}</span></span></div><div class="sp-list">`+v.map(m=>{
     const live=m.state==='in',pre=m.state==='pre',pct=Math.min(100,Math.round(spMinutes(m)/90*100));
     const tag=live?'<span class="sp-pill-live">LIVE</span>':spLate(m)?'<span class="sp-pill-live">STARTED</span>':pre?`<span class="sp-pill">${spTime(m.date)}</span>`:'<span class="sp-pill ft">FT</span>';
     const sc=pre?'vs':`<b data-s="h">${m.home.score==null?0:m.home.score}</b> - <b data-s="a">${m.away.score==null?0:m.away.score}</b>`;
@@ -2851,7 +2852,7 @@ function spHeadline(m){
   const h=m.home.name,a=m.away.name;
   return m.state==='pre'?`${h} vs ${a}`:`${h} ${m.home.score==null?0:m.home.score}-${m.away.score==null?0:m.away.score} ${a}`;
 }
-async function spBanner(m,sceneOnly){
+async function spBanner(m,sceneOnly,opts){
   await spFontReady();
   const FR=SP_FR,W=FR.W,H=FR.H,A=FR.area,cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');
   const HFONT='Poppins,Inter,"Arial Black",Arial,sans-serif',F=(w,px)=>`${w} ${px}px ${HFONT}`;
@@ -2905,8 +2906,9 @@ async function spBanner(m,sceneOnly){
   if(sceneOnly){const sc=document.createElement('canvas');sc.width=A.w;sc.height=A.h;sc.getContext('2d').drawImage(cv,A.x,A.y,A.w,A.h,0,0,A.w,A.h);return sc;}
   // ---- the Buza Media frame, white logo watermark, and the headline in the blue box ----
   if(frame)g.drawImage(frame,0,0,W,H);
-  if(logo){const lw=Math.round(W*0.12),lh=Math.round(lw*logo.naturalHeight/logo.naturalWidth),mg=Math.round(W*0.035);g.save();g.globalAlpha=.9;g.shadowColor='rgba(0,0,0,.35)';g.shadowBlur=14;g.shadowOffsetY=4;g.drawImage(logo,A.x+mg,FR.safeBottom-lh-mg,lw,lh);g.restore();}
-  const b=FR.box,txt=spHeadline(m).toUpperCase(),LH=1.12;
+  if(logo&&opts&&opts.wm){const lw=Math.round(A.w*0.5),lh=Math.round(lw*logo.naturalHeight/logo.naturalWidth);g.save();g.globalAlpha=.16;g.drawImage(logo,A.x+(A.w-lw)/2,A.y+(A.h-lh)/2,lw,lh);g.restore();}
+  else if(logo){const lw=Math.round(W*0.12),lh=Math.round(lw*logo.naturalHeight/logo.naturalWidth),mg=Math.round(W*0.035);g.save();g.globalAlpha=.9;g.shadowColor='rgba(0,0,0,.35)';g.shadowBlur=14;g.shadowOffsetY=4;g.drawImage(logo,A.x+mg,FR.safeBottom-lh-mg,lw,lh);g.restore();}
+  const b=FR.box,txt=((opts&&opts.headline)||spHeadline(m)).toUpperCase(),LH=1.12;
   const wrapH=(fs)=>{g.font=F(800,fs);const out=[];let line='';txt.split(/\s+/).forEach(w=>{const t=line?line+' '+w:w;if(!line||g.measureText(t).width<=b.w)line=t;else{out.push(line);line=w;}});if(line)out.push(line);return out;};
   const okH=(fs)=>{const L=wrapH(fs);if(L.length*fs*LH>b.h)return false;g.font=F(800,fs);return L.every(l=>g.measureText(l).width<=b.w+.5);};
   let lo=14,up=260,best=14;while(lo<=up){const mid=(lo+up)>>1;if(okH(mid)){best=mid;lo=mid+1;}else up=mid-1;}
@@ -3116,6 +3118,60 @@ async function spDownload(ev,id,btn){
     if(typeof showToast==='function')showToast('Banner saved!','success');
   }catch(e){if(typeof showToast==='function')showToast('Could not make the banner: '+(e.message||e),'error');}
   spBusy(btn,false);
+}
+
+/* ---- LIVE: every goal and every final result goes to Facebook + Instagram as a short video with music (admin, while this page is open) ---- */
+const SP_NUM={2:'MAWILI',3:'MATATU',4:'MANNE',5:'MATANO'};
+function spLiveOn(){try{return localStorage.getItem('sp_live_post')!=='0';}catch(e){return true;}}
+function spLiveToggle(btn){try{localStorage.setItem('sp_live_post',spLiveOn()?'0':'1');}catch(e){}spLiveBtn(btn);showToast(spLiveOn()?'Live goal posts: ON (keep this page open during matches).':'Live goal posts: OFF.','success');}
+function spLiveBtn(btn){const b=btn||document.getElementById('sp-live-btn');if(!b)return;const on=spLiveOn();b.classList.toggle('on',on);const l=b.querySelector('span');if(l)l.textContent='Live goal posts: '+(on?'ON':'OFF');}
+function spGoalHeadline(m){
+  const hs=m.home.score||0,as=m.away.score||0,raw=String(m.detail||m.clock||''),n=parseInt((raw.match(/\d+/)||['0'])[0],10)||0;
+  const half=n>90&&!/\+/.test(raw)?'ET':n<=45?'1HALF':'2HALF';
+  const min=raw.replace(/\s+/g,'')||'';
+  const d=Math.abs(hs-as),lead=hs>as?m.home.name:m.away.name,other=hs>as?m.away.name:m.home.name;
+  const body=hs===as?`${m.home.name} NA ${m.away.name} ZIMETOSHANA ${hs}-${as}`:`${lead} ANAONGOZA ${d===1?'GOLI 1':'MAGOLI '+(SP_NUM[d]||d)} DHIDI YA ${other}`;
+  return `${half} ${min} ${body}`.replace(/\s+/g,' ').trim();
+}
+let SP_LIVEQ=Promise.resolve();
+function spLiveCheck(prev,next){
+  if(!spIsAdmin()||!spLiveOn()||(SP.date||spTodayKey())!==spTodayKey())return;
+  next.forEach(m=>{
+    const o=prev.get(m.id);if(!o)return;
+    const eh=new Date(Date.now()+3*3600000).getUTCHours();if(eh<6||eh>=21)return; // no posting at night
+    const tot=x=>(x.home.score||0)+(x.away.score||0);
+    if(m.state==='in'&&tot(m)>tot(o))SP_LIVEQ=SP_LIVEQ.then(()=>spLivePost(m,'g:'+m.id+':'+(m.home.score||0)+'-'+(m.away.score||0),spGoalHeadline(m)));
+    else if(o.state==='in'&&m.state==='post')SP_LIVEQ=SP_LIVEQ.then(()=>spLivePost(m,'ft:'+m.id,spHeadline(m)));
+  });
+}
+async function spLivePost(m,key,headline){
+  try{
+    const ins=await sb.from('live_goal_posts').insert({key});   // another device may have posted this one already
+    if(ins.error)return;
+    if(!window.VSStillVideo){showToast('Live post: Video Studio is not ready.','error');return;}
+    const big=await spBanner(m,false,{headline,wm:true});
+    const trk=['rise_of_legends','building_the_future','spark_of_inspiration','perfection','main_street'];
+    const base=typeof siteBaseUrl==='function'?siteBaseUrl():'';
+    const blob=await window.VSStillVideo(big,7,base+'audio/'+trk[Math.floor(Math.random()*trk.length)]+'.aac');
+    if(!blob){showToast('Live post: this browser cannot make video.','error');return;}
+    const ft=key.startsWith('ft:');
+    const cap=(ft?`MATOKEO: ${spTitle(m)} | ${m.leagueName}`:`GOOOLI! ${spTitle(m)} | ${m.leagueName}\n\n${headline}`)+`\n\nFuatilia matokeo ya moja kwa moja: ${base}\n\n#BuzaMediaSports #Matokeo #Soka #BuzaMedia`;
+    const pr=await sb.functions.invoke('social-post-video',{body:{action:'prepare'}});
+    if(pr.error||!pr.data||pr.data.error)throw new Error('prepare');
+    const up=await sb.storage.from('social-videos').uploadToSignedUrl(pr.data.path,pr.data.token,blob,{contentType:'video/mp4'});
+    if(up.error)throw new Error('upload');
+    const sr=await sb.functions.invoke('social-post-video',{body:{action:'start',path:pr.data.path,caption:cap}});
+    if(sr.error||!sr.data||sr.data.error)throw new Error('start');
+    const ok=[],bad=[];
+    for(const r of (sr.data.results||[])){
+      if(r.status==='published')ok.push(r.platform);
+      else if(r.status==='processing'){
+        let done=false;
+        for(let k=0;k<100&&!done;k++){await new Promise(z=>setTimeout(z,6000));const f=await sb.functions.invoke('social-post-video',{body:{action:'finish',container:r.container,account:r.account}});const dd=f.data||{};if(dd.status==='published'){ok.push(r.platform);done=true;}else if(dd.status==='failed'){bad.push(r.platform);done=true;}}
+      }else bad.push(r.platform);
+    }
+    showToast((ft?'Result':'Goal')+' posted'+(ok.length?' to '+ok.join(' & '):'')+(bad.length?' (failed: '+bad.join(', ')+')':'')+'.',ok.length?'success':'error');
+  }catch(e){showToast('Live post failed. It was not posted.','error');}
 }
 async function spPost(ev,id,btn){
   if(ev)ev.stopPropagation();
