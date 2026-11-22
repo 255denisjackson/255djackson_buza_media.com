@@ -59,6 +59,7 @@ select,textarea{width:100%;padding:.7rem .8rem;border-radius:12px;border:1px sol
 .bn{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}.bn-pv{width:130px;aspect-ratio:1080/1528;border-radius:12px;background:repeating-conic-gradient(#1b2750 0 25%,#0b1020 0 50%) 0 0/16px 16px;border:1px solid #243058;overflow:hidden;display:flex;align-items:center;justify-content:center;text-align:center;padding:6px;flex:0 0 auto}.bn-pv img{width:100%;height:100%;display:block;object-fit:fill}.bn-in{flex:1;min-width:200px}
 .cn-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}.cn{background:#0b1020;border:1px solid #243058;border-radius:12px;padding:12px}.cn b{display:block;margin-bottom:4px;font-size:.9rem}.cn input{margin-top:8px;font-size:.82rem;padding:.6rem .7rem}.cn .row{margin-top:10px}.cn .row .btn{padding:.5rem .9rem}.cn.soon{opacity:.6}.cn-st.ok{color:#3ddc84}.badge{display:inline-block;border-radius:999px;padding:.1rem .55rem;font-size:.68rem;font-weight:700;background:#1b2750;color:#cfd8f5;margin-left:6px}.badge.ok{background:#10321f;color:#9be7b8}.badge.bad{background:#3a1420;color:#ffb4c0}.badge.wait{background:#3a2e10;color:#ffd98a}
 .modal{position:fixed;inset:0;background:rgba(5,8,18,.8);z-index:300000;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto}.modal-c{width:100%;max-width:420px;background:#121a33;border:1px solid #243058;border-radius:18px;padding:18px;max-height:92vh;overflow:auto}.toast{z-index:400000!important}
+.cn-err{color:#ffb4c0;font-size:.76rem;margin-top:8px;line-height:1.4;word-break:break-word}
 </style>
 </head>
 <body>
@@ -86,9 +87,10 @@ select,textarea{width:100%;padding:.7rem .8rem;border-radius:12px;border:1px sol
       <p class="empty" style="margin:0 0 10px">Paste the ID and access key of your own page. Your key is saved safely and is never shown again. Posts you schedule go out from your own accounts.</p>
       <div class="cn-grid">
         <div class="cn" data-p="facebook"><b><i class="ti ti-brand-facebook"></i> Facebook Page</b><div class="cn-st empty">Not connected</div>
-          <input class="cn-id" inputmode="numeric" placeholder="Page ID (numbers)"><input class="cn-key" type="password" autocomplete="off" placeholder="Page access key"><div class="row"><button type="button" class="btn cn-save">Save</button><button type="button" class="btn alt cn-del hidden">Disconnect</button></div></div>
+          <input class="cn-id" inputmode="numeric" placeholder="Page ID (numbers)"><input class="cn-key" type="password" autocomplete="off" placeholder="Page access key"><div class="row"><button type="button" class="btn cn-save">Save</button><button type="button" class="btn alt cn-del hidden">Disconnect</button></div><div class="cn-err"></div></div>
         <div class="cn" data-p="instagram"><b><i class="ti ti-brand-instagram"></i> Instagram</b><div class="cn-st empty">Not connected</div>
-          <input class="cn-id" inputmode="numeric" placeholder="Instagram account ID (numbers)"><input class="cn-key" type="password" autocomplete="off" placeholder="Instagram access key"><div class="row"><button type="button" class="btn cn-save">Save</button><button type="button" class="btn alt cn-del hidden">Disconnect</button></div></div>
+          <input class="cn-id" inputmode="numeric" placeholder="Instagram account ID (numbers)"><input class="cn-key" type="password" autocomplete="off" placeholder="Instagram access key"><div class="row"><button type="button" class="btn cn-save">Save</button><button type="button" class="btn alt cn-del hidden">Disconnect</button></div><div class="cn-err"></div>
+          <div style="border-top:1px solid #243058;margin-top:12px;padding-top:10px"><div class="empty">Always collaborate with (Instagram username)</div><input id="cn-collab" placeholder="@username" autocomplete="off" disabled><div class="row"><button type="button" class="btn alt" id="cn-collab-save" disabled>Save collaborator</button></div><div class="empty" id="cn-collab-st" style="margin-top:6px">Every auto-post will invite this account as a collaborator. Their account must be public.</div></div></div>
         <div class="cn soon"><b><i class="ti ti-brand-youtube"></i> YouTube</b><div class="empty">Coming soon. YouTube needs a Google login, not a simple key.</div></div>
         <div class="cn soon"><b><i class="ti ti-brand-tiktok"></i> TikTok</b><div class="empty">Coming soon. TikTok needs its own approval.</div></div>
       </div>
@@ -106,7 +108,7 @@ select,textarea{width:100%;padding:.7rem .8rem;border-radius:12px;border:1px sol
         <div class="panel" style="margin-bottom:12px"><h2 id="f-h">Schedule a post</h2>
           <label for="p-title">What is the post?</label><input id="p-title" maxlength="120" placeholder="e.g. Goal highlights video">
           <div class="two"><div><label for="p-date">Date</label><input id="p-date" type="date"></div><div><label for="p-time">Time</label><input id="p-time" type="time" value="12:00"></div></div>
-          <label for="p-plat">Where</label><select id="p-plat"><option value="any">Any</option><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="tiktok">TikTok</option><option value="youtube">YouTube</option><option value="whatsapp">WhatsApp</option></select>
+          <label for="p-plat">Where</label><select id="p-plat"><option value="any">Any</option><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="tiktok">TikTok</option><option value="youtube">YouTube</option><option value="whatsapp">WhatsApp (reminder + Share button)</option></select>
           <label for="p-note">Caption (used when posting)</label><textarea id="p-note" rows="2" maxlength="500"></textarea>
           <label for="p-file">Picture or video (needed for auto-post)</label><input id="p-file" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime">
           <label style="display:flex;gap:8px;align-items:center;color:#cfd8f5;margin-top:12px"><input id="p-auto" type="checkbox" style="width:auto"> Post automatically at this time</label>
@@ -122,7 +124,7 @@ select,textarea{width:100%;padding:.7rem .8rem;border-radius:12px;border:1px sol
 <div class="modal hidden" id="cal-m"><div class="modal-c"><h2 style="margin:0 0 6px;font-size:1.05rem">Add to calendar</h2><div class="empty" id="cal-file" style="margin-bottom:6px"></div>
   <label for="cm-title">Title</label><input id="cm-title" maxlength="120" placeholder="What is this post?">
   <div class="two"><div><label for="cm-date">Date</label><input id="cm-date" type="date"></div><div><label for="cm-time">Time</label><input id="cm-time" type="time" value="12:00"></div></div>
-  <label for="cm-plat">Where</label><select id="cm-plat"><option value="any">Any connected account</option><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="tiktok">TikTok (reminder only)</option><option value="youtube">YouTube (reminder only)</option><option value="whatsapp">WhatsApp (reminder only)</option></select>
+  <label for="cm-plat">Where</label><select id="cm-plat"><option value="any">Any connected account</option><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="tiktok">TikTok (reminder only)</option><option value="youtube">YouTube (reminder only)</option><option value="whatsapp">WhatsApp (reminder + Share button)</option></select>
   <label for="cm-note">Caption</label><textarea id="cm-note" rows="2" maxlength="500"></textarea>
   <label style="display:flex;gap:8px;align-items:center;color:#cfd8f5;margin-top:12px"><input id="cm-auto" type="checkbox" style="width:auto"> Post automatically at this time</label>
   <div class="empty" id="cm-hint" style="margin-top:4px"></div>
@@ -278,23 +280,32 @@ const BN=(()=>{
 
 const CN=(()=>{
   const conn={};
+  function paintCollab(){const c=conn.instagram;$('cn-collab').disabled=!c;$('cn-collab-save').disabled=!c;$('cn-collab').value=c&&c.collab_username?'@'+c.collab_username:'';if(!c)$('cn-collab-st').textContent='Connect your Instagram first, then add the collaborator.';}
   function paint(p){const el=document.querySelector('.cn[data-p="'+p+'"]');if(!el)return;const c=conn[p];
     el.querySelector('.cn-st').textContent=c?'Connected: '+(c.account_name||c.account_ref):'Not connected';el.querySelector('.cn-st').classList.toggle('ok',!!c);
-    el.querySelector('.cn-del').classList.toggle('hidden',!c);el.querySelector('.cn-key').placeholder=c?'Paste a new key to replace':(p==='facebook'?'Page access key':'Instagram access key');}
+    el.querySelector('.cn-del').classList.toggle('hidden',!c);paintCollab();el.querySelector('.cn-key').placeholder=c?'Paste a new key to replace':(p==='facebook'?'Page access key':'Instagram access key');}
   async function start(){
-    const r=await sb.from('creator_credentials').select('platform,account_ref,account_name');
-    (r.data||[]).forEach(x=>conn[x.platform]=x);['facebook','instagram'].forEach(paint);
+    const r=await sb.from('creator_credentials').select('platform,account_ref,account_name,collab_username');
+    (r.data||[]).forEach(x=>conn[x.platform]=x);['facebook','instagram'].forEach(paint);paintCollab();
+    $('cn-collab-save').onclick=async()=>{const b=$('cn-collab-save');b.disabled=true;
+      try{const r=await sb.functions.invoke('creator-connect',{body:{action:'collab',platform:'instagram',collab_username:$('cn-collab').value}});
+        let d=r.data;if(r.error&&r.error.context&&r.error.context.json){try{d=await r.error.context.json();}catch(e){}}
+        if(!d||d.error)throw new Error((d&&d.error)||'Could not save.');
+        if(conn.instagram)conn.instagram.collab_username=d.collab;$('cn-collab').value=d.collab?'@'+d.collab:'';
+        $('cn-collab-st').textContent=d.warn||(d.collab?'Saved. Auto-posts will collaborate with @'+d.collab+'.':'Collaborator removed.');showToast(d.collab?'Collaborator saved.':'Collaborator removed.');
+      }catch(e){$('cn-collab-st').textContent=String(e.message||e).slice(0,200);showToast('Could not save the collaborator.','error');}
+      b.disabled=false;};
     document.querySelectorAll('.cn[data-p]').forEach(el=>{
       const p=el.dataset.p;
       el.querySelector('.cn-save').onclick=async()=>{
         const id=el.querySelector('.cn-id').value.trim(),key=el.querySelector('.cn-key').value.trim();
         if(!id||!key){showToast('Fill in the ID and the access key.','error');return;}
-        const b=el.querySelector('.cn-save');b.disabled=true;
+        const b=el.querySelector('.cn-save');b.disabled=true;el.querySelector('.cn-err').textContent='';
         try{const r=await sb.functions.invoke('creator-connect',{body:{action:'save',platform:p,account_ref:id,access_token:key}});
           let d=r.data;if(r.error&&r.error.context&&r.error.context.json){try{d=await r.error.context.json();}catch(e){}}
           if(!d||d.error)throw new Error((d&&d.error)||'Could not save.');
           conn[p]={platform:p,account_ref:id,account_name:d.name};el.querySelector('.cn-key').value='';paint(p);showToast('Connected: '+d.name);DASH.refreshHint();
-        }catch(e){showToast(String(e.message||e).slice(0,140),'error');}
+        }catch(e){const m=String(e.message||e).slice(0,300);el.querySelector('.cn-err').textContent=m+(/ip|allowlist|whitelist/i.test(m)?' → In your Meta app: Settings → Advanced → clear the "Allowlisted IPs for server API calls" box, then try again.':/does not exist|missing permissions/i.test(m)?' → The ID and the key must be for the same Page.':'');showToast('Not connected. Read the red note.','error');}
         b.disabled=false;};
       el.querySelector('.cn-del').onclick=async()=>{if(!confirm('Disconnect this account?'))return;
         try{await sb.functions.invoke('creator-connect',{body:{action:'remove',platform:p}});}catch(e){}delete conn[p];paint(p);DASH.refreshHint();};
@@ -338,7 +349,7 @@ const DASH=(()=>{
     const up=sel?plans.filter(p=>p.plan_date===sel):plans.filter(p=>!p.done&&when(p)>=new Date()).sort((a,b)=>when(a)-when(b)).slice(0,12);
     $('l-h').textContent=sel?'Plans for '+fmtDay(sel):'Coming up';
     const rows=up.sort((a,b)=>when(a)-when(b));
-    $('list').innerHTML=(sel?'<div style="margin-bottom:8px"><button type="button" class="btn alt" style="margin:0;padding:.4rem .8rem;font-size:.78rem;width:auto" id="l-all">Show all coming up</button></div>':'')+(rows.length?rows.map(p=>'<div class="item'+(p.done?' done':'')+'"><div class="t1">'+esc(p.title)+badge(p)+'</div><div class="t2">'+fmtDay(p.plan_date)+' · '+(p.plan_time||'').slice(0,5)+' · '+PL[p.platform]+(p.note?'<br>'+esc(p.note):'')+'</div><div class="acts">'+(p.status==='failed'?'<button data-a="retry" data-id="'+p.id+'">Retry</button>':'')+'<button data-a="done" data-id="'+p.id+'">'+(p.done?'Undo':'✓ Done')+'</button><button data-a="edit" data-id="'+p.id+'">Edit</button><button data-a="del" data-id="'+p.id+'">Delete</button></div></div>').join(''):'<div class="empty">'+(sel?'Nothing planned on this day.':'Nothing planned yet. Pick a day and add your first post.')+'</div>');
+    $('list').innerHTML=(sel?'<div style="margin-bottom:8px"><button type="button" class="btn alt" style="margin:0;padding:.4rem .8rem;font-size:.78rem;width:auto" id="l-all">Show all coming up</button></div>':'')+(rows.length?rows.map(p=>'<div class="item'+(p.done?' done':'')+'"><div class="t1">'+esc(p.title)+badge(p)+'</div><div class="t2">'+fmtDay(p.plan_date)+' · '+(p.plan_time||'').slice(0,5)+' · '+PL[p.platform]+(p.note?'<br>'+esc(p.note):'')+'</div><div class="acts">'+(p.status==='failed'?'<button data-a="retry" data-id="'+p.id+'">Retry</button>':'')+''+(p.media_path?'<button data-a="wa" data-id="'+p.id+'">WhatsApp</button>':'')+'<button data-a="done" data-id="'+p.id+'">'+(p.done?'Undo':'✓ Done')+'</button><button data-a="edit" data-id="'+p.id+'">Edit</button><button data-a="del" data-id="'+p.id+'">Delete</button></div></div>').join(''):'<div class="empty">'+(sel?'Nothing planned on this day.':'Nothing planned yet. Pick a day and add your first post.')+'</div>');
   }
   function refresh(){stats();cal();list();}
   async function add(row){const r=await sb.from('creator_plans').insert(row).select().single();if(r.error)throw r.error;plans.push(r.data);sel=row.plan_date;view=new Date(row.plan_date+'T00:00:00');refresh();return r.data;}
@@ -375,6 +386,14 @@ const DASH=(()=>{
     const p=plans.find(x=>x.id===id);if(!p)return;
     if(a==='done'){const r=await sb.from('creator_plans').update({done:!p.done}).eq('id',id);if(r.error){showToast('Could not update.','error');return;}p.done=!p.done;}
     else if(a==='del'){if(!confirm('Delete this plan?'))return;const r=await sb.from('creator_plans').delete().eq('id',id);if(r.error){showToast('Could not delete.','error');return;}plans=plans.filter(x=>x.id!==id);}
+    else if(a==='wa'){
+      const url=sb.storage.from('creator-media').getPublicUrl(p.media_path).data.publicUrl,cap=(p.note||p.title||'').trim();
+      try{
+        const rs=await fetch(url);const bl=await rs.blob();const ext=p.media_type==='video'?'mp4':'jpg',f=new File([bl],'post.'+ext,{type:bl.type||(p.media_type==='video'?'video/mp4':'image/jpeg')});
+        if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],text:cap});return;}
+      }catch(e){if(e&&e.name==='AbortError')return;}
+      window.open('https://wa.me/?text='+encodeURIComponent((cap?cap+'\n':'')+url),'_blank','noopener');return;
+    }
     else if(a==='retry'){const r=await sb.from('creator_plans').update({status:'queued',plan_at:new Date().toISOString(),results:[]}).eq('id',id);if(r.error){showToast('Could not retry.','error');return;}p.status='queued';p.results=[];showToast('Trying again in a minute or two.');}
     else if(a==='edit'){edit=id;$('f-h').textContent='Edit post';$('p-title').value=p.title;$('p-date').value=p.plan_date;$('p-time').value=(p.plan_time||'12:00').slice(0,5);$('p-plat').value=p.platform;$('p-note').value=p.note||'';$('p-save').textContent='Save changes';$('p-cancel').classList.remove('hidden');$('p-title').scrollIntoView({behavior:'smooth',block:'center'});return;}
     refresh();

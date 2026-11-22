@@ -848,6 +848,11 @@
   }
 
   /* ---------- result: download + post to social media ---------- */
+  function showSaveFallback(r){
+    if(!r||r.querySelector('#vs-fb')||!result)return;var d=document.createElement('div');d.id='vs-fb';d.style.cssText='margin-top:.5rem;font-size:.82rem;color:#c5cad3;line-height:1.5';
+    d.innerHTML='Saving started. Check your <b>Downloads</b> or <b>Gallery</b>. If it did not appear, <a href="'+result.url+'" target="_blank" rel="noopener" style="color:#16d8e6;font-weight:700">tap here to open it</a>, then press and hold the '+(result.pic?'picture':'video')+' (or use the ⋮ menu) and choose Save / Download.';
+    var host=r.querySelector('.card');host.appendChild(d);
+  }
   function showPicResult(blob){
     clearResult();
     var name=(BR()?BR().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'picture':'buza-media')+'-'+new Date().toISOString().slice(0,10)+'.jpg';
@@ -858,7 +863,7 @@
       '<div style="margin-top:.6rem"><button class="btn2 p" id="vs-dl">⬇ Save picture</button>'+(window.BUZA_CAL_ADD?'<button class="btn2" id="vs-cal">📅 Add to calendar</button>':'')+'</div></div>';
     ov.appendChild(r);
     $('vs-rb').onclick=function(){r.remove();};
-    $('vs-dl').onclick=function(){anchorDl();toast('Saving… find it in Downloads / Gallery.','success');};
+    $('vs-dl').onclick=function(){anchorDl();toast('Saving… find it in Downloads / Gallery.','success');showSaveFallback(r);};
     if($('vs-cal'))$('vs-cal').onclick=function(){window.BUZA_CAL_ADD(result.blob,'image',result.name);};
   }
   function clearResult(){if(result&&result.url)URL.revokeObjectURL(result.url);result=null;var r=$('vs-res');if(r)r.remove();}
@@ -875,7 +880,7 @@
       '<div><button class="btn2" id="vs-dl">⬇ Save video</button><button class="btn2 p" id="vs-post"><i class="ti ti-send"></i> <span>Post now</span></button><button class="btn2" id="vs-yt">▶ Schedule for YouTube</button><button class="btn2" id="vs-sch">🕒 Schedule (1 per hour)</button>'+(window.BUZA_CAL_ADD?'<button class="btn2" id="vs-cal">📅 Add to calendar</button>':'')+'</div><div id="vs-st" style="color:#c5cad3;font-size:.85rem;margin-top:.4rem"></div></div>';
     ov.appendChild(r);
     $('vs-rb').onclick=function(){r.remove();};
-    $('vs-dl').onclick=function(){saveToPhone(this);};
+    $('vs-dl').onclick=function(){saveToPhone(this);showSaveFallback(r);};
     $('vs-post').onclick=function(){post(this);};
     $('vs-sch').onclick=function(){schedule(this);};
     if($('vs-cal'))$('vs-cal').onclick=function(){window.BUZA_CAL_ADD(result.blob,'video',result.name);};
