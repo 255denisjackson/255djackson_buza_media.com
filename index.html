@@ -645,7 +645,7 @@ nav{background:var(--primary);color:#fff;position:-webkit-sticky;position:sticky
       <div class="nav-brand-text">BUZA<span>MEDIA</span></div>
     </div>
     <div class="nav-controls" id="nav-controls">
-      <button class="nav-follow-btn" id="follow-btn" onclick="toggleFollow()"><i class="ti ti-bell-plus" aria-hidden="true"></i> Follow</button>
+      <a class="nav-follow-btn" href="creator.html" style="text-decoration:none"><i class="ti ti-user-plus" aria-hidden="true"></i> Create / Log in</a><button class="nav-follow-btn" id="follow-btn" onclick="toggleFollow()"><i class="ti ti-bell-plus" aria-hidden="true"></i> Follow</button>
     </div>
   </div>
   <div class="nav-cats">
@@ -3371,7 +3371,7 @@ function renderNavLoggedIn(){
 }
 function renderNavLoggedOut(){ // visitors only ever see the Follow button — admin is reached through the private link
   document.getElementById('nav-controls').innerHTML=`
-    <button class="nav-follow-btn" id="follow-btn" onclick="toggleFollow()"><i class="ti ti-bell-plus" aria-hidden="true"></i> Follow</button>`;
+    <a class="nav-follow-btn" href="creator.html" style="text-decoration:none"><i class="ti ti-user-plus" aria-hidden="true"></i> Create / Log in</a><button class="nav-follow-btn" id="follow-btn" onclick="toggleFollow()"><i class="ti ti-bell-plus" aria-hidden="true"></i> Follow</button>`;
   updateFollowBtn();
 }
 async function doLogout(){

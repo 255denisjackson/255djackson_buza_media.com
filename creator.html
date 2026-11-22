@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Creator Studio</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:#0b1020;color:#eef1f8;font:15px/1.45 Poppins,system-ui,Arial,sans-serif;display:flex;align-items:center;justify-content:center;padding:20px 16px}
+.card{width:100%;max-width:420px;background:#121a33;border:1px solid #243058;border-radius:20px;padding:26px 22px}
+h1{font-size:1.35rem;margin:0 0 4px;font-weight:800}
+.sub{color:#9aa8cf;font-size:.88rem;margin:0 0 18px}
+.tabs{display:flex;gap:6px;margin-bottom:16px;background:#0b1020;border-radius:12px;padding:4px}
+.tabs button{flex:1;border:0;background:none;color:#9aa8cf;font:inherit;font-weight:600;padding:.55rem;border-radius:9px;cursor:pointer}
+.tabs button.on{background:#2065fe;color:#fff}
+label{display:block;font-size:.8rem;color:#9aa8cf;margin:10px 0 4px}
+input{width:100%;padding:.75rem .85rem;border-radius:12px;border:1px solid #2c3a6b;background:#0b1020;color:#fff;font:inherit}
+input:focus{outline:2px solid #2065fe;border-color:#2065fe}
+.btn{width:100%;margin-top:16px;padding:.85rem;border:0;border-radius:12px;background:#2065fe;color:#fff;font:inherit;font-weight:700;cursor:pointer}
+.btn.alt{background:#1b2750;margin-top:10px}
+.btn:disabled{opacity:.6}
+.err{background:#3a1420;color:#ffb4c0;border-radius:10px;padding:.6rem .8rem;margin-top:12px;font-size:.85rem;display:none}
+.ok{background:#10321f;color:#9be7b8;border-radius:10px;padding:.6rem .8rem;margin-top:12px;font-size:.85rem;display:none}
+.hello{font-size:1.1rem;font-weight:800;margin:0 0 4px}
+.foot{margin-top:18px;text-align:center;color:#6f7fae;font-size:.75rem}
+.link{background:none;border:0;color:#7fb0ff;font:inherit;font-size:.82rem;cursor:pointer;padding:0;margin-top:12px;text-decoration:underline}
+.hidden{display:none!important}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:#1f2a52;color:#fff;padding:.7rem 1rem;border-radius:12px;opacity:0;pointer-events:none;transition:.25s;z-index:200000;max-width:90vw;font-size:.88rem}
+.toast.show{opacity:1;transform:translateX(-50%)}.toast.error{background:#5a1a28}
+.btn2,.btn-primary{}
+</style>
+</head>
+<body>
+<div class="card">
+  <div id="v-out">
+    <h1>Creator Studio</h1>
+    <p class="sub">Make videos and banners with your own name on them.</p>
+    <div class="tabs"><button id="t-up" class="on" type="button">Create account</button><button id="t-in" type="button">Log in</button></div>
+    <div id="f-name"><label for="a-name">Your name / media name</label><input id="a-name" maxlength="24" placeholder="e.g. John Media" autocomplete="nickname"></div>
+    <label for="a-email">Email</label><input id="a-email" type="email" autocomplete="username" placeholder="you@email.com">
+    <label for="a-pass">Password</label><input id="a-pass" type="password" autocomplete="current-password" placeholder="At least 6 characters">
+    <div class="err" id="a-err"></div><div class="ok" id="a-ok"></div>
+    <button class="btn" id="a-go" type="button">Create account</button>
+  </div>
+  <div id="v-in" class="hidden">
+    <p class="hello" id="h-name"></p>
+    <p class="sub">Your name is shown on every banner, watermark and video you make.</p>
+    <button type="button" class="btn" id="vs-open"><i class="ti ti-movie" aria-hidden="true"></i> Open Video Studio</button>
+    <button type="button" class="btn alt" id="b-rename">Change my name</button>
+    <button type="button" class="btn alt" id="b-out">Log out</button>
+  </div>
+  <div class="foot">Powered by Denis Jackson</div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const sb=window.supabase.createClient('https://liingyivheqmuosuxwvd.supabase.co','sb_publishable_jtLwjUFd9GeUInx7c9CkDg_B53KYB4-');
+let isLoggedIn=false,mode='up';
+const $=id=>document.getElementById(id);
+function showToast(m,t){const e=$('toast');e.textContent=m;e.className='toast '+(t||'success')+' show';setTimeout(()=>e.classList.remove('show'),3200);}
+function cleanName(s){return String(s||'').replace(/[<>"'&]/g,'').replace(/\s+/g,' ').trim().slice(0,24);}
+function setMode(m){mode=m;$('t-up').classList.toggle('on',m==='up');$('t-in').classList.toggle('on',m==='in');$('f-name').classList.toggle('hidden',m!=='up');$('a-go').textContent=m==='up'?'Create account':'Log in';$('a-pass').autocomplete=m==='up'?'new-password':'current-password';$('a-err').style.display=$('a-ok').style.display='none';}
+function say(id,t){const e=$(id);e.textContent=t;e.style.display='block';}
+function enter(user){
+  const b=cleanName(user.user_metadata&&user.user_metadata.brand)||cleanName((user.email||'').split('@')[0]);
+  window.BUZA_BRAND=b;isLoggedIn=true;
+  $('v-out').classList.add('hidden');$('v-in').classList.remove('hidden');$('h-name').textContent='Welcome, '+b;
+}
+async function go(){
+  const email=$('a-email').value.trim(),pass=$('a-pass').value,name=cleanName($('a-name').value);
+  $('a-err').style.display=$('a-ok').style.display='none';
+  if(!email||!pass){say('a-err','Enter your email and password.');return;}
+  if(mode==='up'&&name.length<2){say('a-err','Enter your name (at least 2 letters).');return;}
+  if(mode==='up'&&pass.length<6){say('a-err','Password must be at least 6 characters.');return;}
+  $('a-go').disabled=true;
+  try{
+    if(mode==='up'){
+      const r=await sb.auth.signUp({email,password:pass,options:{data:{brand:name}}});
+      if(r.error)throw r.error;
+      if(r.data&&r.data.session){enter(r.data.user);}
+      else say('a-ok','Account created. Check your email and press the confirm link, then come back here and log in.');
+    }else{
+      const r=await sb.auth.signInWithPassword({email,password:pass});
+      if(r.error)throw r.error;enter(r.data.user);
+    }
+  }catch(e){
+    const m=String(e&&e.message||e);
+    say('a-err',/already|registered/i.test(m)?'This email already has an account. Press Log in.':/invalid login/i.test(m)?'Wrong email or password.':/confirm/i.test(m)?'Please confirm your email first (check your inbox).':'Could not continue: '+m.slice(0,120));
+  }
+  $('a-go').disabled=false;
+}
+$('t-up').onclick=()=>setMode('up');$('t-in').onclick=()=>setMode('in');$('a-go').onclick=go;
+$('a-pass').addEventListener('keydown',e=>{if(e.key==='Enter')go();});
+$('b-out').onclick=async()=>{try{await sb.auth.signOut();}catch(e){}location.reload();};
+$('b-rename').onclick=async()=>{
+  const n=cleanName(prompt('New name:',window.BUZA_BRAND)||'');if(n.length<2)return;
+  const r=await sb.auth.updateUser({data:{brand:n}});
+  if(r.error){showToast('Could not change the name.','error');return;}
+  window.BUZA_BRAND=n;$('h-name').textContent='Welcome, '+n;showToast('Name changed.');
+};
+(async()=>{try{const {data}=await sb.auth.getSession();if(data&&data.session)enter(data.session.user);}catch(e){}})();
+</script>
+<script src="video-studio.js" defer></script>
+</body>
+</html>
