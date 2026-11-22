@@ -1518,7 +1518,7 @@ const DB_PROFILES={
   primary:{label:'Primary (original)',url:'https://gxfwjicztemfpxfjbdqq.supabase.co',key:'sb_publishable_zz-T8b1gItOWTM2R43t-jQ_--qts2s8'},
   backup:{label:'Backup (new)',url:'https://liingyivheqmuosuxwvd.supabase.co',key:'sb_publishable_jtLwjUFd9GeUInx7c9CkDg_B53KYB4-'}
 };
-const DB_DEFAULT='backup';
+const DB_DEFAULT='primary';
 const dbOther=n=>n==='primary'?'backup':'primary';
 function dbStored(store,k){try{return store.getItem(k);}catch(e){return null;}}
 function dbChosen(){
