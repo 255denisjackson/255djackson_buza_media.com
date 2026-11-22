@@ -239,7 +239,7 @@ const BN=(()=>{
   async function start(user){
     const uidv=user&&user.id;
     $('bn-file').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;if(!/^image\//.test(f.type)){showToast('Choose an image.','error');return;}
-      try{await upload(f,uidv);}catch(err){$('bn-st').textContent='Could not use this banner. Try another image.';showToast('Banner failed.','error');}};
+      try{await upload(f,uidv);}catch(err){const m=String(err&&(err.message||err.error_description)||err||'').slice(0,140);$('bn-st').textContent='Could not save this banner'+(m?' ('+m+')':'')+'. Log out, log in again and retry.';showToast('Banner failed.','error');}};
     $('bn-del').onclick=async()=>{if(!confirm('Remove your banner and use the default?'))return;
       try{await sb.storage.from('creator-banners').remove([uidv+'/banner.png']);await sb.from('creator_banners').delete().eq('user_id',uidv);}catch(e){}
       show(null,'Banner removed.');};
