@@ -108,7 +108,7 @@ select,textarea{width:100%;padding:.7rem .8rem;border-radius:12px;border:1px sol
         <div class="panel" style="margin-bottom:12px"><h2 id="f-h">Schedule a post</h2>
           <label for="p-title">What is the post?</label><input id="p-title" maxlength="120" placeholder="e.g. Goal highlights video">
           <div class="two"><div><label for="p-date">Date</label><input id="p-date" type="date"></div><div><label for="p-time">Time</label><input id="p-time" type="time" value="12:00"></div></div>
-          <label for="p-plat">Where</label><select id="p-plat"><option value="any">Any</option><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="tiktok">TikTok</option><option value="youtube">YouTube</option><option value="whatsapp">WhatsApp (reminder + Share button)</option></select>
+          <label for="p-plat">Where</label><select id="p-plat"><option value="any">Everywhere (all connected accounts)</option><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="tiktok">TikTok</option><option value="youtube">YouTube</option><option value="whatsapp">WhatsApp (reminder + Share button)</option></select>
           <label for="p-note">Caption (used when posting)</label><textarea id="p-note" rows="2" maxlength="500"></textarea>
           <label for="p-file">Picture or video (needed for auto-post)</label><input id="p-file" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime">
           <label style="display:flex;gap:8px;align-items:center;color:#cfd8f5;margin-top:12px"><input id="p-auto" type="checkbox" style="width:auto"> Post automatically at this time</label>
@@ -124,7 +124,7 @@ select,textarea{width:100%;padding:.7rem .8rem;border-radius:12px;border:1px sol
 <div class="modal hidden" id="cal-m"><div class="modal-c"><h2 style="margin:0 0 6px;font-size:1.05rem">Add to calendar</h2><div class="empty" id="cal-file" style="margin-bottom:6px"></div>
   <label for="cm-title">Title</label><input id="cm-title" maxlength="120" placeholder="What is this post?">
   <div class="two"><div><label for="cm-date">Date</label><input id="cm-date" type="date"></div><div><label for="cm-time">Time</label><input id="cm-time" type="time" value="12:00"></div></div>
-  <label for="cm-plat">Where</label><select id="cm-plat"><option value="any">Any connected account</option><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="tiktok">TikTok (reminder only)</option><option value="youtube">YouTube (reminder only)</option><option value="whatsapp">WhatsApp (reminder + Share button)</option></select>
+  <label for="cm-plat">Where</label><select id="cm-plat"><option value="any">Everywhere (all connected accounts)</option><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="tiktok">TikTok (reminder only)</option><option value="youtube">YouTube (reminder only)</option><option value="whatsapp">WhatsApp (reminder + Share button)</option></select>
   <label for="cm-note">Caption</label><textarea id="cm-note" rows="2" maxlength="500"></textarea>
   <label style="display:flex;gap:8px;align-items:center;color:#cfd8f5;margin-top:12px"><input id="cm-auto" type="checkbox" style="width:auto"> Post automatically at this time</label>
   <div class="empty" id="cm-hint" style="margin-top:4px"></div>
@@ -317,7 +317,7 @@ const DASH=(()=>{
   let plans=[],uid=null,view=new Date(),sel=null,edit=null,loaded=false;
   const pad=n=>String(n).padStart(2,'0'),key=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
   const esc=t=>String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const PL={any:'Any',instagram:'Instagram',facebook:'Facebook',tiktok:'TikTok',youtube:'YouTube',whatsapp:'WhatsApp'};
+  const PL={any:'Everywhere',instagram:'Instagram',facebook:'Facebook',tiktok:'TikTok',youtube:'YouTube',whatsapp:'WhatsApp'};
   const when=p=>new Date(p.plan_date+'T'+(p.plan_time||'12:00').slice(0,5)+':00');
   function fmtDay(k){const d=new Date(k+'T00:00:00');return d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});}
   function stats(){
@@ -344,7 +344,7 @@ const DASH=(()=>{
     if(p.status==='failed'){const e=(p.results||[]).filter(r=>r.status==='failed').map(r=>(r.platform==='all'?'':PL[r.platform]+': ')+(r.error||'')).join(' | ');return '<span class="badge bad" title="'+esc(e)+'">Failed</span>'+(e?'<div class="t2" style="color:#ffb4c0">'+esc(e)+'</div>':'');}
     return '';
   }
-  function hint(){const a=$('p-auto').checked,pl=$('p-plat').value;$('p-hint').textContent=a?(CN.has(pl)?'It will be posted from your own '+(pl==='any'?'connected accounts':PL[pl])+'.':'Connect '+(pl==='any'?'Facebook or Instagram':PL[pl])+' above first.'):'';}
+  function hint(){const a=$('p-auto').checked,pl=$('p-plat').value;$('p-hint').textContent=a?(CN.has(pl)?'It will be posted from your own '+(pl==='any'?'connected accounts (Facebook and Instagram, every one you connected)':PL[pl])+'.':'Connect '+(pl==='any'?'Facebook or Instagram':PL[pl])+' above first.'):'';}
   function list(){
     const up=sel?plans.filter(p=>p.plan_date===sel):plans.filter(p=>!p.done&&when(p)>=new Date()).sort((a,b)=>when(a)-when(b)).slice(0,12);
     $('l-h').textContent=sel?'Plans for '+fmtDay(sel):'Coming up';
