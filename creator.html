@@ -57,6 +57,7 @@ body.dash{align-items:flex-start}.card.wide{max-width:980px;background:none;bord
 select,textarea{width:100%;padding:.7rem .8rem;border-radius:12px;border:1px solid #2c3a6b;background:#0b1020;color:#fff;font:inherit}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .bn{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}.bn-pv{width:130px;aspect-ratio:1080/1528;border-radius:12px;background:repeating-conic-gradient(#1b2750 0 25%,#0b1020 0 50%) 0 0/16px 16px;border:1px solid #243058;overflow:hidden;display:flex;align-items:center;justify-content:center;text-align:center;padding:6px;flex:0 0 auto}.bn-pv img{width:100%;height:100%;display:block;object-fit:fill}.bn-in{flex:1;min-width:200px}
+.cn-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}.cn{background:#0b1020;border:1px solid #243058;border-radius:12px;padding:12px}.cn b{display:block;margin-bottom:4px;font-size:.9rem}.cn input{margin-top:8px;font-size:.82rem;padding:.6rem .7rem}.cn .row{margin-top:10px}.cn .row .btn{padding:.5rem .9rem}.cn.soon{opacity:.6}.cn-st.ok{color:#3ddc84}.badge{display:inline-block;border-radius:999px;padding:.1rem .55rem;font-size:.68rem;font-weight:700;background:#1b2750;color:#cfd8f5;margin-left:6px}.badge.ok{background:#10321f;color:#9be7b8}.badge.bad{background:#3a1420;color:#ffb4c0}.badge.wait{background:#3a2e10;color:#ffd98a}
 </style>
 </head>
 <body>
@@ -80,6 +81,19 @@ select,textarea{width:100%;padding:.7rem .8rem;border-radius:12px;border:1px sol
       <div class="stat"><b id="s-dn">0</b><span>Done</span></div>
       <div class="stat"><b id="s-nx">—</b><span>Next post</span></div>
     </div>
+    <div class="panel" style="margin-bottom:12px"><h2>Connect my accounts (auto-post)</h2>
+      <p class="empty" style="margin:0 0 10px">Paste the ID and access key of your own page. Your key is saved safely and is never shown again. Posts you schedule go out from your own accounts.</p>
+      <div class="cn-grid">
+        <div class="cn" data-p="facebook"><b><i class="ti ti-brand-facebook"></i> Facebook Page</b><div class="cn-st empty">Not connected</div>
+          <input class="cn-id" inputmode="numeric" placeholder="Page ID (numbers)"><input class="cn-key" type="password" autocomplete="off" placeholder="Page access key"><div class="row"><button type="button" class="btn cn-save">Save</button><button type="button" class="btn alt cn-del hidden">Disconnect</button></div></div>
+        <div class="cn" data-p="instagram"><b><i class="ti ti-brand-instagram"></i> Instagram</b><div class="cn-st empty">Not connected</div>
+          <input class="cn-id" inputmode="numeric" placeholder="Instagram account ID (numbers)"><input class="cn-key" type="password" autocomplete="off" placeholder="Instagram access key"><div class="row"><button type="button" class="btn cn-save">Save</button><button type="button" class="btn alt cn-del hidden">Disconnect</button></div></div>
+        <div class="cn soon"><b><i class="ti ti-brand-youtube"></i> YouTube</b><div class="empty">Coming soon. YouTube needs a Google login, not a simple key.</div></div>
+        <div class="cn soon"><b><i class="ti ti-brand-tiktok"></i> TikTok</b><div class="empty">Coming soon. TikTok needs its own approval.</div></div>
+      </div>
+      <details style="margin-top:10px"><summary class="empty" style="cursor:pointer">How do I get the ID and access key?</summary>
+        <div class="empty" style="margin-top:6px;line-height:1.6">1. Go to developers.facebook.com and make an app (type Business).<br>2. Open <b>Tools → Graph API Explorer</b>, choose your app, and press "Get Page Access Token". Allow <b>pages_manage_posts</b>, <b>pages_read_engagement</b>, <b>instagram_basic</b> and <b>instagram_content_publish</b>.<br>3. In the Explorer, ask <b>me/accounts</b>: it shows each Page's <b>id</b> and <b>access_token</b>. That is your Facebook Page ID and key.<br>4. For Instagram, ask <b>{Page ID}?fields=instagram_business_account</b>. That number is your Instagram account ID. Use the same Page key.<br>5. Your Instagram must be a Professional (business/creator) account linked to the Facebook Page.</div></details>
+    </div>
     <div class="panel" style="margin-bottom:12px"><h2>My banner</h2>
       <div class="bn"><div class="bn-pv" id="bn-pv"><span class="empty">Using the default banner</span></div>
         <div class="bn-in"><p class="empty" style="margin:0 0 8px">Upload your own banner (PNG or JPG, portrait is best). Paint the place for the video <b>green</b> and I remove it for you. No green? I find the empty or transparent area, or the big flat-colour area in the middle.</p>
@@ -92,7 +106,10 @@ select,textarea{width:100%;padding:.7rem .8rem;border-radius:12px;border:1px sol
           <label for="p-title">What is the post?</label><input id="p-title" maxlength="120" placeholder="e.g. Goal highlights video">
           <div class="two"><div><label for="p-date">Date</label><input id="p-date" type="date"></div><div><label for="p-time">Time</label><input id="p-time" type="time" value="12:00"></div></div>
           <label for="p-plat">Where</label><select id="p-plat"><option value="any">Any</option><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="tiktok">TikTok</option><option value="youtube">YouTube</option><option value="whatsapp">WhatsApp</option></select>
-          <label for="p-note">Note (optional)</label><textarea id="p-note" rows="2" maxlength="500"></textarea>
+          <label for="p-note">Caption (used when posting)</label><textarea id="p-note" rows="2" maxlength="500"></textarea>
+          <label for="p-file">Picture or video (needed for auto-post)</label><input id="p-file" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime">
+          <label style="display:flex;gap:8px;align-items:center;color:#cfd8f5;margin-top:12px"><input id="p-auto" type="checkbox" style="width:auto"> Post automatically at this time</label>
+          <div class="empty" id="p-hint" style="margin-top:4px"></div>
           <button type="button" class="btn" id="p-save">Save to calendar</button><button type="button" class="btn alt hidden" id="p-cancel">Cancel edit</button>
         </div>
         <div class="panel"><h2 id="l-h">Plans</h2><div id="list"></div></div>
@@ -114,7 +131,7 @@ function say(id,t){const e=$(id);e.textContent=t;e.style.display='block';}
 function enter(user){
   const b=cleanName(user.user_metadata&&user.user_metadata.brand)||cleanName((user.email||'').split('@')[0]);
   window.BUZA_BRAND=b;isLoggedIn=true;try{sb.rpc('touch_creator');}catch(e){}
-  $('v-out').classList.add('hidden');$('v-in').classList.remove('hidden');$('h-name').textContent='Welcome, '+b;document.body.classList.add('dash');document.querySelector('.card').classList.add('wide');DASH.start(user);BN.start(user);
+  $('v-out').classList.add('hidden');$('v-in').classList.remove('hidden');$('h-name').textContent='Welcome, '+b;document.body.classList.add('dash');document.querySelector('.card').classList.add('wide');DASH.start(user);BN.start(user);CN.start();
 }
 async function go(){
   const email=$('a-email').value.trim(),pass=$('a-pass').value,name=cleanName($('a-name').value);
@@ -248,6 +265,33 @@ const BN=(()=>{
   }
   return {start};
 })();
+
+const CN=(()=>{
+  const conn={};
+  function paint(p){const el=document.querySelector('.cn[data-p="'+p+'"]');if(!el)return;const c=conn[p];
+    el.querySelector('.cn-st').textContent=c?'Connected: '+(c.account_name||c.account_ref):'Not connected';el.querySelector('.cn-st').classList.toggle('ok',!!c);
+    el.querySelector('.cn-del').classList.toggle('hidden',!c);el.querySelector('.cn-key').placeholder=c?'Paste a new key to replace':(p==='facebook'?'Page access key':'Instagram access key');}
+  async function start(){
+    const r=await sb.from('creator_credentials').select('platform,account_ref,account_name');
+    (r.data||[]).forEach(x=>conn[x.platform]=x);['facebook','instagram'].forEach(paint);
+    document.querySelectorAll('.cn[data-p]').forEach(el=>{
+      const p=el.dataset.p;
+      el.querySelector('.cn-save').onclick=async()=>{
+        const id=el.querySelector('.cn-id').value.trim(),key=el.querySelector('.cn-key').value.trim();
+        if(!id||!key){showToast('Fill in the ID and the access key.','error');return;}
+        const b=el.querySelector('.cn-save');b.disabled=true;
+        try{const r=await sb.functions.invoke('creator-connect',{body:{action:'save',platform:p,account_ref:id,access_token:key}});
+          let d=r.data;if(r.error&&r.error.context&&r.error.context.json){try{d=await r.error.context.json();}catch(e){}}
+          if(!d||d.error)throw new Error((d&&d.error)||'Could not save.');
+          conn[p]={platform:p,account_ref:id,account_name:d.name};el.querySelector('.cn-key').value='';paint(p);showToast('Connected: '+d.name);DASH.refreshHint();
+        }catch(e){showToast(String(e.message||e).slice(0,140),'error');}
+        b.disabled=false;};
+      el.querySelector('.cn-del').onclick=async()=>{if(!confirm('Disconnect this account?'))return;
+        try{await sb.functions.invoke('creator-connect',{body:{action:'remove',platform:p}});}catch(e){}delete conn[p];paint(p);DASH.refreshHint();};
+    });
+  }
+  return {start,has:p=>p==='any'?!!(conn.facebook||conn.instagram):!!conn[p],any:()=>Object.keys(conn).length>0};
+})();
 const DASH=(()=>{
   let plans=[],uid=null,view=new Date(),sel=null,edit=null,loaded=false;
   const pad=n=>String(n).padStart(2,'0'),key=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
@@ -272,31 +316,55 @@ const DASH=(()=>{
     }
     $('cal').innerHTML=h;
   }
+  function badge(p){
+    if(p.status==='queued')return '<span class="badge wait">Will post</span>';
+    if(p.status==='posting')return '<span class="badge wait">Posting…</span>';
+    if(p.status==='posted')return '<span class="badge ok">Posted ✓</span>';
+    if(p.status==='failed'){const e=(p.results||[]).filter(r=>r.status==='failed').map(r=>(r.platform==='all'?'':PL[r.platform]+': ')+(r.error||'')).join(' | ');return '<span class="badge bad" title="'+esc(e)+'">Failed</span>'+(e?'<div class="t2" style="color:#ffb4c0">'+esc(e)+'</div>':'');}
+    return '';
+  }
+  function hint(){const a=$('p-auto').checked,pl=$('p-plat').value;$('p-hint').textContent=a?(CN.has(pl)?'It will be posted from your own '+(pl==='any'?'connected accounts':PL[pl])+'.':'Connect '+(pl==='any'?'Facebook or Instagram':PL[pl])+' above first.'):'';}
   function list(){
     const up=sel?plans.filter(p=>p.plan_date===sel):plans.filter(p=>!p.done&&when(p)>=new Date()).sort((a,b)=>when(a)-when(b)).slice(0,12);
     $('l-h').textContent=sel?'Plans for '+fmtDay(sel):'Coming up';
     const rows=up.sort((a,b)=>when(a)-when(b));
-    $('list').innerHTML=(sel?'<div style="margin-bottom:8px"><button type="button" class="btn alt" style="margin:0;padding:.4rem .8rem;font-size:.78rem;width:auto" id="l-all">Show all coming up</button></div>':'')+(rows.length?rows.map(p=>'<div class="item'+(p.done?' done':'')+'"><div class="t1">'+esc(p.title)+'</div><div class="t2">'+fmtDay(p.plan_date)+' · '+(p.plan_time||'').slice(0,5)+' · '+PL[p.platform]+(p.note?'<br>'+esc(p.note):'')+'</div><div class="acts"><button data-a="done" data-id="'+p.id+'">'+(p.done?'Undo':'✓ Done')+'</button><button data-a="edit" data-id="'+p.id+'">Edit</button><button data-a="del" data-id="'+p.id+'">Delete</button></div></div>').join(''):'<div class="empty">'+(sel?'Nothing planned on this day.':'Nothing planned yet. Pick a day and add your first post.')+'</div>');
+    $('list').innerHTML=(sel?'<div style="margin-bottom:8px"><button type="button" class="btn alt" style="margin:0;padding:.4rem .8rem;font-size:.78rem;width:auto" id="l-all">Show all coming up</button></div>':'')+(rows.length?rows.map(p=>'<div class="item'+(p.done?' done':'')+'"><div class="t1">'+esc(p.title)+badge(p)+'</div><div class="t2">'+fmtDay(p.plan_date)+' · '+(p.plan_time||'').slice(0,5)+' · '+PL[p.platform]+(p.note?'<br>'+esc(p.note):'')+'</div><div class="acts">'+(p.status==='failed'?'<button data-a="retry" data-id="'+p.id+'">Retry</button>':'')+'<button data-a="done" data-id="'+p.id+'">'+(p.done?'Undo':'✓ Done')+'</button><button data-a="edit" data-id="'+p.id+'">Edit</button><button data-a="del" data-id="'+p.id+'">Delete</button></div></div>').join(''):'<div class="empty">'+(sel?'Nothing planned on this day.':'Nothing planned yet. Pick a day and add your first post.')+'</div>');
   }
   function refresh(){stats();cal();list();}
-  function reset(){edit=null;$('f-h').textContent='Schedule a post';$('p-title').value='';$('p-note').value='';$('p-plat').value='any';$('p-save').textContent='Save to calendar';$('p-cancel').classList.add('hidden');}
+  function reset(){edit=null;$('f-h').textContent='Schedule a post';$('p-title').value='';$('p-note').value='';$('p-plat').value='any';$('p-file').value='';$('p-auto').checked=false;$('p-save').textContent='Save to calendar';$('p-cancel').classList.add('hidden');}
   async function save(){
     const title=$('p-title').value.trim(),date=$('p-date').value,time=$('p-time').value||'12:00';
     if(!title){showToast('Write what the post is.','error');return;}
     if(!date){showToast('Choose a date.','error');return;}
     const row={plan_date:date,plan_time:time,title,platform:$('p-plat').value,note:$('p-note').value.trim()||null};
+    const auto=$('p-auto').checked,file=$('p-file').files[0],old=edit?plans.find(x=>x.id===edit):null;
+    if(auto){
+      if(!file&&!(old&&old.media_path)){showToast('Attach a picture or video to post automatically.','error');return;}
+      if(!CN.has(row.platform)){showToast('Connect '+(row.platform==='any'?'Facebook or Instagram':PL[row.platform])+' first (Connect my accounts).','error');return;}
+      if(new Date(date+'T'+time)<new Date(Date.now()-60000)){showToast('Choose a time in the future.','error');return;}
+    }
+    if(file&&file.size>50*1024*1024){showToast('The file is too big (max 50 MB).','error');return;}
     $('p-save').disabled=true;
     try{
+      if(file){
+        const ext=(file.name.split('.').pop()||'bin').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,5)||'bin',path=uid+'/'+Date.now()+'.'+ext;
+        const up=await sb.storage.from('creator-media').upload(path,file,{contentType:file.type,cacheControl:'3600'});if(up.error)throw up.error;
+        row.media_path=path;row.media_type=/^video\//.test(file.type)?'video':'image';
+        if(old&&old.media_path)sb.storage.from('creator-media').remove([old.media_path]);
+      }
+      if(auto){row.plan_at=new Date(date+'T'+time).toISOString();row.status='queued';row.results=[];}
+      else if(old&&old.status==='queued'){row.status='draft';}
       if(edit){const r=await sb.from('creator_plans').update(row).eq('id',edit).select().single();if(r.error)throw r.error;plans=plans.map(p=>p.id===edit?r.data:p);}
       else{const r=await sb.from('creator_plans').insert(row).select().single();if(r.error)throw r.error;plans.push(r.data);}
-      showToast('Saved to your calendar.');sel=date;view=new Date(date+'T00:00:00');reset();$('p-date').value=date;refresh();
-    }catch(e){showToast('Could not save. Try again.','error');}
+      showToast(auto?'Saved. It will post by itself at that time.':'Saved to your calendar.');sel=date;view=new Date(date+'T00:00:00');reset();$('p-date').value=date;refresh();
+    }catch(e){showToast('Could not save'+(e&&e.message?' ('+String(e.message).slice(0,80)+')':'')+'. Try again.','error');}
     $('p-save').disabled=false;
   }
   async function act(a,id){
     const p=plans.find(x=>x.id===id);if(!p)return;
     if(a==='done'){const r=await sb.from('creator_plans').update({done:!p.done}).eq('id',id);if(r.error){showToast('Could not update.','error');return;}p.done=!p.done;}
     else if(a==='del'){if(!confirm('Delete this plan?'))return;const r=await sb.from('creator_plans').delete().eq('id',id);if(r.error){showToast('Could not delete.','error');return;}plans=plans.filter(x=>x.id!==id);}
+    else if(a==='retry'){const r=await sb.from('creator_plans').update({status:'queued',plan_at:new Date().toISOString(),results:[]}).eq('id',id);if(r.error){showToast('Could not retry.','error');return;}p.status='queued';p.results=[];showToast('Trying again in a minute or two.');}
     else if(a==='edit'){edit=id;$('f-h').textContent='Edit post';$('p-title').value=p.title;$('p-date').value=p.plan_date;$('p-time').value=(p.plan_time||'12:00').slice(0,5);$('p-plat').value=p.platform;$('p-note').value=p.note||'';$('p-save').textContent='Save changes';$('p-cancel').classList.remove('hidden');$('p-title').scrollIntoView({behavior:'smooth',block:'center'});return;}
     refresh();
   }
@@ -305,6 +373,7 @@ const DASH=(()=>{
     $('c-next').onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()+1,1);cal();};
     $('cal').onclick=e=>{const b=e.target.closest('button[data-k]');if(!b)return;sel=sel===b.dataset.k?null:b.dataset.k;if(sel&&!edit)$('p-date').value=sel;cal();list();};
     $('list').onclick=e=>{if(e.target.id==='l-all'){sel=null;cal();list();return;}const b=e.target.closest('button[data-a]');if(b)act(b.dataset.a,b.dataset.id);};
+    $('p-auto').onchange=hint;$('p-plat').onchange=hint;
     $('p-save').onclick=save;$('p-cancel').onclick=reset;
   }
   async function start(user){
@@ -313,8 +382,11 @@ const DASH=(()=>{
     const r=await sb.from('creator_plans').select('*').order('plan_date',{ascending:true}).limit(500);
     plans=r.error?[]:(r.data||[]);if(r.error)showToast('Could not load your calendar.','error');
     refresh();
+    setInterval(async()=>{if(document.hidden||!plans.some(p=>p.status==='queued'||p.status==='posting'))return;
+      const r=await sb.from('creator_plans').select('*').in('status',['queued','posting','posted','failed']).order('plan_date',{ascending:true}).limit(500);
+      if(!r.error&&r.data){const m=new Map(plans.map(p=>[p.id,p]));r.data.forEach(x=>m.set(x.id,x));plans=[...m.values()];refresh();}},60000);
   }
-  return {start};
+  return {start,refreshHint:()=>{try{hint();}catch(e){}}};
 })();
 (async()=>{try{const {data}=await sb.auth.getSession();if(data&&data.session)enter(data.session.user);}catch(e){}})();
 </script>
