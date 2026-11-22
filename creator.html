@@ -58,7 +58,7 @@ input:focus{outline:2px solid #2065fe;border-color:#2065fe}
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const sb=window.supabase.createClient('https://liingyivheqmuosuxwvd.supabase.co','sb_publishable_jtLwjUFd9GeUInx7c9CkDg_B53KYB4-');
+const sb=window.supabase.createClient('https://cgoxglsepltjbemnlmqx.supabase.co','sb_publishable_USnTAF6QDYaD2Oauc7lgxQ_4s-WVmA9');
 let isLoggedIn=false,mode='up';
 const $=id=>document.getElementById(id);
 function showToast(m,t){const e=$('toast');e.textContent=m;e.className='toast '+(t||'success')+' show';setTimeout(()=>e.classList.remove('show'),3200);}
@@ -67,7 +67,7 @@ function setMode(m){mode=m;$('t-up').classList.toggle('on',m==='up');$('t-in').c
 function say(id,t){const e=$(id);e.textContent=t;e.style.display='block';}
 function enter(user){
   const b=cleanName(user.user_metadata&&user.user_metadata.brand)||cleanName((user.email||'').split('@')[0]);
-  window.BUZA_BRAND=b;isLoggedIn=true;
+  window.BUZA_BRAND=b;isLoggedIn=true;try{sb.rpc('touch_creator');}catch(e){}
   $('v-out').classList.add('hidden');$('v-in').classList.remove('hidden');$('h-name').textContent='Welcome, '+b;
 }
 async function go(){
@@ -100,6 +100,7 @@ $('b-rename').onclick=async()=>{
   const n=cleanName(prompt('New name:',window.BUZA_BRAND)||'');if(n.length<2)return;
   const r=await sb.auth.updateUser({data:{brand:n}});
   if(r.error){showToast('Could not change the name.','error');return;}
+  try{const u=await sb.auth.getUser();if(u.data&&u.data.user)await sb.from('creators').update({brand:n}).eq('id',u.data.user.id);}catch(e){}
   window.BUZA_BRAND=n;$('h-name').textContent='Welcome, '+n;showToast('Name changed.');
 };
 (async()=>{try{const {data}=await sb.auth.getSession();if(data&&data.session)enter(data.session.user);}catch(e){}})();
