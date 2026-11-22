@@ -182,7 +182,7 @@ const BN=(()=>{
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   const pubUrl=(path,v)=>sb.storage.from('creator-banners').getPublicUrl(path).data.publicUrl+'?v='+encodeURIComponent(v||Date.now());
   function show(m,msg){
-    cur=m;window.BUZA_MY_BANNER=m?{url:m.url,w:m.w,h:m.h,area:m.area,box:m.box}:null;
+    cur=m;window.BUZA_MY_BANNER=m?{url:m.url,w:m.w,h:m.h,area:m.area,box:m.box,box0:m.box0||m.box}:null;
     $('bn-pv').innerHTML=m?'<img alt="My banner" src="'+m.url+'">':'<span class="empty">Using the default banner</span>';
     $('bn-del').classList.toggle('hidden',!m);if(msg!==undefined)$('bn-st').textContent=msg;
   }
@@ -258,9 +258,9 @@ const BN=(()=>{
     const path=uid+'/banner.png';
     const up=await sb.storage.from('creator-banners').upload(path,r.blob,{contentType:'image/png',upsert:true,cacheControl:'60'});
     if(up.error)throw up.error;
-    const row={user_id:uid,path,w:TW,h:TH,area:r.area,box:r.box,note:r.how,updated_at:new Date().toISOString()};
+    const row={user_id:uid,path,w:TW,h:TH,area:r.area,box:r.box,box_auto:r.box,note:r.how,updated_at:new Date().toISOString()};
     const db=await sb.from('creator_banners').upsert(row);if(db.error)throw db.error;
-    show({url:pubUrl(path,row.updated_at),w:TW,h:TH,area:r.area,box:r.box},r.how+' Saved. It is now in Video Studio → Banner → "My banner".');
+    show({url:pubUrl(path,row.updated_at),w:TW,h:TH,area:r.area,box:r.box,box0:r.box},r.how+' Saved. It is now in Video Studio → Banner → "My banner".');
   }
   async function start(user){
     const uidv=user&&user.id;
@@ -270,7 +270,8 @@ const BN=(()=>{
       try{await sb.storage.from('creator-banners').remove([uidv+'/banner.png']);await sb.from('creator_banners').delete().eq('user_id',uidv);}catch(e){}
       show(null,'Banner removed.');};
     const r=await sb.from('creator_banners').select('*').maybeSingle();
-    if(r.data)show({url:pubUrl(r.data.path,r.data.updated_at),w:r.data.w,h:r.data.h,area:r.data.area,box:r.data.box},r.data.note||'');
+    if(r.data)show({url:pubUrl(r.data.path,r.data.updated_at),w:r.data.w,h:r.data.h,area:r.data.area,box:r.data.box,box0:r.data.box_auto||r.data.box},r.data.note||'');
+    window.BUZA_BOX_SAVE=async box=>{try{await sb.from('creator_banners').update({box}).eq('user_id',uidv);}catch(e){}};
   }
   return {start};
 })();
