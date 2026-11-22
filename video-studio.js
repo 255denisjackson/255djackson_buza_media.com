@@ -126,7 +126,7 @@
   function setBanner(id){
     var b=banOf(id);st.ban=b.id;FR.W=b.W;FR.H=b.H;FR.area=b.area;FR.box=b.box;FR.tab=b.tab||null;
     if(BANIMG[b.id]&&BANIMG[b.id].complete&&BANIMG[b.id].naturalWidth){FR.img=brandImg(BANIMG[b.id],b);draw();return;}
-    FR.img=null;var im=BANIMG[b.id]||new Image();BANIMG[b.id]=im;im.onload=function(){if(st.ban===b.id){FR.img=brandImg(im,b);draw();}};if(!im.src)im.src=b.src;draw();
+    FR.img=null;var im=BANIMG[b.id]||new Image();BANIMG[b.id]=im;im.onload=function(){if(st.ban===b.id){FR.img=brandImg(im,b);draw();}};if(b.cors)im.crossOrigin='anonymous';if(!im.src)im.src=b.src;draw();
   }
   var HFONT='Poppins,Inter,"Arial Black",Arial,sans-serif',HLH=1.12;
   var B={file:null,url:null,el:null,w:0,h:0,dur:0,start:0,end:0};
@@ -217,7 +217,7 @@
     ov=document.createElement('div');ov.id='vs-ov';ov.style.display='none';
     ov.innerHTML=
      '<div class="top"><button class="ib" id="vs-x" aria-label="Close">'+sym('x',22)+'</button><div class="ttl">Video Studio</div><button class="pill" id="vs-q">Queue</button><button class="pill" id="vs-fmt">Banner</button><button class="exp" id="vs-exp">Export</button></div>'+
-     '<div class="stage" id="vs-stage"><canvas id="vs-cv"></canvas><div class="empty" id="vs-empty"><div class="eic">'+sym('ti-video',34)+'</div><div style="color:#c5cad3;font-weight:600">Start with your video</div><div style="color:#7d8491;font-size:.8rem">Then add the Buza banner, logo, text and more</div><button id="vs-first">'+sym('plus',20)+' Add video</button></div></div>'+
+     '<div class="stage" id="vs-stage"><canvas id="vs-cv"></canvas><div class="empty" id="vs-empty"><div class="eic">'+sym('ti-video',34)+'</div><div style="color:#c5cad3;font-weight:600">Start with your video</div><div style="color:#7d8491;font-size:.8rem">Then add your banner, logo, text and more</div><button id="vs-first">'+sym('plus',20)+' Add video</button></div></div>'+
      '<div class="tp"><span id="vs-time">00:00.0 / 00:00.0</span><div class="mid"><button class="ib play" id="vs-play" aria-label="Play">'+sym('play',30)+'</button></div><span><button class="pill" id="vs-spd" style="padding:.3rem .65rem;font-size:.72rem"></button><button class="ib" id="vs-zo" aria-label="Zoom timeline out">'+sym('minus',20)+'</button><button class="ib" id="vs-zi" aria-label="Zoom timeline in">'+sym('plus',20)+'</button></span></div>'+
      '<div class="tlw"><div class="tls" id="vs-tls"><div class="tli" id="vs-tli"></div></div><div class="ph"></div></div>'+
      '<div class="sheet" id="vs-sheet" style="display:none"></div>'+
@@ -229,7 +229,13 @@
     setBanner(st.ban);BANS.forEach(function(b){if(!BANIMG[b.id]){var i2=new Image();i2.src=b.src;BANIMG[b.id]=i2;}});
     try{if(document.fonts&&document.fonts.load)document.fonts.load('800 40px Poppins').then(function(){BRIMG={};setBanner(st.ban);},draw);}catch(e){}
   }
-  function open(){build();ov.style.display='flex';document.body.style.overflow='hidden';setTimeout(function(){sizeCv();renderTL();draw();},50);}
+  var mineSeen=false;
+  function mineBan(){var m=window.BUZA_MY_BANNER,i,idx=-1;for(i=0;i<BANS.length;i++)if(BANS[i].id==='mine')idx=i;
+    if(!m){if(idx>=0){BANS.splice(idx,1);delete BANIMG.mine;mineSeen=false;if(st.ban==='mine')setBanner('buza');}return;}
+    var nb={id:'mine',name:'My banner',src:m.url,W:m.w,H:m.h,area:m.area,box:m.box,cors:true};
+    if(idx>=0)BANS[idx]=nb;else BANS.push(nb);delete BANIMG.mine;
+    if(!mineSeen||st.ban==='mine'){mineSeen=true;setBanner('mine');}}
+  function open(){build();mineBan();ov.style.display='flex';document.body.style.overflow='hidden';setTimeout(function(){sizeCv();renderTL();draw();},50);}
   function close(){if(busy&&!confirm('A video is being created. Stop and close?'))return;cancel=true;setPlaying(false);ov.style.display='none';document.body.style.overflow='';}
   function sizeCv(){var d=FMT[st.fmt];cv.width=Math.round(d[0]/2);cv.height=Math.round(d[1]/2);var asp=d[0]/d[1];cv.style.aspectRatio=d[0]+'/'+d[1];
     var stg=$('vs-stage');if(!stg)return;var mw=stg.clientWidth-14,mh=stg.clientHeight-6;var w=Math.min(mw,mh*asp),h=w/asp;cv.style.width=Math.max(60,w)+'px';cv.style.height=Math.max(60,h)+'px';}

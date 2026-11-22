@@ -56,6 +56,7 @@ body.dash{align-items:flex-start}.card.wide{max-width:980px;background:none;bord
 .empty{color:#6f7fae;font-size:.82rem}
 select,textarea{width:100%;padding:.7rem .8rem;border-radius:12px;border:1px solid #2c3a6b;background:#0b1020;color:#fff;font:inherit}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.bn{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}.bn-pv{width:130px;aspect-ratio:1080/1528;border-radius:12px;background:repeating-conic-gradient(#1b2750 0 25%,#0b1020 0 50%) 0 0/16px 16px;border:1px solid #243058;overflow:hidden;display:flex;align-items:center;justify-content:center;text-align:center;padding:6px;flex:0 0 auto}.bn-pv img{width:100%;height:100%;display:block;object-fit:fill}.bn-in{flex:1;min-width:200px}
 </style>
 </head>
 <body>
@@ -79,6 +80,11 @@ select,textarea{width:100%;padding:.7rem .8rem;border-radius:12px;border:1px sol
       <div class="stat"><b id="s-dn">0</b><span>Done</span></div>
       <div class="stat"><b id="s-nx">—</b><span>Next post</span></div>
     </div>
+    <div class="panel" style="margin-bottom:12px"><h2>My banner</h2>
+      <div class="bn"><div class="bn-pv" id="bn-pv"><span class="empty">Using the default banner</span></div>
+        <div class="bn-in"><p class="empty" style="margin:0 0 8px">Upload your own banner (PNG or JPG, portrait is best). Paint the place for the video <b>green</b> and I remove it for you. No green? I find the empty or transparent area, or the big flat-colour area in the middle.</p>
+          <div class="row"><label class="btn" style="margin:0;width:auto;padding:.6rem 1rem;font-size:.85rem;cursor:pointer;display:inline-block">Upload banner<input type="file" id="bn-file" accept="image/png,image/jpeg,image/webp" hidden></label><button type="button" class="btn alt hidden" id="bn-del" style="width:auto;margin:0;padding:.6rem 1rem;font-size:.85rem">Remove my banner</button></div>
+          <div class="empty" id="bn-st" style="margin-top:8px"></div></div></div></div>
     <div class="grid">
       <div class="panel"><div class="cal-h"><button type="button" id="c-prev" aria-label="Previous month">‹</button><b id="c-title"></b><button type="button" id="c-next" aria-label="Next month">›</button></div><div class="cal" id="cal"></div></div>
       <div>
@@ -108,7 +114,7 @@ function say(id,t){const e=$(id);e.textContent=t;e.style.display='block';}
 function enter(user){
   const b=cleanName(user.user_metadata&&user.user_metadata.brand)||cleanName((user.email||'').split('@')[0]);
   window.BUZA_BRAND=b;isLoggedIn=true;try{sb.rpc('touch_creator');}catch(e){}
-  $('v-out').classList.add('hidden');$('v-in').classList.remove('hidden');$('h-name').textContent='Welcome, '+b;document.body.classList.add('dash');document.querySelector('.card').classList.add('wide');DASH.start(user);
+  $('v-out').classList.add('hidden');$('v-in').classList.remove('hidden');$('h-name').textContent='Welcome, '+b;document.body.classList.add('dash');document.querySelector('.card').classList.add('wide');DASH.start(user);BN.start(user);
 }
 async function go(){
   const email=$('a-email').value.trim(),pass=$('a-pass').value,name=cleanName($('a-name').value);
@@ -144,6 +150,104 @@ $('b-rename').onclick=async()=>{
   window.BUZA_BRAND=n;$('h-name').textContent='Welcome, '+n;showToast('Name changed.');
 };
 
+
+const BN=(()=>{
+  const TW=1360,TH=1924;let cur=null;
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const pubUrl=(path,v)=>sb.storage.from('creator-banners').getPublicUrl(path).data.publicUrl+'?v='+encodeURIComponent(v||Date.now());
+  function show(m,msg){
+    cur=m;window.BUZA_MY_BANNER=m?{url:m.url,w:m.w,h:m.h,area:m.area,box:m.box}:null;
+    $('bn-pv').innerHTML=m?'<img alt="My banner" src="'+m.url+'">':'<span class="empty">Using the default banner</span>';
+    $('bn-del').classList.toggle('hidden',!m);if(msg!==undefined)$('bn-st').textContent=msg;
+  }
+  function loadImg(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{URL.revokeObjectURL(u);res(im);};im.onerror=()=>rej(new Error('bad image'));im.src=u;});}
+  // components of a boolean grid (4-connected); returns [{n,x0,y0,x1,y1,id}], label array
+  function comps(mask,gw,gh){
+    const lab=new Int32Array(gw*gh),out=[];let id=0;
+    for(let i=0;i<mask.length;i++){
+      if(!mask[i]||lab[i])continue;id++;const st=[i];lab[i]=id;let n=0,x0=gw,y0=gh,x1=0,y1=0;
+      while(st.length){const c=st.pop(),x=c%gw,y=(c/gw)|0;n++;if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;
+        if(x>0&&mask[c-1]&&!lab[c-1]){lab[c-1]=id;st.push(c-1);}if(x<gw-1&&mask[c+1]&&!lab[c+1]){lab[c+1]=id;st.push(c+1);}
+        if(y>0&&mask[c-gw]&&!lab[c-gw]){lab[c-gw]=id;st.push(c-gw);}if(y<gh-1&&mask[c+gw]&&!lab[c+gw]){lab[c+gw]=id;st.push(c+gw);}}
+      out.push({id,n,x0,y0,x1,y1});
+    }
+    return {list:out.sort((a,b)=>b.n-a.n),lab};
+  }
+  async function process(file){
+    const im=await loadImg(file);
+    // cover-crop to the banner shape, size TW x TH
+    const cv=document.createElement('canvas');cv.width=TW;cv.height=TH;const g=cv.getContext('2d',{willReadFrequently:true});
+    const k=Math.max(TW/im.naturalWidth,TH/im.naturalHeight),sw=TW/k,sh=TH/k;
+    g.drawImage(im,(im.naturalWidth-sw)/2,(im.naturalHeight-sh)/2,sw,sh,0,0,TW,TH);
+    const id=g.getImageData(0,0,TW,TH),d=id.data,CELL=8,gw=Math.ceil(TW/CELL),gh=Math.ceil(TH/CELL);
+    const cellMask=(test)=>{const m=new Uint8Array(gw*gh);for(let cy=0;cy<gh;cy++)for(let cx=0;cx<gw;cx++){let hit=0,tot=0;for(let y=cy*CELL;y<Math.min(TH,cy*CELL+CELL);y+=2)for(let x=cx*CELL;x<Math.min(TW,cx*CELL+CELL);x+=2){tot++;if(test((y*TW+x)*4))hit++;}m[cy*gw+cx]=hit>tot*0.6?1:0;}return m;};
+    const green=i=>d[i+3]>200&&d[i+1]>110&&d[i+1]-Math.max(d[i],d[i+2])>55;
+    const clear=i=>d[i+3]<30;
+    const MIN=gw*gh*0.015;let how='',mask=null,list=null,lab=null,mode='',near=null;
+    let m1=cellMask(green),c1=comps(m1,gw,gh);
+    if(c1.list.length&&c1.list[0].n>=MIN){mode='green';mask=m1;({list,lab}=c1);how='Green area found and removed.';}
+    else{
+      let m2=cellMask(clear),c2=comps(m2,gw,gh);
+      if(c2.list.length&&c2.list[0].n>=MIN){mode='clear';mask=m2;({list,lab}=c2);how='Transparent area found.';}
+      else{
+        // flat-colour area around the centre
+        const cx=(gw/2)|0,cy=(gh*0.4)|0,ci=((cy*CELL)*TW+cx*CELL)*4,r0=d[ci],g0=d[ci+1],b0=d[ci+2];
+        near=i=>d[i+3]>200&&Math.abs(d[i]-r0)+Math.abs(d[i+1]-g0)+Math.abs(d[i+2]-b0)<60;
+        let m3=cellMask(near),c3=comps(m3,gw,gh),c=c3.list.find(x=>x.id===c3.lab[cy*gw+cx]);
+        if(c&&c.n>=MIN*3){mode='flat';mask=m3;list=[c];lab=c3.lab;how='No green area, so I used the big flat-colour area in the middle.';}
+        else{mode='guess';how='I could not see an empty area, so I placed the video in the top part. For best results paint the video area green.';}
+      }
+    }
+    let area,box=null;
+    const toPx=c=>({x:c.x0*CELL,y:c.y0*CELL,w:Math.min(TW,(c.x1+1)*CELL)-c.x0*CELL,h:Math.min(TH,(c.y1+1)*CELL)-c.y0*CELL});
+    if(mode==='guess'){area={x:Math.round(TW*0.02),y:Math.round(TH*0.02),w:Math.round(TW*0.96),h:Math.round(TH*0.68)};}
+    else{
+      const big=list.filter(c=>c.n>=MIN).slice(0,2),ids=new Set(mode==='flat'?[list[0].id]:big.map(c=>c.id));
+      area=toPx(list[0]);
+      const second=big[1]?toPx(big[1]):null;if(second&&second.y>=area.y+area.h*0.6&&second.w>TW*0.3)box=second;
+      // remove the marked colour (soft edge) only inside the chosen areas
+      if(mode==='green'||mode==='flat'){
+        for(let y=0;y<TH;y++){const cy=(y/CELL)|0;for(let x=0;x<TW;x++){
+          const i=(y*TW+x)*4,cxx=(x/CELL)|0;let inside=false;
+          for(let dy=-1;dy<=1&&!inside;dy++)for(let dx=-1;dx<=1;dx++){const yy=cy+dy,xx=cxx+dx;if(yy<0||xx<0||yy>=gh||xx>=gw)continue;if(ids.has(lab[yy*gw+xx])){inside=true;break;}}
+          if(!inside)continue;
+          if(mode==='green'){const gr=d[i+1]-Math.max(d[i],d[i+2]);if(gr>55)d[i+3]=0;else if(gr>25){const a=clamp(1-(gr-25)/30,0,1);d[i+3]=Math.round(d[i+3]*a);d[i+1]=Math.min(d[i+1],Math.max(d[i],d[i+2]));}}
+          else if(near(i))d[i+3]=0;
+        }}
+        g.putImageData(id,0,0);
+      }
+    }
+    area={x:Math.max(0,area.x-2),y:Math.max(0,area.y-2),w:Math.min(TW,area.w+4),h:Math.min(TH,area.h+4)};
+    if(!box){ // text box: below the video area if there is room, else over its lower part
+      const left=TH-(area.y+area.h);
+      box=left>TH*0.12?{x:Math.round(TW*0.1),y:Math.round(area.y+area.h+left*0.12),w:Math.round(TW*0.8),h:Math.round(left*0.6)}:{x:Math.round(area.x+area.w*0.06),y:Math.round(area.y+area.h*0.74),w:Math.round(area.w*0.88),h:Math.round(area.h*0.2)};
+    }
+    const blob=await new Promise(r=>cv.toBlob(r,'image/png'));
+    return {blob,area,box,how};
+  }
+  async function upload(file,uid){
+    $('bn-st').textContent='Working on your banner…';
+    const r=await process(file);
+    if(r.blob.size>11*1024*1024)throw new Error('big');
+    const path=uid+'/banner.png';
+    const up=await sb.storage.from('creator-banners').upload(path,r.blob,{contentType:'image/png',upsert:true,cacheControl:'60'});
+    if(up.error)throw up.error;
+    const row={user_id:uid,path,w:TW,h:TH,area:r.area,box:r.box,note:r.how,updated_at:new Date().toISOString()};
+    const db=await sb.from('creator_banners').upsert(row);if(db.error)throw db.error;
+    show({url:pubUrl(path,row.updated_at),w:TW,h:TH,area:r.area,box:r.box},r.how+' Saved. It is now in Video Studio → Banner → "My banner".');
+  }
+  async function start(user){
+    const uidv=user&&user.id;
+    $('bn-file').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;if(!/^image\//.test(f.type)){showToast('Choose an image.','error');return;}
+      try{await upload(f,uidv);}catch(err){$('bn-st').textContent='Could not use this banner. Try another image.';showToast('Banner failed.','error');}};
+    $('bn-del').onclick=async()=>{if(!confirm('Remove your banner and use the default?'))return;
+      try{await sb.storage.from('creator-banners').remove([uidv+'/banner.png']);await sb.from('creator_banners').delete().eq('user_id',uidv);}catch(e){}
+      show(null,'Banner removed.');};
+    const r=await sb.from('creator_banners').select('*').maybeSingle();
+    if(r.data)show({url:pubUrl(r.data.path,r.data.updated_at),w:r.data.w,h:r.data.h,area:r.data.area,box:r.data.box},r.data.note||'');
+  }
+  return {start};
+})();
 const DASH=(()=>{
   let plans=[],uid=null,view=new Date(),sel=null,edit=null,loaded=false;
   const pad=n=>String(n).padStart(2,'0'),key=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
