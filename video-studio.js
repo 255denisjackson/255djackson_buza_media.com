@@ -139,6 +139,7 @@
 
   /* ---------- screen ---------- */
   var CSS='#vs-ov{position:fixed;inset:0;z-index:100000;background:#0e1014;color:#e8eaee;display:flex;flex-direction:column;font:14px/1.3 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;-webkit-user-select:none;user-select:none}'+
+  'body.vs-pic #tb-split,body.vs-pic #tb-cutm,body.vs-pic #tb-cc1,body.vs-pic #tb-cc2,body.vs-pic #tb-cundo,body.vs-pic #vs-spd,body.vs-pic #vs-play{display:none!important}'+
   'body.vs-brand #vs-post,body.vs-brand #vs-yt,body.vs-brand #vs-sch,body.vs-brand #tb-split,body.vs-brand #vs-ytt,body.vs-brand #vs-gap,body.vs-brand #vs-credit{display:none!important}'+
   '#vs-ov *{box-sizing:border-box}#vs-ov button{font:inherit;color:inherit;cursor:pointer}'+
   '#vs-ov .top{display:flex;align-items:center;gap:.5rem;padding:.55rem .7rem;flex:0 0 auto}'+
@@ -217,12 +218,12 @@
     ov=document.createElement('div');ov.id='vs-ov';ov.style.display='none';
     ov.innerHTML=
      '<div class="top"><button class="ib" id="vs-x" aria-label="Close">'+sym('x',22)+'</button><div class="ttl">Video Studio</div><button class="pill" id="vs-q">Queue</button><button class="pill" id="vs-fmt">Banner</button><button class="exp" id="vs-exp">Export</button></div>'+
-     '<div class="stage" id="vs-stage"><canvas id="vs-cv"></canvas><div class="empty" id="vs-empty"><div class="eic">'+sym('ti-video',34)+'</div><div style="color:#c5cad3;font-weight:600">Start with your video</div><div style="color:#7d8491;font-size:.8rem">Then add your banner, logo, text and more</div><button id="vs-first">'+sym('plus',20)+' Add video</button></div></div>'+
+     '<div class="stage" id="vs-stage"><canvas id="vs-cv"></canvas><div class="empty" id="vs-empty"><div class="eic">'+sym('ti-video',34)+'</div><div style="color:#c5cad3;font-weight:600">Start with your video or picture</div><div style="color:#7d8491;font-size:.8rem">Then add your banner, logo, text and more</div><button id="vs-first">'+sym('plus',20)+' Add video or picture</button></div></div>'+
      '<div class="tp"><span id="vs-time">00:00.0 / 00:00.0</span><div class="mid"><button class="ib play" id="vs-play" aria-label="Play">'+sym('play',30)+'</button></div><span><button class="pill" id="vs-spd" style="padding:.3rem .65rem;font-size:.72rem"></button><button class="ib" id="vs-zo" aria-label="Zoom timeline out">'+sym('minus',20)+'</button><button class="ib" id="vs-zi" aria-label="Zoom timeline in">'+sym('plus',20)+'</button></span></div>'+
      '<div class="tlw"><div class="tls" id="vs-tls"><div class="tli" id="vs-tli"></div></div><div class="ph"></div></div>'+
      '<div class="sheet" id="vs-sheet" style="display:none"></div>'+
      '<div class="tb" id="vs-tb"></div>'+
-     '<input type="file" id="vs-fv" accept="video/*" hidden><input type="file" id="vs-fi" accept="image/*" hidden><input type="file" id="vs-fp" accept="video/*" hidden>';
+     '<input type="file" id="vs-fv" accept="video/*,image/*" hidden><input type="file" id="vs-fi" accept="image/*" hidden><input type="file" id="vs-fp" accept="video/*" hidden>';
     document.body.appendChild(ov);
     cv=$('vs-cv');ctx=cv.getContext('2d');sizeCv();wire();toolbar();renderTL();draw();
     if(BR()){LOGO.wh=brandLogo(true);LOGO.col=brandLogo(false);document.body.classList.add('vs-brand');}else{[['logo-white.png','wh'],['logo-brand.png','col']].forEach(function(a){var im=new Image();im.onload=function(){LOGO[a[1]]=im;draw();};im.src=a[0];});}
@@ -624,8 +625,23 @@
     cv.style.touchAction='none';
     tlPointer();
   }
+  function loadPic(file){
+    var url=URL.createObjectURL(file),im=new Image();
+    im.pause=function(){};im.play=function(){return Promise.resolve();};im.readyState=4;im.paused=true;im.currentTime=0;
+    im.onload=function(){
+      setPlaying(false);if(B.url)URL.revokeObjectURL(B.url);if(B.el&&B.el.tagName==='VIDEO')unhold(B.el);
+      B={zoom:1,px:0,py:0,file:file,url:url,el:im,w:im.naturalWidth,h:im.naturalHeight,dur:5,start:0,end:5,img:true};
+      st.pps=90;T=0;document.body.classList.add('vs-pic');$('vs-empty').style.display='none';thumb=null;
+      L=L.filter(function(x){return x.type!=='logo'||!x.auto;});CUTS=[];renderTL();toolbar();updTime();
+      if(st.fmt==='banner'&&!L.some(function(x){return x.type==='logo';})){var lg=addLayer({type:'logo',auto:true,col:false,w:20,x:.14,y:.60,t0:0,t1:B.dur});sel=null;panel=false;renderTL();toolbar();sheet();}
+      draw();
+    };
+    im.onerror=function(){URL.revokeObjectURL(url);toast('This picture could not be opened.','error');};im.src=url;
+  }
   function loadBase(file){
     if(!file)return;
+    if(/^image\//.test(file.type)||/\.(jpe?g|png|webp|gif|bmp)$/i.test(file.name)){loadPic(file);return;}
+    document.body.classList.remove('vs-pic');
     if(!/^video\//.test(file.type)&&!/\.(mp4|mov|webm|m4v)$/i.test(file.name)){toast('Choose a video file.','error');return;}
     var url=URL.createObjectURL(file),v=document.createElement('video');v.muted=true;v.playsInline=true;v.preload='auto';v.setAttribute('playsinline','');v.setAttribute('webkit-playsinline','');hold(v);
     v.onloadedmetadata=function(){
@@ -663,7 +679,15 @@
       ov.appendChild(p);$('vs-stop').onclick=function(){cancel=true;};}
     p.style.display=on?'':'none';if(on){$('vs-ptitle').textContent=batchMode?batchMode.title:'Creating your video';$('vs-bar').style.width=(pct||0)+'%';$('vs-ptxt').textContent=txt||'';}}
   var batchMode=null;
+  async function makePic(){
+    var d=FMT[st.fmt],k=Math.min(2,2400/Math.max(d[0],d[1])),W=Math.round(d[0]*k),H=Math.round(d[1]*k),c=document.createElement('canvas');c.width=W;c.height=H;var g=c.getContext('2d');
+    setPlaying(false);var sv=sel;sel=null;try{drawScene(g,W,H,B.el,false,Math.min(T,B.dur-0.01));}finally{sel=sv;}
+    var blob=await new Promise(function(r){c.toBlob(r,'image/jpeg',0.93);});
+    if(!blob){toast('Could not create the picture.','error');return;}
+    showPicResult(blob);
+  }
   async function make(retry){
+    if(B.img){if(!busy)await makePic();return;}
     if(busy)return;
     var light=!!retry||fastMode();try{localStorage.removeItem('vs_light');}catch(e){}
     if(!B.el){toast('Add your video first.','error');return;}
@@ -817,6 +841,19 @@
   }
 
   /* ---------- result: download + post to social media ---------- */
+  function showPicResult(blob){
+    clearResult();
+    var name=(BR()?BR().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'picture':'buza-media')+'-'+new Date().toISOString().slice(0,10)+'.jpg';
+    result={blob:blob,url:URL.createObjectURL(blob),name:name,poster:null,pic:true};
+    var r=document.createElement('div');r.id='vs-res';r.className='scr';
+    r.innerHTML='<div class="card"><div style="display:flex;align-items:center;justify-content:space-between"><b style="font-size:1.1rem">Your picture is ready</b><button class="ib" id="vs-rb" aria-label="Back to editing">✕</button></div>'+
+      '<img alt="Your picture" src="'+result.url+'" style="width:100%;max-height:60vh;object-fit:contain;border-radius:12px;background:#000"><div style="color:#9aa1ad;font-size:.8rem;margin-top:.3rem">'+(blob.size/1048576).toFixed(1)+' MB · JPG</div>'+
+      '<div style="margin-top:.6rem"><button class="btn2 p" id="vs-dl">⬇ Save picture</button>'+(window.BUZA_CAL_ADD?'<button class="btn2" id="vs-cal">📅 Add to calendar</button>':'')+'</div></div>';
+    ov.appendChild(r);
+    $('vs-rb').onclick=function(){r.remove();};
+    $('vs-dl').onclick=function(){anchorDl();toast('Saving… find it in Downloads / Gallery.','success');};
+    if($('vs-cal'))$('vs-cal').onclick=function(){window.BUZA_CAL_ADD(result.blob,'image',result.name);};
+  }
   function clearResult(){if(result&&result.url)URL.revokeObjectURL(result.url);result=null;var r=$('vs-res');if(r)r.remove();}
   function showResult(blob,poster,acodec){
     var name=(BR()?BR().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'video':'buza-media')+'-'+new Date().toISOString().slice(0,10)+'.mp4';
@@ -828,12 +865,13 @@
       '<label style="display:block;color:#9aa1ad;font-size:.8rem">YouTube title (optional)</label><input type="text" id="vs-ytt" maxlength="90" placeholder="Uses the first line of the caption if empty">'+
       '<label style="display:block;color:#9aa1ad;font-size:.8rem">Time between scheduled videos</label><select id="vs-gap" style="width:100%;padding:.55rem;border-radius:10px;background:#0b0d11;color:#eceff4;border:1px solid #303642;margin-bottom:.4rem"><option value="1">1 hour</option><option value="2">2 hours</option><option value="3">3 hours</option></select>'+
       '<label style="display:block;color:#9aa1ad;font-size:.8rem">Caption</label><textarea id="vs-cap" rows="3" maxlength="1800" placeholder="Write the caption here"></textarea>'+
-      '<div><button class="btn2" id="vs-dl">⬇ Save video</button><button class="btn2 p" id="vs-post"><i class="ti ti-send"></i> <span>Post now</span></button><button class="btn2" id="vs-yt">▶ Schedule for YouTube</button><button class="btn2" id="vs-sch">🕒 Schedule (1 per hour)</button></div><div id="vs-st" style="color:#c5cad3;font-size:.85rem;margin-top:.4rem"></div></div>';
+      '<div><button class="btn2" id="vs-dl">⬇ Save video</button><button class="btn2 p" id="vs-post"><i class="ti ti-send"></i> <span>Post now</span></button><button class="btn2" id="vs-yt">▶ Schedule for YouTube</button><button class="btn2" id="vs-sch">🕒 Schedule (1 per hour)</button>'+(window.BUZA_CAL_ADD?'<button class="btn2" id="vs-cal">📅 Add to calendar</button>':'')+'</div><div id="vs-st" style="color:#c5cad3;font-size:.85rem;margin-top:.4rem"></div></div>';
     ov.appendChild(r);
     $('vs-rb').onclick=function(){r.remove();};
     $('vs-dl').onclick=function(){saveToPhone(this);};
     $('vs-post').onclick=function(){post(this);};
     $('vs-sch').onclick=function(){schedule(this);};
+    if($('vs-cal'))$('vs-cal').onclick=function(){window.BUZA_CAL_ADD(result.blob,'video',result.name);};
     $('vs-yt').onclick=function(){scheduleYT(this);};
   }
   function fmtT(iso){return new Date(iso).toLocaleString('en-GB',{timeZone:'Africa/Dar_es_Salaam',weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});}

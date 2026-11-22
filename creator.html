@@ -58,6 +58,7 @@ select,textarea{width:100%;padding:.7rem .8rem;border-radius:12px;border:1px sol
 .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .bn{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}.bn-pv{width:130px;aspect-ratio:1080/1528;border-radius:12px;background:repeating-conic-gradient(#1b2750 0 25%,#0b1020 0 50%) 0 0/16px 16px;border:1px solid #243058;overflow:hidden;display:flex;align-items:center;justify-content:center;text-align:center;padding:6px;flex:0 0 auto}.bn-pv img{width:100%;height:100%;display:block;object-fit:fill}.bn-in{flex:1;min-width:200px}
 .cn-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}.cn{background:#0b1020;border:1px solid #243058;border-radius:12px;padding:12px}.cn b{display:block;margin-bottom:4px;font-size:.9rem}.cn input{margin-top:8px;font-size:.82rem;padding:.6rem .7rem}.cn .row{margin-top:10px}.cn .row .btn{padding:.5rem .9rem}.cn.soon{opacity:.6}.cn-st.ok{color:#3ddc84}.badge{display:inline-block;border-radius:999px;padding:.1rem .55rem;font-size:.68rem;font-weight:700;background:#1b2750;color:#cfd8f5;margin-left:6px}.badge.ok{background:#10321f;color:#9be7b8}.badge.bad{background:#3a1420;color:#ffb4c0}.badge.wait{background:#3a2e10;color:#ffd98a}
+.modal{position:fixed;inset:0;background:rgba(5,8,18,.8);z-index:300000;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto}.modal-c{width:100%;max-width:420px;background:#121a33;border:1px solid #243058;border-radius:18px;padding:18px;max-height:92vh;overflow:auto}.toast{z-index:400000!important}
 </style>
 </head>
 <body>
@@ -118,6 +119,14 @@ select,textarea{width:100%;padding:.7rem .8rem;border-radius:12px;border:1px sol
   </div>
   <div class="foot">Powered by Denis Jackson</div>
 </div>
+<div class="modal hidden" id="cal-m"><div class="modal-c"><h2 style="margin:0 0 6px;font-size:1.05rem">Add to calendar</h2><div class="empty" id="cal-file" style="margin-bottom:6px"></div>
+  <label for="cm-title">Title</label><input id="cm-title" maxlength="120" placeholder="What is this post?">
+  <div class="two"><div><label for="cm-date">Date</label><input id="cm-date" type="date"></div><div><label for="cm-time">Time</label><input id="cm-time" type="time" value="12:00"></div></div>
+  <label for="cm-plat">Where</label><select id="cm-plat"><option value="any">Any connected account</option><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="tiktok">TikTok (reminder only)</option><option value="youtube">YouTube (reminder only)</option><option value="whatsapp">WhatsApp (reminder only)</option></select>
+  <label for="cm-note">Caption</label><textarea id="cm-note" rows="2" maxlength="500"></textarea>
+  <label style="display:flex;gap:8px;align-items:center;color:#cfd8f5;margin-top:12px"><input id="cm-auto" type="checkbox" style="width:auto"> Post automatically at this time</label>
+  <div class="empty" id="cm-hint" style="margin-top:4px"></div>
+  <div class="row" style="margin-top:12px"><button type="button" class="btn" id="cm-save">Save to calendar</button><button type="button" class="btn alt" id="cm-cancel">Cancel</button></div></div></div>
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -331,6 +340,7 @@ const DASH=(()=>{
     $('list').innerHTML=(sel?'<div style="margin-bottom:8px"><button type="button" class="btn alt" style="margin:0;padding:.4rem .8rem;font-size:.78rem;width:auto" id="l-all">Show all coming up</button></div>':'')+(rows.length?rows.map(p=>'<div class="item'+(p.done?' done':'')+'"><div class="t1">'+esc(p.title)+badge(p)+'</div><div class="t2">'+fmtDay(p.plan_date)+' · '+(p.plan_time||'').slice(0,5)+' · '+PL[p.platform]+(p.note?'<br>'+esc(p.note):'')+'</div><div class="acts">'+(p.status==='failed'?'<button data-a="retry" data-id="'+p.id+'">Retry</button>':'')+'<button data-a="done" data-id="'+p.id+'">'+(p.done?'Undo':'✓ Done')+'</button><button data-a="edit" data-id="'+p.id+'">Edit</button><button data-a="del" data-id="'+p.id+'">Delete</button></div></div>').join(''):'<div class="empty">'+(sel?'Nothing planned on this day.':'Nothing planned yet. Pick a day and add your first post.')+'</div>');
   }
   function refresh(){stats();cal();list();}
+  async function add(row){const r=await sb.from('creator_plans').insert(row).select().single();if(r.error)throw r.error;plans.push(r.data);sel=row.plan_date;view=new Date(row.plan_date+'T00:00:00');refresh();return r.data;}
   function reset(){edit=null;$('f-h').textContent='Schedule a post';$('p-title').value='';$('p-note').value='';$('p-plat').value='any';$('p-file').value='';$('p-auto').checked=false;$('p-save').textContent='Save to calendar';$('p-cancel').classList.add('hidden');}
   async function save(){
     const title=$('p-title').value.trim(),date=$('p-date').value,time=$('p-time').value||'12:00';
@@ -386,7 +396,36 @@ const DASH=(()=>{
       const r=await sb.from('creator_plans').select('*').in('status',['queued','posting','posted','failed']).order('plan_date',{ascending:true}).limit(500);
       if(!r.error&&r.data){const m=new Map(plans.map(p=>[p.id,p]));r.data.forEach(x=>m.set(x.id,x));plans=[...m.values()];refresh();}},60000);
   }
-  return {start,refreshHint:()=>{try{hint();}catch(e){}}};
+  return {add,start,refreshHint:()=>{try{hint();}catch(e){}}};
+})();
+const CALM=(()=>{
+  let pend=null;const pad=n=>String(n).padStart(2,'0');
+  function hint(){const a=$('cm-auto').checked,pl=$('cm-plat').value,auto=['any','facebook','instagram'].includes(pl);$('cm-hint').textContent=a?(!auto?'Auto-post works for Facebook and Instagram only. This one will be a reminder.':CN.has(pl)?'It will be posted from your own account.':'Connect Facebook or Instagram first (Connect my accounts).'):'';}
+  window.BUZA_CAL_ADD=(blob,kind,name)=>{
+    pend={blob,kind,name};const d=new Date(Date.now()+3600000);
+    $('cal-file').textContent=(kind==='video'?'Video':'Picture')+' · '+(blob.size/1048576).toFixed(1)+' MB';
+    $('cm-title').value='';$('cm-note').value='';$('cm-date').value=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());$('cm-time').value=pad(d.getHours())+':00';$('cm-plat').value='any';
+    $('cm-auto').checked=CN.any();hint();$('cal-m').classList.remove('hidden');
+  };
+  $('cm-auto').onchange=hint;$('cm-plat').onchange=hint;
+  $('cm-cancel').onclick=()=>{$('cal-m').classList.add('hidden');pend=null;};
+  $('cm-save').onclick=async()=>{
+    if(!pend)return;const title=$('cm-title').value.trim(),date=$('cm-date').value,time=$('cm-time').value||'12:00',pl=$('cm-plat').value,auto=$('cm-auto').checked&&['any','facebook','instagram'].includes(pl);
+    if(!title){showToast('Write a title.','error');return;}if(!date){showToast('Choose a date.','error');return;}
+    if(pend.blob.size>50*1024*1024){showToast('The file is over 50 MB, it cannot be saved to the calendar.','error');return;}
+    if(auto){if(!CN.has(pl)){showToast('Connect '+(pl==='any'?'Facebook or Instagram':pl)+' first.','error');return;}if(new Date(date+'T'+time)<new Date(Date.now()-60000)){showToast('Choose a time in the future.','error');return;}}
+    const b=$('cm-save');b.disabled=true;
+    try{
+      const u=await sb.auth.getUser(),uid=u.data&&u.data.user&&u.data.user.id;if(!uid)throw new Error('Please log in again.');
+      const path=uid+'/'+Date.now()+'.'+(pend.kind==='video'?'mp4':'jpg');
+      const up=await sb.storage.from('creator-media').upload(path,pend.blob,{contentType:pend.kind==='video'?'video/mp4':'image/jpeg',cacheControl:'3600'});if(up.error)throw up.error;
+      const row={plan_date:date,plan_time:time,title,platform:pl,note:$('cm-note').value.trim()||null,media_path:path,media_type:pend.kind};
+      if(auto){row.plan_at=new Date(date+'T'+time).toISOString();row.status='queued';}
+      await DASH.add(row);
+      $('cal-m').classList.add('hidden');pend=null;showToast(auto?'Saved. It will post by itself at that time.':'Added to your calendar.');
+    }catch(e){showToast('Could not save'+(e&&e.message?' ('+String(e.message).slice(0,80)+')':'')+'.','error');}
+    b.disabled=false;
+  };
 })();
 (async()=>{try{const {data}=await sb.auth.getSession();if(data&&data.session)enter(data.session.user);}catch(e){}})();
 </script>
