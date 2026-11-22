@@ -304,7 +304,7 @@ const CN=(()=>{
         try{const r=await sb.functions.invoke('creator-connect',{body:{action:'save',platform:p,account_ref:id,access_token:key}});
           let d=r.data;if(r.error&&r.error.context&&r.error.context.json){try{d=await r.error.context.json();}catch(e){}}
           if(!d||d.error)throw new Error((d&&d.error)||'Could not save.');
-          conn[p]={platform:p,account_ref:id,account_name:d.name};el.querySelector('.cn-key').value='';paint(p);showToast('Connected: '+d.name);DASH.refreshHint();
+          conn[p]={platform:p,account_ref:d.ref||id,account_name:d.name};el.querySelector('.cn-key').value='';paint(p);showToast('Connected: '+d.name+(d.swapped?' (I found your Page key for you)':''));DASH.refreshHint();
         }catch(e){const m=String(e.message||e).slice(0,300);el.querySelector('.cn-err').textContent=m+(/ip|allowlist|whitelist/i.test(m)?' → In your Meta app: Settings → Advanced → clear the "Allowlisted IPs for server API calls" box, then try again.':/does not exist|missing permissions/i.test(m)?' → The ID and the key must be for the same Page.':'');showToast('Not connected. Read the red note.','error');}
         b.disabled=false;};
       el.querySelector('.cn-del').onclick=async()=>{if(!confirm('Disconnect this account?'))return;
