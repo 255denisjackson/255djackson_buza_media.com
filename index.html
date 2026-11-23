@@ -746,7 +746,7 @@ nav{background:var(--primary);color:#fff;position:-webkit-sticky;position:sticky
 <div id="view-login" class="hidden">
   <div class="login-card">
     <div class="login-back" onclick="goHome()"><i class="ti ti-arrow-left" aria-hidden="true"></i> Back to site</div>
-    <div class="login-logo">
+    <div class="login-logo" style="padding:8px 0;cursor:pointer">
       <img class="brand" src="logo-96.png" width="38" height="38" alt="BUZA Media logo" decoding="async">
       <div class="login-logo-text">BUZA<span>MEDIA</span></div>
     </div>
@@ -766,10 +766,13 @@ nav{background:var(--primary);color:#fff;position:-webkit-sticky;position:sticky
     <button class="login-btn hidden" id="login-studio" type="button" style="margin-top:10px;background:#0b0d11;border:1px solid #303642" onclick="if(window.__vsOpen)window.__vsOpen();else showToast('Studio is loading, try again.','error')"><i class="ti ti-movie" aria-hidden="true"></i> Open Video Studio</button>
   </div>
   <script>
-  /* private shortcut: tap the BUZA MEDIA logo 5 times to show the Video Studio button (remembered on this phone only) */
-  (function(){var b=document.getElementById('login-studio'),lg=document.querySelector('#view-login .login-logo-text,.login-logo-text');if(!b)return;
-    try{if(localStorage.getItem('buza_studio_btn')==='1')b.classList.remove('hidden');}catch(e){}
-    var n=0,t=0;if(lg)lg.addEventListener('click',function(){var now=Date.now();n=(now-t<1500)?n+1:1;t=now;if(n>=5){n=0;b.classList.remove('hidden');try{localStorage.setItem('buza_studio_btn','1');}catch(e){}if(window.__vsOpen)window.__vsOpen();}});})();
+  /* private shortcut: tap the logo (picture or the BUZA MEDIA words) 5 times to show the Video Studio button (remembered on this phone only) */
+  (function(){var n=0,t=0;
+    function show(){var b=document.getElementById('login-studio');if(b)b.classList.remove('hidden');}
+    try{if(localStorage.getItem('buza_studio_btn')==='1')show();}catch(e){}
+    document.addEventListener('click',function(e){var el=e.target&&e.target.closest&&e.target.closest('#view-login .login-logo');if(!el)return;
+      var now=Date.now();n=(now-t<2500)?n+1:1;t=now;
+      if(n>=5){n=0;show();try{localStorage.setItem('buza_studio_btn','1');}catch(x){}if(window.__vsOpen)window.__vsOpen();}},true);})();
   </script>
 </div>
 
