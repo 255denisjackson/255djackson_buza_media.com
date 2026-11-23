@@ -113,6 +113,7 @@ select,textarea{width:100%;padding:.7rem .8rem;border-radius:12px;border:1px sol
         <div class="panel" style="margin-bottom:12px"><h2 id="f-h">Schedule a post</h2>
           <label for="p-title">What is the post?</label><input id="p-title" maxlength="120" placeholder="e.g. Goal highlights video">
           <div class="two"><div><label for="p-date">Date</label><input id="p-date" type="date"></div><div><label for="p-time">Time</label><input id="p-time" type="time" value="12:00"></div></div>
+          <div id="p-more-box"><div class="empty" style="margin-top:8px">Post it on more days too (same time, up to 30 extra dates, any month)</div><div class="two"><div><input id="p-more" type="date"></div><div><button type="button" class="btn alt" id="p-more-add" style="margin:0">Add date</button></div></div><div id="p-more-l" class="empty" style="margin-top:6px"></div></div>
           <label for="p-plat">Where</label><select id="p-plat"><option value="any">Everywhere (all connected accounts)</option><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="tiktok">TikTok</option><option value="youtube">YouTube</option><option value="whatsapp">WhatsApp (message my contacts)</option></select>
           <label for="p-note">Caption (used when posting)</label><textarea id="p-note" rows="2" maxlength="500"></textarea>
           <label for="p-file">Picture or video (needed for auto-post)</label><input id="p-file" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime">
@@ -376,7 +377,11 @@ const DASH=(()=>{
   }
   function refresh(){stats();cal();list();}
   async function add(row){const r=await sb.from('creator_plans').insert(row).select().single();if(r.error)throw r.error;plans.push(r.data);sel=row.plan_date;view=new Date(row.plan_date+'T00:00:00');refresh();return r.data;}
-  function reset(){edit=null;$('f-h').textContent='Schedule a post';$('p-title').value='';$('p-note').value='';$('p-plat').value='any';$('p-file').value='';$('p-auto').checked=false;$('p-save').textContent='Save to calendar';$('p-cancel').classList.add('hidden');}
+  let more=[];
+  function drawMore(){$('p-more-l').innerHTML=more.length?more.map(d=>'<span style="display:inline-block;background:#1b2750;border-radius:12px;padding:3px 9px;margin:2px">'+fmtDay(d)+' '+d.slice(0,4)+' <a href="#" data-m="'+d+'" style="color:#ffb4c0;text-decoration:none">✕</a></span>').join(''):'';
+    $('p-more-l').querySelectorAll('[data-m]').forEach(a=>a.onclick=e=>{e.preventDefault();more=more.filter(x=>x!==a.dataset.m);drawMore();});$('p-more-box').classList.toggle('hidden',!!edit);}
+  function addMore(){const d=$('p-more').value;if(!d){showToast('Choose a date first.','error');return;}if(d===$('p-date').value||more.includes(d)){showToast('That date is already in the list.','error');return;}if(more.length>=30){showToast('Maximum 30 extra dates.','error');return;}more.push(d);more.sort();$('p-more').value='';drawMore();}
+  function reset(){more=[];edit=null;$('f-h').textContent='Schedule a post';$('p-title').value='';$('p-note').value='';$('p-plat').value='any';$('p-file').value='';$('p-auto').checked=false;$('p-save').textContent='Save to calendar';$('p-cancel').classList.add('hidden');drawMore();}
   async function save(now){
     now=now===true;
     const title=$('p-title').value.trim(),date=$('p-date').value,time=$('p-time').value||'12:00';
@@ -393,6 +398,7 @@ const DASH=(()=>{
       if(!CN.has(row.platform)){showToast('Connect '+(row.platform==='any'?'Facebook or Instagram':PL[row.platform])+' first (Connect my accounts).','error');return;}
       if(new Date(date+'T'+time)<new Date(Date.now()-60000)){showToast('Choose a time in the future.','error');return;}
     }
+    if(!edit&&!now&&more.length&&auto){const bad=more.find(d=>new Date(d+'T'+time)<new Date(Date.now()-60000));if(bad){showToast('One extra date is in the past ('+bad+'). Remove it.','error');return;}}
     if(file&&file.size>50*1024*1024){showToast('The file is too big (max 50 MB).','error');return;}
     $('p-save').disabled=true;
     try{
@@ -406,9 +412,17 @@ const DASH=(()=>{
       else if(auto){row.plan_at=new Date(date+'T'+time).toISOString();row.status='queued';row.results=[];}
       else if(old&&old.status==='queued'){row.status='draft';}
       if(edit){const r=await sb.from('creator_plans').update(row).eq('id',edit).select().single();if(r.error)throw r.error;plans=plans.map(p=>p.id===edit?r.data:p);}
-      else{const r=await sb.from('creator_plans').insert(row).select().single();if(r.error)throw r.error;plans.push(r.data);}
+      else{const r=await sb.from('creator_plans').insert(row).select().single();if(r.error)throw r.error;plans.push(r.data);
+        if(!now&&more.length){let n=0;
+          for(const d of more){const r2={...row,plan_date:d};
+            if(row.media_path){const np=uid+'/'+Date.now()+'_'+n+'.'+row.media_path.split('.').pop();const c=await sb.storage.from('creator-media').copy(row.media_path,np);
+              if(c.error){const dl=await sb.storage.from('creator-media').download(row.media_path);if(dl.error)throw dl.error;const u2=await sb.storage.from('creator-media').upload(np,dl.data,{contentType:dl.data.type,cacheControl:'3600'});if(u2.error)throw u2.error;}
+              r2.media_path=np;}
+            if(auto){r2.plan_at=new Date(d+'T'+time).toISOString();r2.status='queued';r2.results=[];}
+            const x=await sb.from('creator_plans').insert(r2).select().single();if(x.error)throw x.error;plans.push(x.data);n++;}
+          showToast('Saved on '+(n+1)+' dates.');}}
       if(now){const saved=edit?plans.find(x=>x.id===edit):plans[plans.length-1];sel=date;view=new Date(date+'T00:00:00');reset();$('p-date').value=date;refresh();$('p-save').disabled=false;await postNow(saved.id);return;}
-      showToast(auto?'Saved. It will post by itself at that time.':'Saved to your calendar.');sel=date;view=new Date(date+'T00:00:00');reset();$('p-date').value=date;refresh();
+      if(!(!edit&&more.length))showToast(auto?'Saved. It will post by itself at that time.':'Saved to your calendar.');sel=date;view=new Date(date+'T00:00:00');reset();$('p-date').value=date;refresh();
     }catch(e){showToast('Could not save'+(e&&e.message?' ('+String(e.message).slice(0,80)+')':'')+'. Try again.','error');}
     $('p-save').disabled=false;
   }
@@ -443,7 +457,7 @@ const DASH=(()=>{
     }
     else if(a==='now'){await postNow(id);return;}
     else if(a==='retry'){const r=await sb.from('creator_plans').update({status:'queued',plan_at:new Date().toISOString(),results:[]}).eq('id',id);if(r.error){showToast('Could not retry.','error');return;}p.status='queued';p.results=[];showToast('Trying again in a minute or two.');}
-    else if(a==='edit'){edit=id;$('f-h').textContent='Edit post';$('p-title').value=p.title;$('p-date').value=p.plan_date;$('p-time').value=(p.plan_time||'12:00').slice(0,5);$('p-plat').value=p.platform;$('p-note').value=p.note||'';$('p-save').textContent='Save changes';$('p-cancel').classList.remove('hidden');$('p-title').scrollIntoView({behavior:'smooth',block:'center'});return;}
+    else if(a==='edit'){edit=id;more=[];drawMore();$('f-h').textContent='Edit post';$('p-title').value=p.title;$('p-date').value=p.plan_date;$('p-time').value=(p.plan_time||'12:00').slice(0,5);$('p-plat').value=p.platform;$('p-note').value=p.note||'';$('p-save').textContent='Save changes';$('p-cancel').classList.remove('hidden');$('p-title').scrollIntoView({behavior:'smooth',block:'center'});return;}
     refresh();
   }
   function wire(){
@@ -452,7 +466,7 @@ const DASH=(()=>{
     $('cal').onclick=e=>{const b=e.target.closest('button[data-k]');if(!b)return;sel=sel===b.dataset.k?null:b.dataset.k;if(sel&&!edit)$('p-date').value=sel;cal();list();};
     $('list').onclick=e=>{if(e.target.id==='l-all'){sel=null;cal();list();return;}const b=e.target.closest('button[data-a]');if(b)act(b.dataset.a,b.dataset.id);};
     $('p-auto').onchange=hint;$('p-plat').onchange=hint;
-    $('p-save').onclick=()=>save();$('p-now').onclick=()=>save(true);$('p-cancel').onclick=reset;
+    $('p-more-add').onclick=addMore;$('p-save').onclick=()=>save();$('p-now').onclick=()=>save(true);$('p-cancel').onclick=reset;
   }
   async function start(user){
     uid=user&&user.id;if(!loaded){wire();loaded=true;}
