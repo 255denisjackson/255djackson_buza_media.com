@@ -91,11 +91,16 @@ select,textarea{width:100%;padding:.7rem .8rem;border-radius:12px;border:1px sol
         <div class="cn" data-p="instagram"><b><i class="ti ti-brand-instagram"></i> Instagram</b><div class="cn-st empty">Not connected</div>
           <input class="cn-id" inputmode="numeric" placeholder="Instagram account ID (numbers)"><input class="cn-key" type="password" autocomplete="off" placeholder="Instagram access key"><div class="row"><button type="button" class="btn cn-save">Save</button><button type="button" class="btn alt cn-del hidden">Disconnect</button></div><div class="cn-err"></div>
           <div style="border-top:1px solid #243058;margin-top:12px;padding-top:10px"><div class="empty">Always collaborate with (Instagram username)</div><input id="cn-collab" placeholder="@username" autocomplete="off" disabled><div class="row"><button type="button" class="btn alt" id="cn-collab-save" disabled>Save collaborator</button></div><div class="empty" id="cn-collab-st" style="margin-top:6px">Every auto-post will invite this account as a collaborator. Their account must be public.</div></div></div>
+        <div class="cn" data-p="whatsapp"><b><i class="ti ti-brand-whatsapp"></i> WhatsApp (my contacts)</b><div class="cn-st empty">Not connected</div>
+          <input class="cn-id" inputmode="numeric" placeholder="Phone Number ID (numbers, not your phone)"><input class="cn-key" type="password" autocomplete="off" placeholder="WhatsApp access key"><input class="cn-tpl" autocomplete="off" placeholder="Approved template name (e.g. daily_post)"><input class="cn-lang" autocomplete="off" placeholder="Template language (en, en_US, sw)" value="en"><div class="row"><button type="button" class="btn cn-save">Save</button><button type="button" class="btn alt cn-del hidden">Disconnect</button></div><div class="cn-err"></div>
+          <div style="border-top:1px solid #243058;margin-top:12px;padding-top:10px"><div class="empty"><b>Contacts who agreed to receive your posts</b> (<span id="wc-n">0</span>)</div><input id="wc-name" placeholder="Name (optional)" autocomplete="off"><input id="wc-phone" inputmode="tel" placeholder="Phone with country code, e.g. 255712345678" autocomplete="off"><label class="empty" style="display:flex;gap:6px;align-items:flex-start;margin:6px 0"><input type="checkbox" id="wc-ok" style="width:auto;margin-top:2px"> This person agreed to receive my messages on WhatsApp.</label><div class="row"><button type="button" class="btn alt" id="wc-add">Add contact</button></div><textarea id="wc-bulk" rows="3" placeholder="Or paste many: one per line, 255712345678 or Name,255712345678" style="margin-top:8px"></textarea><div class="row"><button type="button" class="btn alt" id="wc-bulk-add">Add all pasted (they all agreed)</button></div><div id="wc-list" class="empty" style="margin-top:8px;max-height:160px;overflow:auto"></div></div></div>
         <div class="cn soon"><b><i class="ti ti-brand-youtube"></i> YouTube</b><div class="empty">Coming soon. YouTube needs a Google login, not a simple key.</div></div>
         <div class="cn soon"><b><i class="ti ti-brand-tiktok"></i> TikTok</b><div class="empty">Coming soon. TikTok needs its own approval.</div></div>
       </div>
       <details style="margin-top:10px"><summary class="empty" style="cursor:pointer">How do I get the ID and access key?</summary>
         <div class="empty" style="margin-top:6px;line-height:1.6">1. Go to developers.facebook.com and make an app (type Business).<br>2. Open <b>Tools → Graph API Explorer</b>, choose your app, and press "Get Page Access Token". Allow <b>pages_manage_posts</b>, <b>pages_read_engagement</b>, <b>instagram_basic</b> and <b>instagram_content_publish</b>.<br>3. In the Explorer, ask <b>me/accounts</b>: it shows each Page's <b>id</b> and <b>access_token</b>. That is your Facebook Page ID and key.<br>4. For Instagram, ask <b>{Page ID}?fields=instagram_business_account</b>. That number is your Instagram account ID. Use the same Page key.<br>5. Your Instagram must be a Professional (business/creator) account linked to the Facebook Page.</div></details>
+      <details style="margin-top:6px"><summary class="empty" style="cursor:pointer">WhatsApp: how to set it up</summary>
+        <div class="empty" style="margin-top:6px;line-height:1.6">This sends your picture or video as a WhatsApp message to people who agreed to receive it. It is <b>not</b> WhatsApp Status (WhatsApp does not allow that). Meta charges per message.<br>1. In your Meta app add the product <b>WhatsApp</b> and set up a WhatsApp Business number.<br>2. In <b>WhatsApp Manager → Message templates</b> create a template of category Marketing with an <b>Image or Video header</b> and a body of exactly one variable: <b>{{1}}</b>. Wait until Meta approves it.<br>3. Copy the <b>Phone Number ID</b> (WhatsApp → API Setup) and make a permanent key (System User) with <b>whatsapp_business_messaging</b> and <b>whatsapp_business_management</b>.<br>4. Paste them above with the template name and its language, press Save, then add your contacts. Only add people who agreed.</div></details>
     </div>
     <div class="panel" style="margin-bottom:12px"><h2>My banner</h2>
       <div class="bn"><div class="bn-pv" id="bn-pv"><span class="empty">Using the default banner</span></div>
@@ -108,7 +113,7 @@ select,textarea{width:100%;padding:.7rem .8rem;border-radius:12px;border:1px sol
         <div class="panel" style="margin-bottom:12px"><h2 id="f-h">Schedule a post</h2>
           <label for="p-title">What is the post?</label><input id="p-title" maxlength="120" placeholder="e.g. Goal highlights video">
           <div class="two"><div><label for="p-date">Date</label><input id="p-date" type="date"></div><div><label for="p-time">Time</label><input id="p-time" type="time" value="12:00"></div></div>
-          <label for="p-plat">Where</label><select id="p-plat"><option value="any">Everywhere (all connected accounts)</option><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="tiktok">TikTok</option><option value="youtube">YouTube</option><option value="whatsapp">WhatsApp (reminder + Share button)</option></select>
+          <label for="p-plat">Where</label><select id="p-plat"><option value="any">Everywhere (all connected accounts)</option><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="tiktok">TikTok</option><option value="youtube">YouTube</option><option value="whatsapp">WhatsApp (message my contacts)</option></select>
           <label for="p-note">Caption (used when posting)</label><textarea id="p-note" rows="2" maxlength="500"></textarea>
           <label for="p-file">Picture or video (needed for auto-post)</label><input id="p-file" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime">
           <label style="display:flex;gap:8px;align-items:center;color:#cfd8f5;margin-top:12px"><input id="p-auto" type="checkbox" style="width:auto"> Post automatically at this time</label>
@@ -124,7 +129,7 @@ select,textarea{width:100%;padding:.7rem .8rem;border-radius:12px;border:1px sol
 <div class="modal hidden" id="cal-m"><div class="modal-c"><h2 style="margin:0 0 6px;font-size:1.05rem">Add to calendar</h2><div class="empty" id="cal-file" style="margin-bottom:6px"></div>
   <label for="cm-title">Title</label><input id="cm-title" maxlength="120" placeholder="What is this post?">
   <div class="two"><div><label for="cm-date">Date</label><input id="cm-date" type="date"></div><div><label for="cm-time">Time</label><input id="cm-time" type="time" value="12:00"></div></div>
-  <label for="cm-plat">Where</label><select id="cm-plat"><option value="any">Everywhere (all connected accounts)</option><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="tiktok">TikTok (reminder only)</option><option value="youtube">YouTube (reminder only)</option><option value="whatsapp">WhatsApp (reminder + Share button)</option></select>
+  <label for="cm-plat">Where</label><select id="cm-plat"><option value="any">Everywhere (all connected accounts)</option><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="tiktok">TikTok (reminder only)</option><option value="youtube">YouTube (reminder only)</option><option value="whatsapp">WhatsApp (message my contacts)</option></select>
   <label for="cm-note">Caption</label><textarea id="cm-note" rows="2" maxlength="500"></textarea>
   <label style="display:flex;gap:8px;align-items:center;color:#cfd8f5;margin-top:12px"><input id="cm-auto" type="checkbox" style="width:auto"> Post automatically at this time</label>
   <div class="empty" id="cm-hint" style="margin-top:4px"></div>
@@ -283,10 +288,26 @@ const CN=(()=>{
   function paintCollab(){const c=conn.instagram;$('cn-collab').disabled=!c;$('cn-collab-save').disabled=!c;$('cn-collab').value=c&&c.collab_username?'@'+c.collab_username:'';if(!c)$('cn-collab-st').textContent='Connect your Instagram first, then add the collaborator.';}
   function paint(p){const el=document.querySelector('.cn[data-p="'+p+'"]');if(!el)return;const c=conn[p];
     el.querySelector('.cn-st').textContent=c?'Connected: '+(c.account_name||c.account_ref):'Not connected';el.querySelector('.cn-st').classList.toggle('ok',!!c);
-    el.querySelector('.cn-del').classList.toggle('hidden',!c);paintCollab();el.querySelector('.cn-key').placeholder=c?'Paste a new key to replace':(p==='facebook'?'Page access key':'Instagram access key');}
+    el.querySelector('.cn-del').classList.toggle('hidden',!c);paintCollab();el.querySelector('.cn-key').placeholder=c?'Paste a new key to replace':(p==='facebook'?'Page access key':p==='whatsapp'?'WhatsApp access key':'Instagram access key');}
+  let cl=[];
+  const e2=t=>String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function drawC(){$('wc-n').textContent=cl.length;$('wc-list').innerHTML=cl.length?cl.map(c=>'<div style="display:flex;justify-content:space-between;gap:8px;padding:3px 0"><span>'+e2(c.name||'')+' '+e2(c.phone)+'</span><a href="#" data-d="'+c.id+'" style="color:#ffb4c0">Remove</a></div>').join(''):'No contacts yet.';
+    $('wc-list').querySelectorAll('[data-d]').forEach(a=>a.onclick=async ev=>{ev.preventDefault();await sb.from('creator_contacts').delete().eq('id',a.dataset.d);cl=cl.filter(x=>x.id!==a.dataset.d);drawC();});}
+  const cleanP=t=>{let d=String(t).replace(/[^\d]/g,'');if(/^0\d{9}$/.test(d))d='255'+d.slice(1);return /^\d{9,15}$/.test(d)?d:'';};
+  async function addC(rows){
+    const ok=[],bad=[];rows.forEach(r=>{const p=cleanP(r.phone);if(p&&!cl.some(c=>c.phone===p)&&!ok.some(c=>c.phone===p))ok.push({name:(r.name||'').slice(0,60)||null,phone:p});else if(!p)bad.push(r.phone);});
+    if(ok.length){const r=await sb.from('creator_contacts').insert(ok).select();if(r.error){showToast('Could not save: '+String(r.error.message).slice(0,120),'error');return;}cl=cl.concat(r.data||[]);drawC();}
+    showToast(ok.length+' added'+(bad.length?', '+bad.length+' wrong number(s) skipped':'')+'.',bad.length&&!ok.length?'error':undefined);}
+  async function contacts(){
+    const r=await sb.from('creator_contacts').select('id,name,phone').order('created_at');cl=r.data||[];drawC();
+    $('wc-add').onclick=async()=>{if(!$('wc-ok').checked){showToast('Tick the box: this person agreed to receive your messages.','error');return;}
+      const p=$('wc-phone').value;if(!cleanP(p)){showToast('Write the phone with country code, e.g. 255712345678.','error');return;}
+      await addC([{name:$('wc-name').value.trim(),phone:p}]);$('wc-name').value='';$('wc-phone').value='';$('wc-ok').checked=false;};
+    $('wc-bulk-add').onclick=async()=>{const rows=$('wc-bulk').value.split(/\n/).map(l=>l.trim()).filter(Boolean).map(l=>{const m=l.split(/[,;\t]/);return m.length>1?{name:m[0].trim(),phone:m[m.length-1]}:{name:'',phone:l};});
+      if(!rows.length)return;if(!confirm('Do all these people agree to receive your WhatsApp messages?'))return;await addC(rows);$('wc-bulk').value='';};}
   async function start(){
-    const r=await sb.from('creator_credentials').select('platform,account_ref,account_name,collab_username');
-    (r.data||[]).forEach(x=>conn[x.platform]=x);['facebook','instagram'].forEach(paint);paintCollab();
+    const r=await sb.from('creator_credentials').select('platform,account_ref,account_name,collab_username,wa_template,wa_lang');
+    (r.data||[]).forEach(x=>conn[x.platform]=x);['facebook','instagram','whatsapp'].forEach(paint);paintCollab();contacts();
     $('cn-collab-save').onclick=async()=>{const b=$('cn-collab-save');b.disabled=true;
       try{const r=await sb.functions.invoke('creator-connect',{body:{action:'collab',platform:'instagram',collab_username:$('cn-collab').value}});
         let d=r.data;if(r.error&&r.error.context&&r.error.context.json){try{d=await r.error.context.json();}catch(e){}}
@@ -300,8 +321,9 @@ const CN=(()=>{
       el.querySelector('.cn-save').onclick=async()=>{
         const id=el.querySelector('.cn-id').value.trim(),key=el.querySelector('.cn-key').value.trim();
         if(!id||!key){showToast('Fill in the ID and the access key.','error');return;}
+        if(p==='whatsapp'&&!el.querySelector('.cn-tpl').value.trim()){showToast('Write the approved template name.','error');return;}
         const b=el.querySelector('.cn-save');b.disabled=true;el.querySelector('.cn-err').textContent='';
-        try{const r=await sb.functions.invoke('creator-connect',{body:{action:'save',platform:p,account_ref:id,access_token:key}});
+        try{const r=await sb.functions.invoke('creator-connect',{body:{action:'save',platform:p,account_ref:id,access_token:key,wa_template:(el.querySelector('.cn-tpl')||{}).value,wa_lang:(el.querySelector('.cn-lang')||{}).value}});
           let d=r.data;if(r.error&&r.error.context&&r.error.context.json){try{d=await r.error.context.json();}catch(e){}}
           if(!d||d.error)throw new Error((d&&d.error)||'Could not save.');
           conn[p]={platform:p,account_ref:d.ref||id,account_name:d.name};el.querySelector('.cn-key').value='';paint(p);showToast('Connected: '+d.name+(d.swapped?' (I found your Page key for you)':''));DASH.refreshHint();
@@ -443,9 +465,10 @@ const DASH=(()=>{
   }
   return {add,postNow,start,refreshHint:()=>{try{hint();}catch(e){}}};
 })();
+const PLN={facebook:'Facebook',instagram:'Instagram',whatsapp:'WhatsApp',tiktok:'TikTok',youtube:'YouTube'};
 const CALM=(()=>{
   let pend=null;const pad=n=>String(n).padStart(2,'0');
-  function hint(){const a=$('cm-auto').checked,pl=$('cm-plat').value,auto=['any','facebook','instagram'].includes(pl);$('cm-hint').textContent=a?(!auto?'Auto-post works for Facebook and Instagram only. This one will be a reminder.':CN.has(pl)?'It will be posted from your own account.':'Connect Facebook or Instagram first (Connect my accounts).'):'';}
+  function hint(){const a=$('cm-auto').checked,pl=$('cm-plat').value,auto=['any','facebook','instagram','whatsapp'].includes(pl);$('cm-hint').textContent=a?(!auto?'Auto-post works for Facebook, Instagram and WhatsApp only. This one will be a reminder.':CN.has(pl)?'It will be posted from your own account.':'Connect '+(pl==='whatsapp'?'WhatsApp':'Facebook or Instagram')+' first (Connect my accounts).'):'';}
   window.BUZA_CAL_ADD=(blob,kind,name)=>{
     pend={blob,kind,name};const d=new Date(Date.now()+3600000);
     $('cal-file').textContent=(kind==='video'?'Video':'Picture')+' · '+(blob.size/1048576).toFixed(1)+' MB';
@@ -457,11 +480,11 @@ const CALM=(()=>{
   $('cm-now').onclick=()=>saveModal(true);
   $('cm-save').onclick=()=>saveModal(false);
   async function saveModal(now){
-    if(!pend)return;const title=$('cm-title').value.trim(),date=$('cm-date').value,time=$('cm-time').value||'12:00',pl=$('cm-plat').value,auto=$('cm-auto').checked&&['any','facebook','instagram'].includes(pl);
+    if(!pend)return;const title=$('cm-title').value.trim(),date=$('cm-date').value,time=$('cm-time').value||'12:00',pl=$('cm-plat').value,auto=$('cm-auto').checked&&['any','facebook','instagram','whatsapp'].includes(pl);
     if(!title){showToast('Write a title.','error');return;}if(!date){showToast('Choose a date.','error');return;}
     if(pend.blob.size>50*1024*1024){showToast('The file is over 50 MB, it cannot be saved to the calendar.','error');return;}
-    if(now&&!CN.has(['any','facebook','instagram'].includes(pl)?pl:'any')){showToast('Connect Facebook or Instagram first (Connect my accounts).','error');return;}
-    if(auto&&!now){if(!CN.has(pl)){showToast('Connect '+(pl==='any'?'Facebook or Instagram':pl)+' first.','error');return;}if(new Date(date+'T'+time)<new Date(Date.now()-60000)){showToast('Choose a time in the future.','error');return;}}
+    if(now&&!CN.has(['any','facebook','instagram','whatsapp'].includes(pl)?pl:'any')){showToast('Connect Facebook or Instagram first (Connect my accounts).','error');return;}
+    if(auto&&!now){if(!CN.has(pl)){showToast('Connect '+(pl==='any'?'Facebook or Instagram':PLN[pl]||pl)+' first.','error');return;}if(new Date(date+'T'+time)<new Date(Date.now()-60000)){showToast('Choose a time in the future.','error');return;}}
     const b=$(now?'cm-now':'cm-save');b.disabled=true;
     try{
       const u=await sb.auth.getUser(),uid=u.data&&u.data.user&&u.data.user.id;if(!uid)throw new Error('Please log in again.');
