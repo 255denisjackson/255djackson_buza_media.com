@@ -110,7 +110,7 @@
     c.save();c.beginPath();c.rect(q.rp.x,q.rp.y,q.rp.w,q.rp.h);c.clip();c.fillStyle='#161a21';c.fillRect(q.rp.x,q.rp.y,q.rp.w,q.rp.h);
     var im=SP.img;
     if(im&&im.complete&&im.naturalWidth){var k=Math.max(q.rp.w/im.naturalWidth,q.rp.h/im.naturalHeight),dw=im.naturalWidth*k,dh=im.naturalHeight*k;c.drawImage(im,q.rp.x+(q.rp.w-dw)/2,q.rp.y+(q.rp.h-dh)/2,dw,dh);}
-    else if(preview){c.fillStyle='#8b93a1';c.textAlign='center';c.textBaseline='middle';c.font='600 '+Math.round(W/22)+'px '+HFONT;c.fillText('Choose picture',q.rp.x+q.rp.w/2,q.rp.y+q.rp.h/2);}
+    else if(preview){c.fillStyle='#8b93a1';c.textAlign='center';c.textBaseline='middle';c.font='600 '+Math.round(W/22)+'px '+HFONT;c.fillText(B.img?'Choose photo 2':'Choose picture',q.rp.x+q.rp.w/2,q.rp.y+q.rp.h/2);}
     c.restore();
     var th=Math.max(3,Math.round(W*0.006));c.fillStyle='#ffffff';
     if(SP.dir==='h')c.fillRect(q.line.x-th/2,q.line.y,th,q.line.h);else c.fillRect(q.line.x,q.line.y-th/2,q.line.w,th);
@@ -509,10 +509,10 @@
     }
     if(spsheet&&!l){
       var sel0=(SP.dir==='h'?(SP.vfirst?'hv':'hp'):(SP.vfirst?'vv':'vp')),inp='width:100%;padding:.6rem .7rem;border-radius:12px;background:#0b0d11;color:#eceff4;border:1px solid #303642;font-size:1rem';
-      sh.innerHTML='<div style="color:#c5cad3;font-size:.8rem;margin-bottom:.3rem">Split screen: video + picture. Drag the white line to resize.</div><div class="sl" style="display:block"><select id="sp-l" style="'+inp+'">'+
-        [['hv','Video left · Picture right'],['hp','Picture left · Video right'],['vv','Video top · Picture bottom'],['vp','Picture top · Video bottom']].map(function(o){return '<option value="'+o[0]+'"'+(o[0]===sel0?' selected':'')+'>'+o[1]+'</option>';}).join('')+
+      sh.innerHTML='<div style="color:#c5cad3;font-size:.8rem;margin-bottom:.3rem">'+(B.img?'Two photos side by side. Photo 1 is the one you opened.':'Split screen: video + picture.')+' Drag the white line to resize.</div><div class="sl" style="display:block"><select id="sp-l" style="'+inp+'">'+
+        (B.img?[['hv','Photo 1 left · Photo 2 right'],['hp','Photo 2 left · Photo 1 right'],['vv','Photo 1 top · Photo 2 bottom'],['vp','Photo 2 top · Photo 1 bottom']]:[['hv','Video left · Picture right'],['hp','Picture left · Video right'],['vv','Video top · Picture bottom'],['vp','Picture top · Video bottom']]).map(function(o){return '<option value="'+o[0]+'"'+(o[0]===sel0?' selected':'')+'>'+o[1]+'</option>';}).join('')+
         '</select></div><div class="sl"><span>Move divider</span><input type="range" id="sp-p" min="15" max="85" value="'+SP.pos+'"></div>'+
-        '<div style="display:flex;gap:.5rem;margin-top:.4rem"><button class="pill" id="sp-pic" style="flex:1">'+(SP.img?'Change picture':'Choose picture')+'</button><button class="pill" id="sp-off" style="flex:1">Turn off</button></div><input type="file" id="sp-f" accept="image/*" style="display:none">';
+        '<div style="display:flex;gap:.5rem;margin-top:.4rem"><button class="pill" id="sp-pic" style="flex:1">'+(SP.img?(B.img?'Change photo 2':'Change picture'):(B.img?'Choose photo 2':'Choose picture'))+'</button><button class="pill" id="sp-off" style="flex:1">Turn off</button></div><input type="file" id="sp-f" accept="image/*" style="display:none">';
       sh.style.display='';
       $('sp-l').addEventListener('change',function(e){var v=e.target.value;SP.dir=v.charAt(0)==='h'?'h':'v';SP.vfirst=v.charAt(1)==='v';draw();});
       $('sp-p').addEventListener('input',function(e){SP.pos=+e.target.value;draw();});
