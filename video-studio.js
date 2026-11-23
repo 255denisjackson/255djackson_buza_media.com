@@ -1154,4 +1154,6 @@
   window.__vsOpen=open;
   window.__vs={st:st,B:function(){return B;},L:function(){return L;},make:make,addLayer:addLayer,result:function(){return result;},seek:seek,toggleKf:toggleKf,sel:function(i){sel=i;},setProp:setProp,T:function(){return T;},evalL:evalL};
   var ob=document.getElementById('vs-open');if(ob)ob.addEventListener('click',open);
+  /* direct link without login: index.html#studio opens the editor straight away (editing works without the database) */
+  try{if(/(^|[#&?])studio/.test(location.hash||'')||/[?&]studio/.test(location.search||''))setTimeout(open,200);}catch(e){}
 })();
