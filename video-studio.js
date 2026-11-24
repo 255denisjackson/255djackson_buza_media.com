@@ -240,12 +240,16 @@
     if(idx>=0)BANS[idx]=nb;else BANS.push(nb);delete BANIMG.mine;
     if(!mineSeen||st.ban==='mine'){mineSeen=true;setBanner('mine');}}
   /* stop the phone's pull-down-to-refresh while editing: dragging the logo, headline or video must never reload the page */
-  var pullOn=false,pullY=0,pullSt=null;
+  var pullOn=false,pullY=0,pullX=0,pullSt=null;
   function inScroller(t){while(t&&t!==ov){if(t.nodeType===1){var cs=getComputedStyle(t);if(/(auto|scroll)/.test(cs.overflowY)&&t.scrollHeight>t.clientHeight+1)return t;}t=t.parentNode;}return null;}
-  function onTS(e){pullY=e.touches&&e.touches[0]?e.touches[0].clientY:0;}
-  function onTM(e){if(!ov||ov.style.display==='none')return;var sc=inScroller(e.target);
+  function onTS(e){var t=e.touches&&e.touches[0];pullY=t?t.clientY:0;pullX=t?t.clientX:0;}
+  /* only the sideways-or-vertical PULL is stopped; sideways swipes (tool strips, timeline) are never touched */
+  function onTM(e){if(!ov||ov.style.display==='none'||!e.touches||!e.touches[0])return;
+    var dy=e.touches[0].clientY-pullY,dx=e.touches[0].clientX-pullX;
+    if(Math.abs(dx)>=Math.abs(dy))return;
+    var sc=inScroller(e.target);
     if(!sc){if(e.cancelable)e.preventDefault();return;}
-    var y=e.touches[0].clientY,dy=y-pullY;if((sc.scrollTop<=0&&dy>0)||(sc.scrollTop+sc.clientHeight>=sc.scrollHeight-1&&dy<0)){if(e.cancelable)e.preventDefault();}}
+    if((sc.scrollTop<=0&&dy>0)||(sc.scrollTop+sc.clientHeight>=sc.scrollHeight-1&&dy<0)){if(e.cancelable)e.preventDefault();}}
   function lockPull(on){var h=document.documentElement,b=document.body;
     if(on&&!pullOn){pullOn=true;pullSt=[h.style.overscrollBehavior,b.style.overscrollBehavior];h.style.overscrollBehavior='none';b.style.overscrollBehavior='none';
       document.addEventListener('touchstart',onTS,{passive:true});document.addEventListener('touchmove',onTM,{passive:false});}
