@@ -60,6 +60,7 @@ select,textarea{width:100%;padding:.7rem .8rem;border-radius:12px;border:1px sol
 .cn-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}.cn{background:#0b1020;border:1px solid #243058;border-radius:12px;padding:12px}.cn b{display:block;margin-bottom:4px;font-size:.9rem}.cn input{margin-top:8px;font-size:.82rem;padding:.6rem .7rem}.cn .row{margin-top:10px}.cn .row .btn{padding:.5rem .9rem}.cn.soon{opacity:.6}.cn-st.ok{color:#3ddc84}.badge{display:inline-block;border-radius:999px;padding:.1rem .55rem;font-size:.68rem;font-weight:700;background:#1b2750;color:#cfd8f5;margin-left:6px}.badge.ok{background:#10321f;color:#9be7b8}.badge.bad{background:#3a1420;color:#ffb4c0}.badge.wait{background:#3a2e10;color:#ffd98a}
 .modal{position:fixed;inset:0;background:rgba(5,8,18,.8);z-index:300000;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto}.modal-c{width:100%;max-width:420px;background:#121a33;border:1px solid #243058;border-radius:18px;padding:18px;max-height:92vh;overflow:auto}.toast{z-index:400000!important}
 .cn-err{color:#ffb4c0;font-size:.76rem;margin-top:8px;line-height:1.4;word-break:break-word}
+body.nodb #v-in>*:not(.top):not(#db-setup){display:none!important}
 </style>
 </head>
 <body>
@@ -77,6 +78,16 @@ select,textarea{width:100%;padding:.7rem .8rem;border-radius:12px;border:1px sol
   <div id="v-in" class="hidden">
     <div class="top"><div><p class="hello" id="h-name"></p><p class="sub">Your name is on every banner, watermark and video you make.</p></div>
       <div class="row"><button type="button" class="btn" id="vs-open"><i class="ti ti-movie" aria-hidden="true"></i> Video Studio</button><button type="button" class="btn alt" id="b-rename">Change name</button><button type="button" class="btn alt" id="b-out">Log out</button></div></div>
+    <div class="panel" id="db-setup" style="margin-bottom:12px"><h2>Step 1: connect your own free database</h2>
+      <div class="empty" style="line-height:1.6;margin-bottom:8px">Your posts, pictures, contacts and banner are stored in <b>your own</b> free Supabase database, so nothing is shared and nothing gets locked. You do this once (about 5 minutes).</div>
+      <div class="empty" style="line-height:1.7">1. Go to <b>supabase.com</b>, sign up (free) and press <b>New project</b>. Choose any name and a password you will remember.<br>2. When the project is ready, open <b>SQL Editor</b> → <b>New query</b>. Press the button below to copy the setup SQL, paste it there and press <b>Run</b>. It must say "Success".<br>3. Open <b>Project Settings → API</b>. Copy the <b>Project URL</b>, the <b>anon (publishable)</b> key and the <b>service_role (secret)</b> key into the boxes below.</div>
+      <div class="row" style="margin:8px 0"><button type="button" class="btn alt" id="db-copy">Copy setup SQL</button><button type="button" class="btn alt" id="db-show">Show it</button></div>
+      <textarea id="db-sql" rows="6" readonly class="hidden" style="font-size:.72rem"></textarea>
+      <input id="db-url" placeholder="Project URL (https://xxxx.supabase.co)" autocomplete="off"><input id="db-anon" placeholder="anon / publishable key" autocomplete="off"><input id="db-svc" type="password" placeholder="service_role / secret key" autocomplete="off">
+      <div class="empty" style="margin-top:4px">The secret key is kept on our server and used only to post for you at the time you chose. It is never shown in the browser.</div>
+      <div class="row" style="margin-top:8px"><button type="button" class="btn" id="db-go">Connect my database</button></div><div class="cn-err" id="db-err"></div>
+    </div>
+    <div class="empty hidden" id="db-ok" style="margin:0 0 10px"></div>
     <div class="stats">
       <div class="stat"><b id="s-up">0</b><span>Coming up</span></div>
       <div class="stat"><b id="s-wk">0</b><span>This week</span></div>
@@ -140,15 +151,98 @@ select,textarea{width:100%;padding:.7rem .8rem;border-radius:12px;border:1px sol
 <script>
 const sb=window.supabase.createClient('https://cgoxglsepltjbemnlmqx.supabase.co','sb_publishable_USnTAF6QDYaD2Oauc7lgxQ_4s-WVmA9');
 let isLoggedIn=false,mode='up';
+let sbd=sb; /* the creator's OWN database (plans, contacts, banners, media). Set after login; the central one only holds login + keys. */
 const $=id=>document.getElementById(id);
 function showToast(m,t){const e=$('toast');e.textContent=m;e.className='toast '+(t||'success')+' show';setTimeout(()=>e.classList.remove('show'),3200);}
 function cleanName(s){return String(s||'').replace(/[<>"'&]/g,'').replace(/\s+/g,' ').trim().slice(0,24);}
 function setMode(m){mode=m;$('t-up').classList.toggle('on',m==='up');$('t-in').classList.toggle('on',m==='in');$('f-name').classList.toggle('hidden',m!=='up');$('a-go').textContent=m==='up'?'Create account':'Log in';$('a-pass').autocomplete=m==='up'?'new-password':'current-password';$('a-err').style.display=$('a-ok').style.display='none';}
 function say(id,t){const e=$(id);e.textContent=t;e.style.display='block';}
+const DBS=(()=>{
+  let row=null,started=false,U=null;
+  const SQL=uid=>`-- Buza Media creator setup. Paste this in Supabase > SQL Editor and press Run.
+create extension if not exists pgcrypto;
+create table if not exists public.creator_plans(
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default '${uid}',
+  plan_date date not null, plan_time time, title text not null,
+  platform text not null default 'any' check (platform in ('any','instagram','facebook','tiktok','youtube','whatsapp')),
+  note text, done boolean not null default false, created_at timestamptz not null default now(),
+  media_path text, media_type text, plan_at timestamptz,
+  status text not null default 'draft' check (status in ('draft','queued','posting','posted','failed')),
+  results jsonb not null default '[]'::jsonb, posting_at timestamptz);
+create index if not exists creator_plans_due on public.creator_plans(status, plan_at);
+create table if not exists public.creator_contacts(
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default '${uid}',
+  name text, phone text not null, created_at timestamptz not null default now(), unique(user_id, phone));
+create table if not exists public.creator_banners(
+  user_id uuid primary key default '${uid}',
+  path text not null, w integer not null, h integer not null, area jsonb not null, box jsonb not null,
+  note text, updated_at timestamptz not null default now(), box_auto jsonb);
+alter table public.creator_plans enable row level security;
+alter table public.creator_contacts enable row level security;
+alter table public.creator_banners enable row level security;
+drop policy if exists bm_all on public.creator_plans;
+create policy bm_all on public.creator_plans for all to anon, authenticated using (true) with check (true);
+drop policy if exists bm_all on public.creator_contacts;
+create policy bm_all on public.creator_contacts for all to anon, authenticated using (true) with check (true);
+drop policy if exists bm_all on public.creator_banners;
+create policy bm_all on public.creator_banners for all to anon, authenticated using (true) with check (true);
+grant all on public.creator_plans, public.creator_contacts, public.creator_banners to anon, authenticated, service_role;
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types) values
+ ('creator-media','creator-media',true,52428800,array['image/jpeg','image/png','image/webp','video/mp4','video/quicktime']),
+ ('creator-banners','creator-banners',true,12582912,array['image/png'])
+on conflict (id) do update set public=true, file_size_limit=excluded.file_size_limit, allowed_mime_types=excluded.allowed_mime_types;
+drop policy if exists bm_files on storage.objects;
+create policy bm_files on storage.objects for all to anon, authenticated
+ using (bucket_id in ('creator-media','creator-banners')) with check (bucket_id in ('creator-media','creator-banners'));`;
+  const client=r=>window.supabase.createClient(r.db_url,r.anon_key,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+  async function boot(user){
+    U=user;const sql=SQL(user.id);$('db-sql').value=sql;
+    $('db-copy').onclick=async()=>{try{await navigator.clipboard.writeText(sql);showToast('Copied. Paste it in Supabase SQL Editor.');}catch(e){$('db-sql').classList.remove('hidden');$('db-sql').select();showToast('Select all and copy the text.','error');}};
+    $('db-show').onclick=()=>$('db-sql').classList.toggle('hidden');
+    $('db-go').onclick=connect;
+    const r=await sb.from('creator_dbs').select('*').maybeSingle();row=r.data||null;
+    if(!row){document.body.classList.add('nodb');$('db-setup').classList.remove('hidden');$('db-ok').classList.add('hidden');return;}
+    sbd=client(row);document.body.classList.remove('nodb');$('db-setup').classList.add('hidden');
+    const host=row.db_url.replace('https://','').split('.')[0];
+    $('db-ok').innerHTML='Your own database: <b>'+host+'</b> '+(row.last_error?'<span style="color:#ffb4c0">· problem: '+String(row.last_error).replace(/[<>&]/g,'')+'</span>':'<span style="color:#7be7a1">· connected</span>')+' · <a href="#" id="db-mig" style="color:#8fb4ff">Move my older posts here</a> · <a href="#" id="db-off" style="color:#ffb4c0">Disconnect</a>';
+    $('db-ok').classList.remove('hidden');
+    $('db-off').onclick=async e=>{e.preventDefault();if(!confirm('Disconnect your database? Your data stays in it, but posting from this site stops until you connect again.'))return;await sb.functions.invoke('creator-db',{body:{action:'remove'}});location.reload();};
+    $('db-mig').onclick=async e=>{e.preventDefault();migrate();};
+    if(!started){started=true;DASH.start(user);BN.start(user);CN.start();}
+  }
+  async function connect(){
+    const b=$('db-go');$('db-err').textContent='';const v={db_url:$('db-url').value.trim(),anon_key:$('db-anon').value.trim(),service_key:$('db-svc').value.trim()};
+    if(!v.db_url||!v.anon_key||!v.service_key){$('db-err').textContent='Fill the three boxes.';return;}
+    b.disabled=true;b.textContent='Checking…';
+    try{const r=await sb.functions.invoke('creator-db',{body:{action:'save',...v}});
+      let msg=r.error?'Could not connect.':'';if(r.error){try{const j=await r.error.context.json();msg=j.error||msg;}catch(e){}}
+      if(!msg&&r.data&&r.data.error)msg=r.data.error;
+      if(msg){$('db-err').textContent=msg;return;}
+      $('db-svc').value='';showToast('Your database is connected.');await boot(U);}
+    catch(e){$('db-err').textContent=String(e.message||e).slice(0,160);}
+    finally{b.disabled=false;b.textContent='Connect my database';}
+  }
+  /* copy the creator's older data (kept in the central database before this change) into their own database */
+  async function migrate(){
+    if(!confirm('Copy your older posts, contacts and pictures into your own database?'))return;
+    try{
+      const pl=(await sb.from('creator_plans').select('*')).data||[];if(!pl.length){showToast('Nothing older to move.');return;}
+      const have=new Set(((await sbd.from('creator_plans').select('id')).data||[]).map(x=>x.id));let n=0;
+      for(const p of pl){if(have.has(p.id))continue;const q={...p};
+        if(p.media_path){try{const d=await sb.storage.from('creator-media').download(p.media_path);if(d.error)throw d.error;const u=await sbd.storage.from('creator-media').upload(p.media_path,d.data,{contentType:d.data.type,upsert:true});if(u.error)throw u.error;}catch(e){continue;}}
+        const r=await sbd.from('creator_plans').insert(q);if(!r.error){n++;await sb.from('creator_plans').delete().eq('id',p.id);}}
+      const ct=(await sb.from('creator_contacts').select('name,phone')).data||[];if(ct.length)await sbd.from('creator_contacts').upsert(ct,{onConflict:'user_id,phone'});
+      showToast('Moved '+n+' posts.');setTimeout(()=>location.reload(),900);
+    }catch(e){showToast('Could not move: '+String(e.message||e).slice(0,100),'error');}
+  }
+  return{boot};
+})();
 function enter(user){
   const b=cleanName(user.user_metadata&&user.user_metadata.brand)||cleanName((user.email||'').split('@')[0]);
   window.BUZA_BRAND=b;isLoggedIn=true;try{sb.rpc('touch_creator');}catch(e){}
-  $('v-out').classList.add('hidden');$('v-in').classList.remove('hidden');$('h-name').textContent='Welcome, '+b;document.body.classList.add('dash');document.querySelector('.card').classList.add('wide');DASH.start(user);BN.start(user);CN.start();
+  $('v-out').classList.add('hidden');$('v-in').classList.remove('hidden');$('h-name').textContent='Welcome, '+b;document.body.classList.add('dash');document.querySelector('.card').classList.add('wide');DBS.boot(user);
 }
 async function go(){
   const email=$('a-email').value.trim(),pass=$('a-pass').value,name=cleanName($('a-name').value);
@@ -188,7 +282,7 @@ $('b-rename').onclick=async()=>{
 const BN=(()=>{
   const TW=1360,TH=1924;let cur=null;
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-  const pubUrl=(path,v)=>sb.storage.from('creator-banners').getPublicUrl(path).data.publicUrl+'?v='+encodeURIComponent(v||Date.now());
+  const pubUrl=(path,v)=>sbd.storage.from('creator-banners').getPublicUrl(path).data.publicUrl+'?v='+encodeURIComponent(v||Date.now());
   function show(m,msg){
     cur=m;window.BUZA_MY_BANNER=m?{url:m.url,w:m.w,h:m.h,area:m.area,box:m.box,box0:m.box0||m.box}:null;
     $('bn-pv').innerHTML=m?'<img alt="My banner" src="'+m.url+'">':'<span class="empty">Using the default banner</span>';
@@ -264,10 +358,10 @@ const BN=(()=>{
     const r=await process(file);
     if(r.blob.size>11*1024*1024)throw new Error('big');
     const path=uid+'/banner.png';
-    const up=await sb.storage.from('creator-banners').upload(path,r.blob,{contentType:'image/png',upsert:true,cacheControl:'60'});
+    const up=await sbd.storage.from('creator-banners').upload(path,r.blob,{contentType:'image/png',upsert:true,cacheControl:'60'});
     if(up.error)throw up.error;
     const row={user_id:uid,path,w:TW,h:TH,area:r.area,box:r.box,box_auto:r.box,note:r.how,updated_at:new Date().toISOString()};
-    const db=await sb.from('creator_banners').upsert(row);if(db.error)throw db.error;
+    const db=await sbd.from('creator_banners').upsert(row);if(db.error)throw db.error;
     show({url:pubUrl(path,row.updated_at),w:TW,h:TH,area:r.area,box:r.box,box0:r.box},r.how+' Saved. It is now in Video Studio → Banner → "My banner".');
   }
   async function start(user){
@@ -275,11 +369,11 @@ const BN=(()=>{
     $('bn-file').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;if(!/^image\//.test(f.type)){showToast('Choose an image.','error');return;}
       try{await upload(f,uidv);}catch(err){const m=String(err&&(err.message||err.error_description)||err||'').slice(0,140);$('bn-st').textContent='Could not save this banner'+(m?' ('+m+')':'')+'. Log out, log in again and retry.';showToast('Banner failed.','error');}};
     $('bn-del').onclick=async()=>{if(!confirm('Remove your banner and use the default?'))return;
-      try{await sb.storage.from('creator-banners').remove([uidv+'/banner.png']);await sb.from('creator_banners').delete().eq('user_id',uidv);}catch(e){}
+      try{await sbd.storage.from('creator-banners').remove([uidv+'/banner.png']);await sbd.from('creator_banners').delete().eq('user_id',uidv);}catch(e){}
       show(null,'Banner removed.');};
-    const r=await sb.from('creator_banners').select('*').maybeSingle();
+    const r=await sbd.from('creator_banners').select('*').maybeSingle();
     if(r.data)show({url:pubUrl(r.data.path,r.data.updated_at),w:r.data.w,h:r.data.h,area:r.data.area,box:r.data.box,box0:r.data.box_auto||r.data.box},r.data.note||'');
-    window.BUZA_BOX_SAVE=async box=>{try{await sb.from('creator_banners').update({box}).eq('user_id',uidv);}catch(e){}};
+    window.BUZA_BOX_SAVE=async box=>{try{await sbd.from('creator_banners').update({box}).eq('user_id',uidv);}catch(e){}};
   }
   return {start};
 })();
@@ -294,14 +388,14 @@ const CN=(()=>{
   let cl=[];
   const e2=t=>String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function drawC(){$('wc-n').textContent=cl.length;$('wc-list').innerHTML=cl.length?cl.map(c=>'<div style="display:flex;justify-content:space-between;gap:8px;padding:3px 0"><span>'+e2(c.name||'')+' '+e2(c.phone)+'</span><a href="#" data-d="'+c.id+'" style="color:#ffb4c0">Remove</a></div>').join(''):'No contacts yet.';
-    $('wc-list').querySelectorAll('[data-d]').forEach(a=>a.onclick=async ev=>{ev.preventDefault();await sb.from('creator_contacts').delete().eq('id',a.dataset.d);cl=cl.filter(x=>x.id!==a.dataset.d);drawC();});}
+    $('wc-list').querySelectorAll('[data-d]').forEach(a=>a.onclick=async ev=>{ev.preventDefault();await sbd.from('creator_contacts').delete().eq('id',a.dataset.d);cl=cl.filter(x=>x.id!==a.dataset.d);drawC();});}
   const cleanP=t=>{let d=String(t).replace(/[^\d]/g,'');if(/^0\d{9}$/.test(d))d='255'+d.slice(1);return /^\d{9,15}$/.test(d)?d:'';};
   async function addC(rows){
     const ok=[],bad=[];rows.forEach(r=>{const p=cleanP(r.phone);if(p&&!cl.some(c=>c.phone===p)&&!ok.some(c=>c.phone===p))ok.push({name:(r.name||'').slice(0,60)||null,phone:p});else if(!p)bad.push(r.phone);});
-    if(ok.length){const r=await sb.from('creator_contacts').insert(ok).select();if(r.error){showToast('Could not save: '+String(r.error.message).slice(0,120),'error');return;}cl=cl.concat(r.data||[]);drawC();}
+    if(ok.length){const r=await sbd.from('creator_contacts').insert(ok).select();if(r.error){showToast('Could not save: '+String(r.error.message).slice(0,120),'error');return;}cl=cl.concat(r.data||[]);drawC();}
     showToast(ok.length+' added'+(bad.length?', '+bad.length+' wrong number(s) skipped':'')+'.',bad.length&&!ok.length?'error':undefined);}
   async function contacts(){
-    const r=await sb.from('creator_contacts').select('id,name,phone').order('created_at');cl=r.data||[];drawC();
+    const r=await sbd.from('creator_contacts').select('id,name,phone').order('created_at');cl=r.data||[];drawC();
     $('wc-add').onclick=async()=>{if(!$('wc-ok').checked){showToast('Tick the box: this person agreed to receive your messages.','error');return;}
       const p=$('wc-phone').value;if(!cleanP(p)){showToast('Write the phone with country code, e.g. 255712345678.','error');return;}
       await addC([{name:$('wc-name').value.trim(),phone:p}]);$('wc-name').value='';$('wc-phone').value='';$('wc-ok').checked=false;};
@@ -377,7 +471,7 @@ const DASH=(()=>{
     $('list').innerHTML=(sel?'<div style="margin-bottom:8px"><button type="button" class="btn alt" style="margin:0;padding:.4rem .8rem;font-size:.78rem;width:auto" id="l-all">Show all coming up</button></div>':'')+(rows.length?rows.map(p=>'<div class="item'+(p.done?' done':'')+'"><div class="t1">'+esc(p.title)+badge(p)+'</div><div class="t2">'+fmtDay(p.plan_date)+' · '+(p.plan_time||'').slice(0,5)+' · '+PL[p.platform]+(p.note?'<br>'+esc(p.note):'')+'</div><div class="acts">'+(p.status==='failed'?'<button data-a="retry" data-id="'+p.id+'">Retry</button>':'')+(p.status==='draft'&&p.media_path&&!p.done&&when(p)>new Date()&&['any','facebook','instagram','whatsapp'].includes(p.platform)?'<button data-a="auto" data-id="'+p.id+'">Auto-post</button>':'')+''+(p.media_path&&p.status!=='posted'&&p.status!=='posting'?'<button data-a="now" data-id="'+p.id+'">Post now</button>':'')+(p.media_path?'<button data-a="wa" data-id="'+p.id+'">WhatsApp</button>':'')+'<button data-a="done" data-id="'+p.id+'">'+(p.done?'Undo':'✓ Done')+'</button><button data-a="edit" data-id="'+p.id+'">Edit</button><button data-a="del" data-id="'+p.id+'">Delete</button></div></div>').join(''):'<div class="empty">'+(sel?'Nothing planned on this day.':'Nothing planned yet. Pick a day and add your first post.')+'</div>');
   }
   function refresh(){stats();cal();list();}
-  async function add(row){const r=await sb.from('creator_plans').insert(row).select().single();if(r.error)throw r.error;plans.push(r.data);sel=row.plan_date;view=new Date(row.plan_date+'T00:00:00');refresh();return r.data;}
+  async function add(row){const r=await sbd.from('creator_plans').insert(row).select().single();if(r.error)throw r.error;plans.push(r.data);sel=row.plan_date;view=new Date(row.plan_date+'T00:00:00');refresh();return r.data;}
   let more=[];
   function drawMore(){$('p-more-l').innerHTML=more.length?more.map(d=>'<span style="display:inline-block;background:#1b2750;border-radius:12px;padding:3px 9px;margin:2px">'+fmtDay(d)+' '+d.slice(0,4)+' <a href="#" data-m="'+d+'" style="color:#ffb4c0;text-decoration:none">✕</a></span>').join(''):'';
     $('p-more-l').querySelectorAll('[data-m]').forEach(a=>a.onclick=e=>{e.preventDefault();more=more.filter(x=>x!==a.dataset.m);drawMore();});$('p-more-box').classList.toggle('hidden',!!edit);}
@@ -405,22 +499,22 @@ const DASH=(()=>{
     try{
       if(file){
         const ext=(file.name.split('.').pop()||'bin').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,5)||'bin',path=uid+'/'+Date.now()+'.'+ext;
-        const up=await sb.storage.from('creator-media').upload(path,file,{contentType:file.type,cacheControl:'3600'});if(up.error)throw up.error;
+        const up=await sbd.storage.from('creator-media').upload(path,file,{contentType:file.type,cacheControl:'3600'});if(up.error)throw up.error;
         row.media_path=path;row.media_type=/^video\//.test(file.type)?'video':'image';
-        if(old&&old.media_path)sb.storage.from('creator-media').remove([old.media_path]);
+        if(old&&old.media_path)sbd.storage.from('creator-media').remove([old.media_path]);
       }
       if(now){row.status='draft';row.results=[];}
       else if(auto){row.plan_at=new Date(date+'T'+time).toISOString();row.status='queued';row.results=[];}
       else if(old&&old.status==='queued'){row.status='draft';}
-      if(edit){const r=await sb.from('creator_plans').update(row).eq('id',edit).select().single();if(r.error)throw r.error;plans=plans.map(p=>p.id===edit?r.data:p);}
-      else{const r=await sb.from('creator_plans').insert(row).select().single();if(r.error)throw r.error;plans.push(r.data);
+      if(edit){const r=await sbd.from('creator_plans').update(row).eq('id',edit).select().single();if(r.error)throw r.error;plans=plans.map(p=>p.id===edit?r.data:p);}
+      else{const r=await sbd.from('creator_plans').insert(row).select().single();if(r.error)throw r.error;plans.push(r.data);
         if(!now&&more.length){let n=0;
           for(const d of more){const r2={...row,plan_date:d};
-            if(row.media_path){const np=uid+'/'+Date.now()+'_'+n+'.'+row.media_path.split('.').pop();const c=await sb.storage.from('creator-media').copy(row.media_path,np);
-              if(c.error){const dl=await sb.storage.from('creator-media').download(row.media_path);if(dl.error)throw dl.error;const u2=await sb.storage.from('creator-media').upload(np,dl.data,{contentType:dl.data.type,cacheControl:'3600'});if(u2.error)throw u2.error;}
+            if(row.media_path){const np=uid+'/'+Date.now()+'_'+n+'.'+row.media_path.split('.').pop();const c=await sbd.storage.from('creator-media').copy(row.media_path,np);
+              if(c.error){const dl=await sbd.storage.from('creator-media').download(row.media_path);if(dl.error)throw dl.error;const u2=await sbd.storage.from('creator-media').upload(np,dl.data,{contentType:dl.data.type,cacheControl:'3600'});if(u2.error)throw u2.error;}
               r2.media_path=np;}
             if(auto){r2.plan_at=new Date(d+'T'+time).toISOString();r2.status='queued';r2.results=[];}
-            const x=await sb.from('creator_plans').insert(r2).select().single();if(x.error)throw x.error;plans.push(x.data);n++;}
+            const x=await sbd.from('creator_plans').insert(r2).select().single();if(x.error)throw x.error;plans.push(x.data);n++;}
           showToast('Saved on '+(n+1)+' dates.');}}
       if(now){const saved=edit?plans.find(x=>x.id===edit):plans[plans.length-1];sel=date;view=new Date(date+'T00:00:00');reset();$('p-date').value=date;refresh();$('p-save').disabled=false;await postNow(saved.id);return;}
       if(!(!edit&&more.length))showToast(auto?'Saved. It will post by itself at that time.':'Saved to your calendar.');sel=date;view=new Date(date+'T00:00:00');reset();$('p-date').value=date;refresh();
@@ -438,7 +532,7 @@ const DASH=(()=>{
       else throw new Error('no answer');
     }catch(e){
       // the answer may have been lost: read the real state
-      const q=await sb.from('creator_plans').select('*').eq('id',id).maybeSingle();if(q.data)Object.assign(p,q.data);else p.status='failed';
+      const q=await sbd.from('creator_plans').select('*').eq('id',id).maybeSingle();if(q.data)Object.assign(p,q.data);else p.status='failed';
     }
     refresh();
     const ok=(p.results||[]).filter(x=>x.status==='published').map(x=>PL[x.platform]),bad=(p.results||[]).filter(x=>x.status==='failed');
@@ -446,10 +540,10 @@ const DASH=(()=>{
   }
   async function act(a,id){
     const p=plans.find(x=>x.id===id);if(!p)return;
-    if(a==='done'){const r=await sb.from('creator_plans').update({done:!p.done}).eq('id',id);if(r.error){showToast('Could not update.','error');return;}p.done=!p.done;}
-    else if(a==='del'){if(!confirm('Delete this plan?'))return;const r=await sb.from('creator_plans').delete().eq('id',id);if(r.error){showToast('Could not delete.','error');return;}plans=plans.filter(x=>x.id!==id);}
+    if(a==='done'){const r=await sbd.from('creator_plans').update({done:!p.done}).eq('id',id);if(r.error){showToast('Could not update.','error');return;}p.done=!p.done;}
+    else if(a==='del'){if(!confirm('Delete this plan?'))return;const r=await sbd.from('creator_plans').delete().eq('id',id);if(r.error){showToast('Could not delete.','error');return;}plans=plans.filter(x=>x.id!==id);}
     else if(a==='wa'){
-      const url=sb.storage.from('creator-media').getPublicUrl(p.media_path).data.publicUrl,cap=(p.note||p.title||'').trim();
+      const url=sbd.storage.from('creator-media').getPublicUrl(p.media_path).data.publicUrl,cap=(p.note||p.title||'').trim();
       try{
         const rs=await fetch(url);const bl=await rs.blob();const ext=p.media_type==='video'?'mp4':'jpg',f=new File([bl],'post.'+ext,{type:bl.type||(p.media_type==='video'?'video/mp4':'image/jpeg')});
         if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],text:cap});return;}
@@ -457,8 +551,8 @@ const DASH=(()=>{
       window.open('https://wa.me/?text='+encodeURIComponent((cap?cap+'\n':'')+url),'_blank','noopener');return;
     }
     else if(a==='now'){await postNow(id);return;}
-    else if(a==='auto'){const at=when(p);if(at<=new Date()){showToast('That time has passed. Use Post now.','error');return;}const r=await sb.from('creator_plans').update({status:'queued',plan_at:at.toISOString(),results:[]}).eq('id',id);if(r.error){showToast('Could not set auto-post.','error');return;}p.status='queued';p.plan_at=at.toISOString();p.results=[];showToast('It will post by itself at that time.');}
-    else if(a==='retry'){const r=await sb.from('creator_plans').update({status:'queued',plan_at:new Date().toISOString(),results:[]}).eq('id',id);if(r.error){showToast('Could not retry.','error');return;}p.status='queued';p.results=[];showToast('Trying again in a minute or two.');}
+    else if(a==='auto'){const at=when(p);if(at<=new Date()){showToast('That time has passed. Use Post now.','error');return;}const r=await sbd.from('creator_plans').update({status:'queued',plan_at:at.toISOString(),results:[]}).eq('id',id);if(r.error){showToast('Could not set auto-post.','error');return;}p.status='queued';p.plan_at=at.toISOString();p.results=[];showToast('It will post by itself at that time.');}
+    else if(a==='retry'){const r=await sbd.from('creator_plans').update({status:'queued',plan_at:new Date().toISOString(),results:[]}).eq('id',id);if(r.error){showToast('Could not retry.','error');return;}p.status='queued';p.results=[];showToast('Trying again in a minute or two.');}
     else if(a==='edit'){edit=id;more=[];drawMore();$('f-h').textContent='Edit post';$('p-title').value=p.title;$('p-date').value=p.plan_date;$('p-time').value=(p.plan_time||'12:00').slice(0,5);$('p-plat').value=p.platform;$('p-note').value=p.note||'';$('p-save').textContent='Save changes';$('p-cancel').classList.remove('hidden');$('p-title').scrollIntoView({behavior:'smooth',block:'center'});return;}
     refresh();
   }
@@ -473,11 +567,11 @@ const DASH=(()=>{
   async function start(user){
     uid=user&&user.id;if(!loaded){wire();loaded=true;}
     $('p-date').value=key(new Date());
-    const r=await sb.from('creator_plans').select('*').order('plan_date',{ascending:true}).limit(500);
+    const r=await sbd.from('creator_plans').select('*').order('plan_date',{ascending:true}).limit(500);
     plans=r.error?[]:(r.data||[]);if(r.error)showToast('Could not load your calendar.','error');
     refresh();
     setInterval(async()=>{if(document.hidden||!plans.some(p=>p.status==='queued'||p.status==='posting'))return;
-      const r=await sb.from('creator_plans').select('*').in('status',['queued','posting','posted','failed']).order('plan_date',{ascending:true}).limit(500);
+      const r=await sbd.from('creator_plans').select('*').in('status',['queued','posting','posted','failed']).order('plan_date',{ascending:true}).limit(500);
       if(!r.error&&r.data){const m=new Map(plans.map(p=>[p.id,p]));r.data.forEach(x=>m.set(x.id,x));plans=[...m.values()];refresh();}},60000);
   }
   return {add,postNow,start,refreshHint:()=>{try{hint();}catch(e){}}};
@@ -506,7 +600,7 @@ const CALM=(()=>{
     try{
       const u=await sb.auth.getUser(),uid=u.data&&u.data.user&&u.data.user.id;if(!uid)throw new Error('Please log in again.');
       const path=uid+'/'+Date.now()+'.'+(pend.kind==='video'?'mp4':'jpg');
-      const up=await sb.storage.from('creator-media').upload(path,pend.blob,{contentType:pend.kind==='video'?'video/mp4':'image/jpeg',cacheControl:'3600'});if(up.error)throw up.error;
+      const up=await sbd.storage.from('creator-media').upload(path,pend.blob,{contentType:pend.kind==='video'?'video/mp4':'image/jpeg',cacheControl:'3600'});if(up.error)throw up.error;
       const row={plan_date:date,plan_time:time,title,platform:pl,note:$('cm-note').value.trim()||null,media_path:path,media_type:pend.kind};
       if(auto&&!now){row.plan_at=new Date(date+'T'+time).toISOString();row.status='queued';}
       const added=await DASH.add(row);
