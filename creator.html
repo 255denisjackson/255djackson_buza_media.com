@@ -203,6 +203,9 @@ create policy bm_files on storage.objects for all to anon, authenticated
     $('db-show').onclick=()=>$('db-sql').classList.toggle('hidden');
     $('db-go').onclick=connect;
     const r=await sb.from('creator_dbs').select('*').maybeSingle();row=r.data||null;
+    if(!row){const ca=await sb.from('central_access').select('user_id').maybeSingle();
+      if(ca.data){sbd=sb;document.body.classList.remove('nodb');$('db-setup').classList.add('hidden');$('db-ok').innerHTML='Using the main Buza Media database (full access).';$('db-ok').classList.remove('hidden');if(!started){started=true;DASH.start(user);BN.start(user);CN.start();}return;}
+    }
     if(!row){document.body.classList.add('nodb');$('db-setup').classList.remove('hidden');$('db-ok').classList.add('hidden');return;}
     sbd=client(row);document.body.classList.remove('nodb');$('db-setup').classList.add('hidden');
     const host=row.db_url.replace('https://','').split('.')[0];
