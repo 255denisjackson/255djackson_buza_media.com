@@ -179,6 +179,15 @@ create table if not exists public.creator_banners(
   user_id uuid primary key default '${uid}',
   path text not null, w integer not null, h integer not null, area jsonb not null, box jsonb not null,
   note text, updated_at timestamptz not null default now(), box_auto jsonb);
+create or replace function public.creator_plans_clamp() returns trigger language plpgsql as $f$
+begin
+  new.title := left(btrim(coalesce(new.title, '')), 120);
+  if new.title = '' then new.title := 'Post'; end if;
+  if new.note is not null then new.note := left(new.note, 500); end if;
+  return new;
+end $f$;
+drop trigger if exists creator_plans_clamp on public.creator_plans;
+create trigger creator_plans_clamp before insert or update on public.creator_plans for each row execute function public.creator_plans_clamp();
 alter table public.creator_plans enable row level security;
 alter table public.creator_contacts enable row level security;
 alter table public.creator_banners enable row level security;
