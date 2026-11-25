@@ -482,10 +482,10 @@ const DASH=(()=>{
   function reset(){more=[];edit=null;$('f-h').textContent='Schedule a post';$('p-title').value='';$('p-note').value='';$('p-plat').value='any';$('p-file').value='';$('p-auto').checked=true;$('p-save').textContent='Save to calendar';$('p-cancel').classList.add('hidden');drawMore();}
   async function save(now){
     now=now===true;
-    const title=$('p-title').value.trim(),date=$('p-date').value,time=$('p-time').value||'12:00';
+    const rawT=$('p-title').value.trim(),title=rawT.slice(0,120),date=$('p-date').value,time=$('p-time').value||'12:00';
     if(!title){showToast('Write what the post is.','error');return;}
     if(!date){showToast('Choose a date.','error');return;}
-    const row={plan_date:date,plan_time:time,title,platform:$('p-plat').value,note:$('p-note').value.trim()||null};
+    const row={plan_date:date,plan_time:time,title,platform:$('p-plat').value,note:($('p-note').value.trim()||(rawT.length>120?rawT:'')).slice(0,500)||null};
     const auto=$('p-auto').checked,file=$('p-file').files[0],old=edit?plans.find(x=>x.id===edit):null;
     if(now){
       if(!file&&!(old&&old.media_path)){showToast('Attach a picture or video to post now.','error');return;}
@@ -594,7 +594,7 @@ const CALM=(()=>{
   $('cm-now').onclick=()=>saveModal(true);
   $('cm-save').onclick=()=>saveModal(false);
   async function saveModal(now){
-    if(!pend)return;const title=$('cm-title').value.trim(),date=$('cm-date').value,time=$('cm-time').value||'12:00',pl=$('cm-plat').value,auto=$('cm-auto').checked&&['any','facebook','instagram','whatsapp'].includes(pl);
+    if(!pend)return;const rawT=$('cm-title').value.trim(),title=rawT.slice(0,120),date=$('cm-date').value,time=$('cm-time').value||'12:00',pl=$('cm-plat').value,auto=$('cm-auto').checked&&['any','facebook','instagram','whatsapp'].includes(pl);
     if(!title){showToast('Write a title.','error');return;}if(!date){showToast('Choose a date.','error');return;}
     if(pend.blob.size>50*1024*1024){showToast('The file is over 50 MB, it cannot be saved to the calendar.','error');return;}
     if(now&&!CN.has(['any','facebook','instagram','whatsapp'].includes(pl)?pl:'any')){showToast('Connect Facebook or Instagram first (Connect my accounts).','error');return;}
@@ -604,7 +604,7 @@ const CALM=(()=>{
       const u=await sb.auth.getUser(),uid=u.data&&u.data.user&&u.data.user.id;if(!uid)throw new Error('Please log in again.');
       const path=uid+'/'+Date.now()+'.'+(pend.kind==='video'?'mp4':'jpg');
       const up=await sbd.storage.from('creator-media').upload(path,pend.blob,{contentType:pend.kind==='video'?'video/mp4':'image/jpeg',cacheControl:'3600'});if(up.error)throw up.error;
-      const row={plan_date:date,plan_time:time,title,platform:pl,note:$('cm-note').value.trim()||null,media_path:path,media_type:pend.kind};
+      const row={plan_date:date,plan_time:time,title,platform:pl,note:($('cm-note').value.trim()||(rawT.length>120?rawT:'')).slice(0,500)||null,media_path:path,media_type:pend.kind};
       if(auto&&!now){row.plan_at=new Date(date+'T'+time).toISOString();row.status='queued';}
       const added=await DASH.add(row);
       $('cal-m').classList.add('hidden');pend=null;
