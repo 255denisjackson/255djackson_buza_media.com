@@ -7,7 +7,7 @@
 <meta name="description" content="Buza Media: habari kutoka Tanzania. Soma habari za Simba, Yanga, Azam, Miss Grand Tanzania, Bongo Flava na matukio ya kila siku, kila saa.">
 <meta name="robots" content="index,follow,max-image-preview:large">
 <link rel="canonical" href="https://255denisjackson.github.io/255djackson_buza_media.com/">
-<link rel="preconnect" href="https://gxfwjicztemfpxfjbdqq.supabase.co" crossorigin>
+<link rel="preconnect" href="https://cgoxglsepltjbemnlmqx.supabase.co" crossorigin>
 <link rel="icon" href="favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png"><link rel="manifest" href="site.webmanifest">
 <meta name="theme-color" content="#1a1a2e">
@@ -1526,18 +1526,19 @@ let knownPostIds=null;
    (for the rest of that visit). Keys here are publishable (public) keys — safe in the browser.      */
 const DB_PROFILES={
   primary:{label:'Primary (original)',url:'https://gxfwjicztemfpxfjbdqq.supabase.co',key:'sb_publishable_zz-T8b1gItOWTM2R43t-jQ_--qts2s8'},
-  backup:{label:'Backup (new)',url:'https://liingyivheqmuosuxwvd.supabase.co',key:'sb_publishable_jtLwjUFd9GeUInx7c9CkDg_B53KYB4-'}
+  backup:{label:'Backup (new)',url:'https://liingyivheqmuosuxwvd.supabase.co',key:'sb_publishable_jtLwjUFd9GeUInx7c9CkDg_B53KYB4-'},
+  main:{label:'Main (current)',url:'https://cgoxglsepltjbemnlmqx.supabase.co',key:'sb_publishable_USnTAF6QDYaD2Oauc7lgxQ_4s-WVmA9'}
 };
-const DB_DEFAULT='primary';
-const dbOther=n=>n==='primary'?'backup':'primary';
+const DB_DEFAULT='main';
+const dbOther=n=>n==='main'?'primary':'main';
 function dbStored(store,k){try{return store.getItem(k);}catch(e){return null;}}
 function dbChosen(){
   try{const q=new URLSearchParams(window.location.search).get('db');
     if(q&&DB_PROFILES[q]){try{localStorage.setItem('buza_db',q);}catch(e){}return q;}
     if(q==='default'){try{localStorage.removeItem('buza_db');sessionStorage.removeItem('buza_db_auto');}catch(e){}}
   }catch(e){}
-  const m=dbStored(localStorage,'buza_db');if(m&&DB_PROFILES[m])return m;
-  const a=dbStored(sessionStorage,'buza_db_auto');if(a&&DB_PROFILES[a])return a;
+  const m=dbStored(localStorage,'buza_db');if(m==='main')return m;
+  const a=dbStored(sessionStorage,'buza_db_auto');if(a==='main')return a; /* old databases are closed: older saved choices are ignored */
   return DB_DEFAULT;
 }
 let dbActive=dbChosen();
